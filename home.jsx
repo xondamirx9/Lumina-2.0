@@ -2,46 +2,42 @@
    Lumina Voyages — Homepage
    ========================================================= */
 
-/* ---------- Hero search bar ---------- */
 function HeroSearch({ go }) {
   const [where, setWhere] = useState("");
   const [cat, setCat] = useState("all");
-  const [when, setWhen] = useState("Anytime");
+  const [when, setWhen] = useState("anytime");
+  const { t } = useI18n();
   const submit = () => go({ view: "listing", q: where, cat });
+  const whenOpts = [["anytime","summer","autumn","winter","spring"].map(k => ({ k, label: t(k) }))][0];
   return (
-    <div className="hero-search anim-fade-up" style={{
-      background: "oklch(1 0 0 / 0.92)", backdropFilter: "blur(16px)",
-      borderRadius: "var(--r-lg)", boxShadow: "var(--sh-xl)",
-      padding: 10, display: "grid", gridTemplateColumns: "1.4fr 1fr 1fr auto", gap: 6,
-      maxWidth: 880, margin: "0 auto", animationDelay: "0.3s",
-    }}>
+    <div className="hero-search anim-fade-up" style={{ background: "oklch(1 0 0 / 0.92)", backdropFilter: "blur(16px)", borderRadius: "var(--r-lg)", boxShadow: "var(--sh-xl)", padding: 10, display: "grid", gridTemplateColumns: "1.4fr 1fr 1fr auto", gap: 6, maxWidth: 880, margin: "0 auto", animationDelay: "0.3s" }}>
       <label className="hs-field" style={hsField}>
         <Icon name="pin" size={20} style={{ color: "var(--ocean)" }} />
         <span style={hsCol}>
-          <span style={hsLabel}>Where to</span>
-          <input value={where} onChange={(e) => setWhere(e.target.value)} placeholder="Search destinations" style={hsInput} />
+          <span style={hsLabel}>{t("hero_where")}</span>
+          <input value={where} onChange={(e) => setWhere(e.target.value)} placeholder={t("hero_search_ph")} style={hsInput} />
         </span>
       </label>
       <label className="hs-field" style={hsField}>
         <Icon name="compass" size={20} style={{ color: "var(--ocean)" }} />
         <span style={hsCol}>
-          <span style={hsLabel}>Journey type</span>
+          <span style={hsLabel}>{t("hero_journey_type")}</span>
           <select value={cat} onChange={(e) => setCat(e.target.value)} style={{ ...hsInput, cursor: "pointer", appearance: "none" }}>
-            {CATEGORIES.map((c) => <option key={c.id} value={c.id}>{c.label}</option>)}
+            {CATEGORIES.map((c) => <option key={c.id} value={c.id}>{t("cat_" + c.id)}</option>)}
           </select>
         </span>
       </label>
       <label className="hs-field" style={{ ...hsField, borderRight: "none" }}>
         <Icon name="calendar" size={20} style={{ color: "var(--ocean)" }} />
         <span style={hsCol}>
-          <span style={hsLabel}>When</span>
+          <span style={hsLabel}>{t("hero_when")}</span>
           <select value={when} onChange={(e) => setWhen(e.target.value)} style={{ ...hsInput, cursor: "pointer", appearance: "none" }}>
-            {["Anytime", "Summer 2026", "Autumn 2026", "Winter 2026", "Spring 2027"].map((w) => <option key={w}>{w}</option>)}
+            {whenOpts.map(({ k, label }) => <option key={k} value={k}>{label}</option>)}
           </select>
         </span>
       </label>
       <button className="btn btn-primary btn-lg" onClick={submit} style={{ borderRadius: "var(--r-md)" }}>
-        <Icon name="search" size={20} /> <span className="search-label">Search</span>
+        <Icon name="search" size={20} /> <span className="search-label">{t("hero_search")}</span>
       </button>
     </div>
   );
@@ -51,38 +47,37 @@ const hsCol = { display: "flex", flexDirection: "column", gap: 2, flex: 1, minWi
 const hsLabel = { fontSize: "0.7rem", fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase", color: "var(--ink-3)" };
 const hsInput = { border: "none", outline: "none", background: "transparent", fontFamily: "var(--font-sans)", fontSize: "0.98rem", fontWeight: 600, color: "var(--ink)", width: "100%", padding: 0 };
 
-/* ---------- Hero ---------- */
 function Hero({ go }) {
   const [p, setP] = useState(0);
+  const { t } = useI18n();
   useEffect(() => {
     const onScroll = () => setP(window.scrollY);
     window.addEventListener("scroll", onScroll, { passive: true });
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
+  const stats = [[t("hero_reviews"),"4.9★"],[t("hero_countries"),"60+"],[t("hero_tailor"),"100%"],[t("hero_support"),"24/7"]];
   return (
     <section style={{ position: "relative", minHeight: "100vh", display: "flex", flexDirection: "column", justifyContent: "center", overflow: "hidden", paddingTop: 90 }}>
-      {/* layered scenic background */}
       <div style={{ position: "absolute", inset: 0, transform: `translateY(${p * 0.25}px) scale(1.05)`, zIndex: 0 }}>
-        <img src="https://images.unsplash.com/photo-1570077188670-e3a8d69ac5ff?auto=format&fit=crop&w=1600&q=80" alt="Santorini aegean coastline at golden hour" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", objectPosition: "center" }} />
+        <img src="https://images.unsplash.com/photo-1570077188670-e3a8d69ac5ff?auto=format&fit=crop&w=1600&q=80" alt="Santorini" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", objectPosition: "center" }} />
         <div style={{ position: "absolute", inset: 0, background: "linear-gradient(180deg, oklch(0.25 0.05 235 / 0.45) 0%, oklch(0.3 0.05 235 / 0.1) 40%, oklch(0.99 0.01 220 / 0.0) 70%, var(--bg) 100%)" }} />
       </div>
-
       <div className="wrap" style={{ position: "relative", zIndex: 2, textAlign: "center", paddingBottom: 30 }}>
         <span className="anim-fade-up row gap-2" style={{ display: "inline-flex", animationDelay: "0.05s", background: "oklch(1 0 0 / 0.16)", backdropFilter: "blur(8px)", color: "white", padding: "8px 16px", borderRadius: "var(--r-pill)", fontSize: "0.82rem", fontWeight: 600, marginBottom: 26 }}>
-          <Icon name="sparkle" size={16} /> Handcrafted journeys to 60+ countries
+          <Icon name="sparkle" size={16} /> {t("hero_badge")}
         </span>
         <h1 className="display anim-fade-up" style={{ fontSize: "clamp(3rem, 8vw, 6.6rem)", color: "white", animationDelay: "0.12s", textShadow: "0 2px 40px oklch(0.2 0.05 235 / 0.4)" }}>
-          Travel that feels<br /><span className="serif-italic" style={{ color: "var(--sand)" }}>extraordinary</span>
+          {t("hero_h1a")}<br /><span className="serif-italic" style={{ color: "var(--sand)" }}>{t("hero_h1b")}</span>
         </h1>
         <p className="anim-fade-up" style={{ color: "oklch(1 0 0 / 0.94)", fontSize: "clamp(1.05rem, 2vw, 1.3rem)", maxWidth: 600, margin: "22px auto 40px", animationDelay: "0.2s", lineHeight: 1.5, textShadow: "0 1px 20px oklch(0.2 0.05 235 / 0.4)" }}>
-          From private sails through the Cyclades to the dunes of the Sahara — discover beautifully designed tours, then book in minutes.
+          {t("hero_sub")}
         </p>
         <HeroSearch go={go} />
         <div className="anim-fade-up row" style={{ justifyContent: "center", gap: 40, marginTop: 44, animationDelay: "0.45s", flexWrap: "wrap" }}>
-          {[["4.9★", "12,400+ reviews"], ["60+", "Countries"], ["100%", "Tailor-made"], ["24/7", "On-trip support"]].map(([n, l], i) => (
+          {stats.map(([label, num], i) => (
             <div key={i} style={{ textAlign: "center", color: "white" }}>
-              <div style={{ fontSize: "1.7rem", fontWeight: 800, letterSpacing: "-0.02em" }}>{n}</div>
-              <div style={{ fontSize: "0.82rem", color: "oklch(1 0 0 / 0.8)", fontWeight: 500 }}>{l}</div>
+              <div style={{ fontSize: "1.7rem", fontWeight: 800, letterSpacing: "-0.02em" }}>{num}</div>
+              <div style={{ fontSize: "0.82rem", color: "oklch(1 0 0 / 0.8)", fontWeight: 500 }}>{label}</div>
             </div>
           ))}
         </div>
@@ -91,8 +86,8 @@ function Hero({ go }) {
   );
 }
 
-/* ---------- Category strip ---------- */
 function CategoryStrip({ go }) {
+  const { t } = useI18n();
   return (
     <section className="wrap" style={{ padding: "70px 28px 20px" }}>
       <div className="cat-strip" style={{ display: "grid", gridTemplateColumns: "repeat(6, 1fr)", gap: 14 }}>
@@ -101,10 +96,8 @@ function CategoryStrip({ go }) {
             style={{ transitionDelay: i * 0.05 + "s", display: "flex", flexDirection: "column", alignItems: "center", gap: 12, padding: "26px 12px", background: "var(--surface)", borderRadius: "var(--r-md)", boxShadow: "var(--sh-sm)", transition: "transform 0.4s var(--spring), box-shadow 0.4s" }}
             onMouseEnter={(e) => { e.currentTarget.style.transform = "translateY(-6px)"; e.currentTarget.style.boxShadow = "var(--sh-lg)"; }}
             onMouseLeave={(e) => { e.currentTarget.style.transform = "none"; e.currentTarget.style.boxShadow = "var(--sh-sm)"; }}>
-            <span style={{ width: 54, height: 54, borderRadius: "50%", display: "grid", placeItems: "center", background: "var(--ocean-tint)", color: "var(--ocean-deep)" }}>
-              <Icon name={c.icon} size={24} />
-            </span>
-            <span style={{ fontWeight: 700, fontSize: "0.9rem" }}>{c.label}</span>
+            <span style={{ width: 54, height: 54, borderRadius: "50%", display: "grid", placeItems: "center", background: "var(--ocean-tint)", color: "var(--ocean-deep)" }}><Icon name={c.icon} size={24} /></span>
+            <span style={{ fontWeight: 700, fontSize: "0.9rem" }}>{t("cat_" + c.id)}</span>
           </button>
         ))}
       </div>
@@ -112,27 +105,27 @@ function CategoryStrip({ go }) {
   );
 }
 
-/* ---------- Featured tours ---------- */
 function FeaturedTours({ go }) {
-  const featured = TOURS.filter((t) => t.featured).slice(0, 6);
+  const { t } = useI18n();
+  const featured = TOURS.filter((tr) => tr.featured).slice(0, 6);
   return (
     <section className="wrap" style={{ padding: "60px 28px" }}>
       <div className="row reveal" style={{ justifyContent: "space-between", alignItems: "flex-end", marginBottom: 36, flexWrap: "wrap", gap: 16 }}>
         <div>
-          <span className="eyebrow">Editor's selection</span>
-          <h2 className="display" style={{ fontSize: "clamp(2.2rem, 4vw, 3.4rem)", marginTop: 12 }}>Journeys we're<br /><span className="serif-italic" style={{ color: "var(--ocean)" }}>dreaming about</span></h2>
+          <span className="eyebrow">{t("featured_eyebrow")}</span>
+          <h2 className="display" style={{ fontSize: "clamp(2.2rem, 4vw, 3.4rem)", marginTop: 12 }}>{t("featured_h2a")}<br /><span className="serif-italic" style={{ color: "var(--ocean)" }}>{t("featured_h2b")}</span></h2>
         </div>
-        <button className="btn btn-ghost" onClick={() => go({ view: "listing" })}>Browse all journeys <Icon name="arrow" size={18} /></button>
+        <button className="btn btn-ghost" onClick={() => go({ view: "listing" })}>{t("featured_browse")} <Icon name="arrow" size={18} /></button>
       </div>
       <div className="grid-3" style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 26 }}>
-        {featured.map((t, i) => <TourCard key={t.id} tour={t} onOpen={(id) => go({ view: "tour", id })} delay={(i % 3) * 0.08} />)}
+        {featured.map((tr, i) => <TourCard key={tr.id} tour={tr} onOpen={(id) => go({ view: "tour", id })} delay={(i % 3) * 0.08} />)}
       </div>
     </section>
   );
 }
 
-/* ---------- Destination showcase (beautiful browsing) ---------- */
 function DestinationShowcase({ go }) {
+  const { t } = useI18n();
   const tiles = [
     { ...DESTINATIONS[0], span: "tall" }, { ...DESTINATIONS[3] }, { ...DESTINATIONS[1] },
     { ...DESTINATIONS[2] }, { ...DESTINATIONS[4] }, { ...DESTINATIONS[5], span: "wide" },
@@ -141,8 +134,8 @@ function DestinationShowcase({ go }) {
     <section style={{ background: "var(--bg-2)", padding: "90px 0" }}>
       <div className="wrap">
         <div className="reveal" style={{ textAlign: "center", marginBottom: 46 }}>
-          <span className="eyebrow">Browse by destination</span>
-          <h2 className="display" style={{ fontSize: "clamp(2.2rem, 4vw, 3.4rem)", marginTop: 12 }}>Where will you wander?</h2>
+          <span className="eyebrow">{t("dest_eyebrow")}</span>
+          <h2 className="display" style={{ fontSize: "clamp(2.2rem, 4vw, 3.4rem)", marginTop: 12 }}>{t("dest_h2")}</h2>
         </div>
         <div className="dest-grid" style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gridAutoRows: "200px", gap: 16 }}>
           {tiles.map((d, i) => (
@@ -154,7 +147,7 @@ function DestinationShowcase({ go }) {
               <div style={{ position: "absolute", inset: 0, background: "linear-gradient(180deg, transparent 40%, oklch(0.2 0.04 235 / 0.6) 100%)" }} />
               <div style={{ position: "absolute", left: 20, bottom: 18, textAlign: "left", color: "white" }}>
                 <div className="display" style={{ fontSize: "1.9rem" }}>{d.name}</div>
-                <div style={{ fontSize: "0.82rem", color: "oklch(1 0 0 / 0.85)", fontWeight: 600 }}>{d.count} journeys</div>
+                <div style={{ fontSize: "0.82rem", color: "oklch(1 0 0 / 0.85)", fontWeight: 600 }}>{d.count} {t("dest_journeys")}</div>
               </div>
             </button>
           ))}
@@ -164,31 +157,26 @@ function DestinationShowcase({ go }) {
   );
 }
 
-/* ---------- Why Lumina ---------- */
 function WhyLumina() {
+  const { t } = useI18n();
   const items = [
-    { icon: "map", h: "Designed by specialists", x: "Every itinerary is built and tested by people who live and breathe their regions." },
-    { icon: "shield", h: "Protected & flexible", x: "Financial protection, free changes up to 60 days out, and 24/7 support on the ground." },
-    { icon: "leaf", h: "Travel that gives back", x: "Carbon-balanced trips and partnerships with the communities you visit." },
-    { icon: "award", h: "Loved by 12,000+ travellers", x: "An average rating of 4.9 across more than a decade of journeys." },
+    { icon: "map",    h: t("why_i1h"), x: t("why_i1x") },
+    { icon: "shield", h: t("why_i2h"), x: t("why_i2x") },
+    { icon: "leaf",   h: t("why_i3h"), x: t("why_i3x") },
+    { icon: "award",  h: t("why_i4h"), x: t("why_i4x") },
   ];
   return (
     <section id="why" className="wrap" style={{ padding: "90px 28px", scrollMarginTop: 80 }}>
       <div className="why-grid" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 60, alignItems: "center" }}>
         <div className="reveal">
-          <span className="eyebrow">The Lumina difference</span>
-          <h2 className="display" style={{ fontSize: "clamp(2.2rem, 4vw, 3.6rem)", margin: "14px 0 20px" }}>Beautifully planned,<br /><span className="serif-italic" style={{ color: "var(--coral)" }}>effortlessly yours</span></h2>
-          <p style={{ color: "var(--ink-2)", fontSize: "1.08rem", lineHeight: 1.65, maxWidth: 460, marginBottom: 30 }}>
-            We obsess over the details so you don't have to — from the view at breakfast to the timing of every sunset. The result is travel that feels personal, generous, and genuinely yours.
-          </p>
+          <span className="eyebrow">{t("why_eyebrow")}</span>
+          <h2 className="display" style={{ fontSize: "clamp(2.2rem, 4vw, 3.6rem)", margin: "14px 0 20px" }}>{t("why_h2a")}<br /><span className="serif-italic" style={{ color: "var(--coral)" }}>{t("why_h2b")}</span></h2>
+          <p style={{ color: "var(--ink-2)", fontSize: "1.08rem", lineHeight: 1.65, maxWidth: 460, marginBottom: 30 }}>{t("why_body")}</p>
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 22 }}>
             {items.map((it) => (
               <div key={it.h} className="row gap-3" style={{ alignItems: "flex-start" }}>
                 <span style={{ flexShrink: 0, width: 46, height: 46, borderRadius: "var(--r-sm)", display: "grid", placeItems: "center", background: "var(--ocean-tint)", color: "var(--ocean-deep)" }}><Icon name={it.icon} size={22} /></span>
-                <div>
-                  <h4 style={{ fontSize: "1rem", marginBottom: 4 }}>{it.h}</h4>
-                  <p style={{ fontSize: "0.88rem", color: "var(--ink-2)", lineHeight: 1.5 }}>{it.x}</p>
-                </div>
+                <div><h4 style={{ fontSize: "1rem", marginBottom: 4 }}>{it.h}</h4><p style={{ fontSize: "0.88rem", color: "var(--ink-2)", lineHeight: 1.5 }}>{it.x}</p></div>
               </div>
             ))}
           </div>
@@ -199,8 +187,8 @@ function WhyLumina() {
           <div style={{ position: "absolute", bottom: 40, right: 10, background: "var(--surface)", borderRadius: "var(--r-md)", boxShadow: "var(--sh-lg)", padding: "16px 20px", display: "flex", alignItems: "center", gap: 14 }}>
             <span style={{ width: 44, height: 44, borderRadius: "50%", background: "var(--coral-soft)", color: "var(--coral-deep)", display: "grid", placeItems: "center" }}><Icon name="award" size={24} /></span>
             <div>
-              <div style={{ fontWeight: 800, fontSize: "1.1rem" }}>Travellers' Choice</div>
-              <div style={{ fontSize: "0.8rem", color: "var(--ink-3)" }}>Awarded 2024 · 2025 · 2026</div>
+              <div style={{ fontWeight: 800, fontSize: "1.1rem" }}>{t("why_award")}</div>
+              <div style={{ fontSize: "0.8rem", color: "var(--ink-3)" }}>{t("why_award_years")}</div>
             </div>
           </div>
         </div>
@@ -209,7 +197,6 @@ function WhyLumina() {
   );
 }
 
-/* ---------- Testimonials ---------- */
 function Testimonials() {
   const quotes = [
     { text: "The most thoughtfully designed trip we've ever taken. Every day felt like the highlight until the next one arrived.", name: "Elena & Marco", trip: "Cyclades by Private Sail", theme: "santorini" },
@@ -218,8 +205,8 @@ function Testimonials() {
   ];
   const [i, setI] = useState(0);
   useEffect(() => {
-    const t = setInterval(() => setI((x) => (x + 1) % quotes.length), 6000);
-    return () => clearInterval(t);
+    const tmr = setInterval(() => setI((x) => (x + 1) % quotes.length), 6000);
+    return () => clearInterval(tmr);
   }, []);
   return (
     <section style={{ background: "linear-gradient(160deg, var(--ocean-deep), var(--ocean))", padding: "100px 0", color: "white", position: "relative", overflow: "hidden" }}>
@@ -251,22 +238,20 @@ function Testimonials() {
   );
 }
 
-/* ---------- CTA band ---------- */
 function CTABand({ go }) {
+  const { t } = useI18n();
   return (
     <section className="wrap" style={{ padding: "90px 28px" }}>
       <div className="reveal" style={{ position: "relative", borderRadius: "var(--r-xl)", overflow: "hidden", boxShadow: "var(--sh-xl)" }}>
         <Scenic theme="amalfi" label="amalfi coast" style={{ position: "absolute", inset: 0 }} />
         <div style={{ position: "absolute", inset: 0, background: "linear-gradient(110deg, oklch(0.25 0.05 235 / 0.85) 0%, oklch(0.3 0.06 235 / 0.4) 100%)" }} />
         <div style={{ position: "relative", zIndex: 2, padding: "clamp(40px, 6vw, 80px)", maxWidth: 620, color: "white" }}>
-          <span className="eyebrow" style={{ color: "var(--sand)" }}>Let's begin</span>
-          <h2 className="display" style={{ fontSize: "clamp(2.2rem, 4.5vw, 3.6rem)", margin: "12px 0 16px" }}>Your next great story starts here</h2>
-          <p style={{ fontSize: "1.1rem", color: "oklch(1 0 0 / 0.9)", lineHeight: 1.6, marginBottom: 32 }}>
-            Tell us how you like to travel and our specialists will craft something just for you — or browse our ready-to-book journeys.
-          </p>
+          <span className="eyebrow" style={{ color: "var(--sand)" }}>{t("cta_eyebrow")}</span>
+          <h2 className="display" style={{ fontSize: "clamp(2.2rem, 4.5vw, 3.6rem)", margin: "12px 0 16px" }}>{t("cta_h2")}</h2>
+          <p style={{ fontSize: "1.1rem", color: "oklch(1 0 0 / 0.9)", lineHeight: 1.6, marginBottom: 32 }}>{t("cta_body")}</p>
           <div className="row gap-3" style={{ flexWrap: "wrap" }}>
-            <button className="btn btn-primary btn-lg" onClick={() => go({ view: "listing" })}>Explore journeys <Icon name="arrow" size={20} /></button>
-            <button className="btn btn-lg" onClick={() => go({ view: "listing" })} style={{ background: "oklch(1 0 0 / 0.16)", color: "white", backdropFilter: "blur(8px)" }}><Icon name="phone" size={18} /> Talk to a specialist</button>
+            <button className="btn btn-primary btn-lg" onClick={() => go({ view: "listing" })}>{t("cta_explore")} <Icon name="arrow" size={20} /></button>
+            <button className="btn btn-lg" onClick={() => go({ view: "listing" })} style={{ background: "oklch(1 0 0 / 0.16)", color: "white", backdropFilter: "blur(8px)" }}><Icon name="phone" size={18} /> {t("cta_talk")}</button>
           </div>
         </div>
       </div>

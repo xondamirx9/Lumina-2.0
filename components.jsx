@@ -3,7 +3,6 @@
    ========================================================= */
 const { useState, useEffect, useRef, useCallback, createContext, useContext } = React;
 
-/* ---------- Icons (simple line set) ---------- */
 const I = {
   search:   "M11 19a8 8 0 100-16 8 8 0 000 16zM21 21l-4.3-4.3",
   heart:    "M12 21s-7.5-4.6-10-9.5C.4 8.3 2 5 5.2 5c2 0 3.2 1.1 3.8 2.3C9.6 6.1 10.8 5 12.8 5 16 5 17.6 8.3 16 11.5 13.5 16.4 12 21 12 21z",
@@ -46,6 +45,8 @@ const I = {
   tag:      "M20.6 13.4L13 21l-9-9V4h8l8.6 8.6a1.4 1.4 0 010 2zM7.5 7.5h.01",
   trash:    "M3 6h18M8 6V4a1 1 0 011-1h6a1 1 0 011 1v2M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6",
   quote:    "M7 7H4a1 1 0 00-1 1v4a1 1 0 001 1h2v3a1 1 0 001 1 1 1 0 001-1V8a1 1 0 00-1-1zm10 0h-3a1 1 0 00-1 1v4a1 1 0 001 1h2v3a1 1 0 002 0V8a1 1 0 00-1-1z",
+  sun:      "M12 3v2M12 19v2M4.2 4.2l1.4 1.4M18.4 18.4l1.4 1.4M3 12h2M19 12h2M4.2 19.8l1.4-1.4M18.4 5.6l1.4-1.4M12 8a4 4 0 100 8 4 4 0 000-8z",
+  moon:     "M21 12.8A9 9 0 1111.2 3a7 7 0 009.8 9.8z",
 };
 
 function Icon({ name, size = 20, fill = "none", style, strokeWidth = 1.9, className }) {
@@ -60,7 +61,6 @@ function Icon({ name, size = 20, fill = "none", style, strokeWidth = 1.9, classN
   );
 }
 
-/* ---------- Real photo map — Unsplash (free-to-use) ---------- */
 const PHOTOS = {
   santorini: "https://images.unsplash.com/photo-1570077188670-e3a8d69ac5ff?auto=format&fit=crop&w=1400&q=80",
   maldives:  "https://images.unsplash.com/photo-1514282401047-d79a71a590e8?auto=format&fit=crop&w=1400&q=80",
@@ -78,46 +78,26 @@ const PHOTOS = {
   sunset:    "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?auto=format&fit=crop&w=1400&q=80",
 };
 
-/* ---------- Scenic photo component ---------- */
 function Scenic({ theme, label, className = "", style, children, rounded }) {
   const src = PHOTOS[theme] || PHOTOS.ocean;
   return (
     <div className={"scenic-wrap " + className} data-label={label}
       style={{ position: "relative", overflow: "hidden", borderRadius: rounded, ...style }}>
-      <img
-        src={src}
-        alt={label || theme}
-        loading="lazy"
-        style={{
-          position: "absolute", inset: 0, width: "100%", height: "100%",
-          objectFit: "cover", objectPosition: "center",
-          transition: "transform 0.7s var(--ease-out)",
-        }}
-        className="ph-img"
-      />
+      <img src={src} alt={label || theme} loading="lazy" className="ph-img"
+        style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", objectPosition: "center" }} />
       {label && (
-        <span style={{
-          position: "absolute", left: 12, bottom: 11,
-          fontFamily: "ui-monospace, 'SF Mono', Menlo, monospace",
-          fontSize: 10, letterSpacing: "0.03em",
-          color: "oklch(1 0 0 / 0.92)",
-          background: "oklch(0.2 0.03 235 / 0.42)",
-          backdropFilter: "blur(3px)",
-          padding: "3px 8px", borderRadius: 6,
-          zIndex: 3, pointerEvents: "none",
-        }}>{label}</span>
+        <span style={{ position: "absolute", left: 12, bottom: 11, fontFamily: "ui-monospace,'SF Mono',Menlo,monospace", fontSize: 10, letterSpacing: "0.03em", color: "oklch(1 0 0 / 0.92)", background: "oklch(0.2 0.03 235 / 0.42)", backdropFilter: "blur(3px)", padding: "3px 8px", borderRadius: 6, zIndex: 3, pointerEvents: "none" }}>{label}</span>
       )}
       {children}
     </div>
   );
 }
 
-/* ---------- Star rating ---------- */
 function Stars({ value, size = 15 }) {
   const full = Math.round(value);
   return (
     <span className="stars" aria-label={value + " out of 5"}>
-      {[1, 2, 3, 4, 5].map((n) => (
+      {[1,2,3,4,5].map((n) => (
         <Icon key={n} name="star" size={size} fill={n <= full ? "current" : "none"}
           style={{ color: n <= full ? "var(--gold)" : "var(--hairline-2)" }} strokeWidth={1.6} />
       ))}
@@ -125,7 +105,6 @@ function Stars({ value, size = 15 }) {
   );
 }
 
-/* ---------- Reveal on scroll ---------- */
 function useReveal() {
   const ref = useRef(null);
   useEffect(() => {
@@ -140,7 +119,6 @@ function useReveal() {
   return ref;
 }
 
-/* ---------- Toast ---------- */
 const ToastCtx = createContext(() => {});
 function useToast() { return useContext(ToastCtx); }
 function ToastProvider({ children }) {
@@ -162,34 +140,27 @@ function ToastProvider({ children }) {
   );
 }
 
-/* ---------- Wishlist heart button ---------- */
 function SaveButton({ tourId, big }) {
   const [saved, setSaved] = useState(Store.isSaved(tourId));
   const toast = useToast();
+  const { t } = useI18n();
   const onClick = (e) => {
     e.stopPropagation(); e.preventDefault();
     const now = Store.toggleSaved(tourId);
     setSaved(now);
-    toast(now ? "Saved to your trips" : "Removed from saved", now ? "heart" : "check");
+    toast(now ? t("save_msg") : t("unsave_msg"), now ? "heart" : "check");
   };
   return (
     <button className="save-btn" onClick={onClick} aria-label="Save trip"
-      style={{
-        width: big ? 46 : 38, height: big ? 46 : 38, borderRadius: "50%",
-        display: "grid", placeItems: "center",
-        background: "oklch(1 0 0 / 0.9)", backdropFilter: "blur(8px)",
-        boxShadow: "var(--sh-sm)", color: saved ? "var(--coral)" : "var(--ink-2)",
-        transition: "transform 0.4s var(--spring), color 0.3s",
-        transform: saved ? "scale(1.04)" : "scale(1)",
-      }}>
+      style={{ width: big ? 46 : 38, height: big ? 46 : 38, borderRadius: "50%", display: "grid", placeItems: "center", background: "oklch(1 0 0 / 0.9)", backdropFilter: "blur(8px)", boxShadow: "var(--sh-sm)", color: saved ? "var(--coral)" : "var(--ink-2)", transition: "transform 0.4s var(--spring), color 0.3s", transform: saved ? "scale(1.04)" : "scale(1)" }}>
       <Icon name="heart" size={big ? 22 : 18} fill={saved ? "current" : "none"} strokeWidth={2} />
     </button>
   );
 }
 
-/* ---------- Tour card ---------- */
 function TourCard({ tour, onOpen, delay = 0 }) {
   const [hover, setHover] = useState(false);
+  const { t } = useI18n();
   return (
     <a href={"#/tour/" + tour.id} onClick={(e) => { e.preventDefault(); onOpen(tour.id); }}
       className="card reveal" style={{ transitionDelay: delay + "s", cursor: "pointer", display: "block" }}
@@ -197,16 +168,14 @@ function TourCard({ tour, onOpen, delay = 0 }) {
       <div style={{ position: "relative", overflow: "hidden" }}>
         <Scenic theme={tour.theme} label={tour.place} style={{ height: 230, transition: "transform 0.7s var(--ease-out)", transform: hover ? "scale(1.06)" : "scale(1)" }} />
         <div style={{ position: "absolute", top: 14, left: 14, display: "flex", gap: 8 }}>
-          {tour.oldPrice && <span className="badge badge-coral">SAVE {fmtPrice(tour.oldPrice - tour.price)}</span>}
-          {tour.popular && !tour.oldPrice && <span className="badge badge-glass">Popular</span>}
+          {tour.oldPrice && <span className="badge badge-coral">{t("save_badge")} {fmtPrice(tour.oldPrice - tour.price)}</span>}
+          {tour.popular && !tour.oldPrice && <span className="badge badge-glass">{t("card_popular")}</span>}
         </div>
         <div style={{ position: "absolute", top: 12, right: 12 }}><SaveButton tourId={tour.id} /></div>
       </div>
       <div style={{ padding: "18px 20px 20px" }}>
         <div className="row" style={{ justifyContent: "space-between", gap: 10 }}>
-          <span className="row gap-2" style={{ color: "var(--ink-3)", fontSize: "0.82rem", fontWeight: 600 }}>
-            <Icon name="pin" size={15} /> {tour.region}
-          </span>
+          <span className="row gap-2" style={{ color: "var(--ink-3)", fontSize: "0.82rem", fontWeight: 600 }}><Icon name="pin" size={15} /> {tour.region}</span>
           <span className="row gap-2" style={{ fontSize: "0.85rem", fontWeight: 700 }}>
             <Icon name="star" size={14} fill="current" style={{ color: "var(--gold)" }} /> {tour.rating}
             <span style={{ color: "var(--ink-3)", fontWeight: 500 }}>({tour.reviews})</span>
@@ -215,24 +184,24 @@ function TourCard({ tour, onOpen, delay = 0 }) {
         <h3 style={{ fontSize: "1.28rem", margin: "10px 0 8px", letterSpacing: "-0.02em" }}>{tour.title}</h3>
         <p style={{ color: "var(--ink-2)", fontSize: "0.92rem", lineHeight: 1.5, minHeight: 42 }}>{tour.blurb}</p>
         <div className="row gap-3" style={{ margin: "14px 0 16px", color: "var(--ink-2)", fontSize: "0.84rem", fontWeight: 600, flexWrap: "wrap" }}>
-          <span className="row gap-2"><Icon name="clock" size={15} /> {tour.days} days</span>
+          <span className="row gap-2"><Icon name="clock" size={15} /> {tour.days} {t("card_days")}</span>
           <span style={{ color: "var(--hairline-2)" }}>·</span>
-          <span className="row gap-2"><Icon name="users" size={15} /> {tour.groupMax <= 2 ? "Private" : "Max " + tour.groupMax}</span>
+          <span className="row gap-2"><Icon name="users" size={15} /> {tour.groupMax <= 2 ? t("card_private") : t("card_max") + " " + tour.groupMax}</span>
           <span style={{ color: "var(--hairline-2)" }}>·</span>
           <span className="row gap-2"><Icon name="mountain" size={15} /> {tour.difficulty}</span>
         </div>
         <div className="hr" style={{ marginBottom: 14 }} />
         <div className="row" style={{ justifyContent: "space-between" }}>
           <div>
-            <span style={{ fontSize: "0.78rem", color: "var(--ink-3)" }}>from</span>
+            <span style={{ fontSize: "0.78rem", color: "var(--ink-3)" }}>{t("card_from")}</span>
             <div className="row gap-2" style={{ alignItems: "baseline" }}>
               <span style={{ fontSize: "1.4rem", fontWeight: 800, letterSpacing: "-0.03em" }}>{fmtPrice(tour.price)}</span>
               {tour.oldPrice && <span style={{ color: "var(--ink-3)", textDecoration: "line-through", fontSize: "0.9rem" }}>{fmtPrice(tour.oldPrice)}</span>}
-              <span style={{ color: "var(--ink-3)", fontSize: "0.8rem" }}>/ person</span>
+              <span style={{ color: "var(--ink-3)", fontSize: "0.8rem" }}>{t("card_person")}</span>
             </div>
           </div>
           <span className="btn btn-soft btn-sm" style={{ transition: "all 0.4s", background: hover ? "var(--ocean)" : "var(--ocean-tint)", color: hover ? "white" : "var(--ocean-deep)" }}>
-            View <Icon name="arrow" size={16} />
+            {t("card_view")} <Icon name="arrow" size={16} />
           </span>
         </div>
       </div>
@@ -240,7 +209,6 @@ function TourCard({ tour, onOpen, delay = 0 }) {
   );
 }
 
-/* ---------- Brand mark ---------- */
 function Logo({ light, onClick }) {
   return (
     <a href="#/" onClick={(e) => { e.preventDefault(); onClick && onClick(); }} className="row gap-3" style={{ alignItems: "center" }}>
@@ -257,11 +225,37 @@ function Logo({ light, onClick }) {
   );
 }
 
-/* ---------- Navigation ---------- */
+/* ---------- Language + Theme controls ---------- */
+function LangThemeBar({ solid }) {
+  const { lang, setLang, theme, setTheme, t } = useI18n();
+  const isDark = theme === "dark";
+  const col = solid ? "var(--ink-2)" : "oklch(1 0 0 / 0.88)";
+  return (
+    <div className="row gap-2">
+      {/* theme toggle */}
+      <button onClick={() => setTheme(isDark ? "light" : "dark")}
+        title={isDark ? t("theme_light") : t("theme_dark")}
+        style={{ width: 36, height: 36, borderRadius: "50%", display: "grid", placeItems: "center", color: col, background: solid ? "var(--surface-2)" : "oklch(1 0 0 / 0.14)", backdropFilter: "blur(8px)", transition: "all 0.3s" }}>
+        <Icon name={isDark ? "sun" : "moon"} size={17} />
+      </button>
+      {/* language selector */}
+      <div style={{ position: "relative" }}>
+        <select value={lang} onChange={(e) => setLang(e.target.value)}
+          style={{ appearance: "none", border: "none", outline: "none", background: solid ? "var(--surface-2)" : "oklch(1 0 0 / 0.14)", backdropFilter: "blur(8px)", color: col, fontFamily: "var(--font-sans)", fontWeight: 700, fontSize: "0.82rem", padding: "7px 26px 7px 10px", borderRadius: "var(--r-pill)", cursor: "pointer", transition: "all 0.3s", letterSpacing: "0.04em" }}>
+          <option value="en">EN</option>
+          <option value="ru">RU</option>
+          <option value="uz">UZ</option>
+        </select>
+        <Icon name="chevD" size={13} style={{ position: "absolute", right: 7, top: "50%", transform: "translateY(-50%)", color: col, pointerEvents: "none" }} />
+      </div>
+    </div>
+  );
+}
+
 function Nav({ go, route, savedCount, user }) {
   const [scrolled, setScrolled] = useState(false);
-  const [open, setOpen] = useState(false);
   const onHome = route.view === "home";
+  const { t } = useI18n();
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 30);
     onScroll();
@@ -270,18 +264,12 @@ function Nav({ go, route, savedCount, user }) {
   }, []);
   const solid = scrolled || !onHome;
   const links = [
-    { label: "Destinations", to: { view: "listing" } },
-    { label: "Journeys", to: { view: "listing" } },
-    { label: "About", to: { view: "home", hash: "why" } },
+    { label: t("nav_destinations"), to: { view: "listing" } },
+    { label: t("nav_journeys"), to: { view: "listing" } },
+    { label: t("nav_about"), to: { view: "home", hash: "why" } },
   ];
   return (
-    <header style={{
-      position: "fixed", top: 0, left: 0, right: 0, zIndex: 100,
-      transition: "all 0.5s var(--ease)",
-      background: solid ? "oklch(1 0 0 / 0.82)" : "transparent",
-      backdropFilter: solid ? "blur(14px) saturate(1.4)" : "none",
-      boxShadow: solid ? "0 1px 0 var(--hairline)" : "none",
-    }}>
+    <header style={{ position: "fixed", top: 0, left: 0, right: 0, zIndex: 100, transition: "all 0.5s var(--ease)", background: solid ? "oklch(var(--bg-raw, 1 0 0) / 0.82)" : "transparent", backdropFilter: solid ? "blur(14px) saturate(1.4)" : "none", boxShadow: solid ? "0 1px 0 var(--hairline)" : "none" }}>
       <div className="wrap row" style={{ justifyContent: "space-between", height: 74 }}>
         <Logo light={!solid} onClick={() => go({ view: "home" })} />
         <nav className="row gap-8 desk-nav">
@@ -293,6 +281,7 @@ function Nav({ go, route, savedCount, user }) {
           ))}
         </nav>
         <div className="row gap-3">
+          <LangThemeBar solid={solid} />
           <button className="row gap-2" onClick={() => go({ view: "account", tab: "saved" })}
             style={{ position: "relative", color: solid ? "var(--ink-2)" : "white", fontWeight: 600, fontSize: "0.9rem", padding: "6px" }}>
             <Icon name="heart" size={20} fill={savedCount ? "current" : "none"} style={{ color: savedCount ? "var(--coral)" : "inherit" }} />
@@ -300,7 +289,7 @@ function Nav({ go, route, savedCount, user }) {
           </button>
           <button className={"btn " + (solid ? "btn-ghost" : "")} onClick={() => go({ view: "account" })}
             style={!solid ? { background: "oklch(1 0 0 / 0.16)", color: "white", backdropFilter: "blur(8px)" } : {}}>
-            <Icon name="user" size={18} /> {user ? user.name.split(" ")[0] : "Sign in"}
+            <Icon name="user" size={18} /> {user ? user.name.split(" ")[0] : t("nav_sign_in")}
           </button>
         </div>
       </div>
@@ -308,30 +297,28 @@ function Nav({ go, route, savedCount, user }) {
   );
 }
 
-/* ---------- Footer ---------- */
 function Footer({ go }) {
+  const { t } = useI18n();
   const cols = [
-    { h: "Journeys", items: ["Luxury & private", "Adventure", "Guided group", "Cruises", "Cultural"] },
-    { h: "Company", items: ["Our story", "Travel guides", "Sustainability", "Careers", "Press"] },
-    { h: "Support", items: ["Help centre", "Booking terms", "Travel insurance", "Contact us", "FAQ"] },
+    { h: t("footer_journeys"), key: "f_j", items: [t("cat_luxury"), t("cat_adventure"), t("cat_group"), t("cat_cruise"), t("cat_cultural")] },
+    { h: t("footer_company") || "Company", key: "f_c", items: ["Our story", "Travel guides", "Sustainability", "Careers", "Press"] },
+    { h: t("footer_support") || "Support", key: "f_s", items: ["Help centre", "Booking terms", "Travel insurance", "Contact us", "FAQ"] },
   ];
   return (
     <footer style={{ background: "var(--ink)", color: "oklch(0.85 0.02 230)", marginTop: 0 }}>
       <div className="wrap" style={{ padding: "72px 28px 40px" }}>
         <div className="footer-grid" style={{ display: "grid", gridTemplateColumns: "1.5fr 1fr 1fr 1fr", gap: 48 }}>
           <div>
-            <div style={{ filter: "none" }}><Logo light onClick={() => go({ view: "home" })} /></div>
-            <p style={{ marginTop: 18, maxWidth: 280, lineHeight: 1.6, color: "oklch(0.78 0.02 230)" }}>
-              Curated journeys to the world's most beautiful places — designed by people who've been there.
-            </p>
+            <Logo light onClick={() => go({ view: "home" })} />
+            <p style={{ marginTop: 18, maxWidth: 280, lineHeight: 1.6, color: "oklch(0.78 0.02 230)" }}>{t("footer_tagline")}</p>
             <div className="row gap-3" style={{ marginTop: 22 }}>
               {["globe", "mail", "phone"].map((ic) => (
                 <span key={ic} style={{ width: 40, height: 40, borderRadius: "50%", display: "grid", placeItems: "center", background: "oklch(1 0 0 / 0.07)", color: "white" }}><Icon name={ic} size={18} /></span>
               ))}
             </div>
           </div>
-          {cols.map((c, i) => (
-            <div key={i} className="col gap-3">
+          {cols.map((c) => (
+            <div key={c.key} className="col gap-3">
               <h4 style={{ fontSize: "0.78rem", letterSpacing: "0.16em", textTransform: "uppercase", color: "var(--teal)", marginBottom: 6 }}>{c.h}</h4>
               {c.items.map((it) => (
                 <a key={it} href="#" onClick={(e) => { e.preventDefault(); go({ view: "listing" }); }}
@@ -344,11 +331,11 @@ function Footer({ go }) {
         </div>
         <div className="hr" style={{ background: "oklch(1 0 0 / 0.1)", margin: "44px 0 24px" }} />
         <div className="row footer-bottom" style={{ justifyContent: "space-between", fontSize: "0.84rem", color: "oklch(0.7 0.02 230)" }}>
-          <span>© 2026 Lumina Voyages. Crafted for the curious.</span>
+          <span>{t("footer_copy")}</span>
           <div className="row gap-6">
-            <a href="#" onClick={(e) => e.preventDefault()}>Privacy</a>
-            <a href="#" onClick={(e) => e.preventDefault()}>Terms</a>
-            <a href="#" onClick={(e) => e.preventDefault()}>Cookies</a>
+            <a href="#" onClick={(e) => e.preventDefault()}>{t("footer_privacy")}</a>
+            <a href="#" onClick={(e) => e.preventDefault()}>{t("footer_terms")}</a>
+            <a href="#" onClick={(e) => e.preventDefault()}>{t("footer_cookies")}</a>
           </div>
         </div>
       </div>
@@ -356,7 +343,4 @@ function Footer({ go }) {
   );
 }
 
-Object.assign(window, {
-  Icon, Scenic, Stars, useReveal, ToastProvider, useToast,
-  SaveButton, TourCard, Logo, Nav, Footer,
-});
+Object.assign(window, { Icon, Scenic, Stars, useReveal, ToastProvider, useToast, SaveButton, TourCard, Logo, Nav, Footer });
