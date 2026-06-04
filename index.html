@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Lumina Voyages — Extraordinary travel, beautifully planned</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="styles.css" />
+<style>
+  /* scenic-wrap needs explicit height when used inside flex/grid */
+  .scenic-wrap { display: block; }
+  .scenic-wrap .ph-img { transition: transform 0.7s cubic-bezier(0.16,1,0.3,1); }
+
+  /* responsive tweaks for the SPA chrome */
+  @media (max-width: 1080px) {
+    .listing-body { grid-template-columns: 1fr !important; }
+    .filters-side { position: static !important; }
+    .detail-body, .booking-grid, .profile-grid, .why-grid { grid-template-columns: 1fr !important; }
+    .book-aside, .order-summary { position: static !important; }
+    .dest-grid { grid-template-columns: repeat(2, 1fr) !important; }
+  }
+  @media (max-width: 920px) {
+    .grid-3 { grid-template-columns: repeat(2, 1fr) !important; }
+    .hero-search { grid-template-columns: 1fr 1fr !important; }
+    .hero-search > button { grid-column: span 2; }
+    .cat-strip { grid-template-columns: repeat(3, 1fr) !important; }
+    .auth-wrap { grid-template-columns: 1fr !important; }
+    .auth-art { display: none; }
+  }
+  @media (max-width: 720px) {
+    .desk-nav { display: none !important; }
+    .grid-2, .grid-3 { grid-template-columns: 1fr !important; }
+    .hero-search { grid-template-columns: 1fr !important; }
+    .hero-search > button { grid-column: span 1; }
+    .cat-strip { grid-template-columns: repeat(2, 1fr) !important; }
+    .footer-grid { grid-template-columns: 1fr 1fr !important; gap: 32px !important; }
+    .footer-bottom { flex-direction: column; gap: 12px; }
+    .step-label { display: none; }
+    .gallery { grid-template-columns: 1fr !important; grid-template-rows: auto !important; }
+    .gallery > *:not(:first-child) { display: none; }
+    .search-label { display: inline; }
+    .wrap { padding: 0 18px; }
+  }
+  #boot { position: fixed; inset: 0; display: grid; place-items: center; background: var(--bg); z-index: 999; transition: opacity 0.5s; }
+  #boot.gone { opacity: 0; pointer-events: none; }
+  .boot-mark { width: 52px; height: 52px; border-radius: 50%; background: conic-gradient(var(--ocean-bright), var(--teal), var(--coral), var(--ocean-bright)); animation: spinSlow 1.1s linear infinite; -webkit-mask: radial-gradient(farthest-side, transparent 60%, #000 62%); mask: radial-gradient(farthest-side, transparent 60%, #000 62%); }
+</style>
+</head>
+<body>
+<div id="boot"><div class="boot-mark"></div></div>
+<div id="root"></div>
+
+<template id="__bundler_thumbnail" data-bg-color="#0d4f6b">
+  <svg viewBox="0 0 1200 800" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+      <linearGradient id="tg" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0" stop-color="#3a9bd6"/>
+        <stop offset="0.55" stop-color="#2f7fc4"/>
+        <stop offset="1" stop-color="#e8c98a"/>
+      </linearGradient>
+    </defs>
+    <rect width="1200" height="800" fill="url(#tg)"/>
+    <circle cx="600" cy="330" r="120" fill="none" stroke="#ffffff" stroke-width="14" opacity="0.95"/>
+    <circle cx="650" cy="290" r="26" fill="#ffffff"/>
+    <path d="M600 250 L640 350 L540 390 L580 290 Z" fill="#ffffff" opacity="0.95"/>
+    <text x="600" y="560" font-family="Georgia, serif" font-size="120" fill="#ffffff" text-anchor="middle">Lumina</text>
+    <text x="600" y="630" font-family="Helvetica, sans-serif" font-size="40" letter-spacing="18" fill="#ffffff" text-anchor="middle" opacity="0.85">VOYAGES</text>
+  </svg>
+</template>
+
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+
+<script type="text/babel" src="data.jsx"></script>
+<script type="text/babel" src="components.jsx"></script>
+<script type="text/babel" src="home.jsx"></script>
+<script type="text/babel" src="listing.jsx"></script>
+<script type="text/babel" src="detail.jsx"></script>
+<script type="text/babel" src="booking.jsx"></script>
+<script type="text/babel" src="account.jsx"></script>
+
+<script type="text/babel" data-presets="react">
+const { useState: useStateApp, useEffect: useEffectApp } = React;
+
+/* ---- tiny hash router: #/view/param ---- */
+function parseHash() {
+  const h = (location.hash || "#/").replace(/^#\/?/, "");
+  const [seg, param] = h.split("/");
+  if (!seg) return { view: "home" };
+  if (seg === "journeys" || seg === "listing") return { view: "listing" };
+  if (seg === "tour" && param) return { view: "tour", id: param };
+  if (seg === "booking" && param) return { view: "booking", id: param };
+  if (seg === "account") return { view: "account", tab: param };
+  return { view: "home" };
+}
+
+function App() {
+  const [route, setRoute] = useStateApp(() => {
+    // restore richer route (with transient params) if present
+    try { const s = sessionStorage.getItem("lumina_route"); if (s) return JSON.parse(s); } catch (e) {}
+    return parseHash();
+  });
+  const [store, setStore] = useStateApp(Store.get());
+
+  useEffectApp(() => Store.subscribe((s) => setStore({ ...s })), []);
+
+  useEffectApp(() => {
+    const b = document.getElementById("boot");
+    if (b) requestAnimationFrame(() => b.classList.add("gone"));
+  }, []);
+
+  const go = (r) => {
+    setRoute(r);
+    try { sessionStorage.setItem("lumina_route", JSON.stringify(r)); } catch (e) {}
+    const hashMap = { home: "#/", listing: "#/journeys", tour: "#/tour/" + (r.id || ""), booking: "#/booking/" + (r.id || ""), account: "#/account" + (r.tab ? "/" + r.tab : "") };
+    history.replaceState(null, "", hashMap[r.view] || "#/");
+    window.scrollTo(0, 0);
+  };
+
+  // sync browser back/forward
+  useEffectApp(() => {
+    const onPop = () => setRoute(parseHash());
+    window.addEventListener("popstate", onPop);
+    return () => window.removeEventListener("popstate", onPop);
+  }, []);
+
+  const showChrome = route.view !== "account" || store.user; // hide nav/footer on full-screen auth
+  const hideFooter = route.view === "booking" || (route.view === "account" && !store.user);
+
+  return (
+    <ToastProvider>
+      {showChrome && <Nav go={go} route={route} savedCount={store.saved.length} user={store.user} />}
+      <main key={route.view + (route.id || "") + (route.tab || "")}>
+        {route.view === "home" && <HomePage go={go} />}
+        {route.view === "listing" && <ListingPage go={go} route={route} />}
+        {route.view === "tour" && <TourPage go={go} route={route} />}
+        {route.view === "booking" && <BookingPage go={go} route={route} />}
+        {route.view === "account" && <AccountPage go={go} route={route} store={store} />}
+      </main>
+      {showChrome && !hideFooter && <Footer go={go} />}
+    </ToastProvider>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById("root")).render(<App />);
+</script>
+</body>
+</html>
