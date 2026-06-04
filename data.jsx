@@ -481,11 +481,11 @@ const Store = (() => {
     listeners.forEach((fn) => fn(state));
   }
 
-  function _applySession(session, profile) {
+  async function _applySession(session, profile) {
     const userId = session.user.id;
-    const saved = _loadForUser(userId);
+    const local = _loadForUser(userId);
     state = {
-      ...saved,
+      ...local,
       user: {
         id: userId,
         name: profile?.name || session.user.user_metadata?.name || session.user.email.split("@")[0],
@@ -495,6 +495,19 @@ const Store = (() => {
       }
     };
     persist();
+    /* Pull bookings from Supabase so any device sees the full history */
+    try {
+      const rows = await SB.bookings.mine();
+      if (rows?.length) {
+        state.bookings = rows.map(b => ({
+          id: b.id, tourId: b.tour_id, date: b.date,
+          guests: b.guests, total: b.total, status: b.status,
+          createdAt: b.created_at, tours: b.tours,
+          name: b.guest_name, email: b.guest_email,
+        }));
+        persist();
+      }
+    } catch(e) {}
   }
 
   /* Sync user from Supabase session on startup */
