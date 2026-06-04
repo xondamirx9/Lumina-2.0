@@ -269,7 +269,7 @@ function Nav({ go, route, savedCount, user }) {
     { label: t("nav_about"), to: { view: "home", hash: "why" } },
   ];
   return (
-    <header style={{ position: "fixed", top: 0, left: 0, right: 0, zIndex: 100, transition: "all 0.5s var(--ease)", background: solid ? "oklch(var(--bg-raw, 1 0 0) / 0.82)" : "transparent", backdropFilter: solid ? "blur(14px) saturate(1.4)" : "none", boxShadow: solid ? "0 1px 0 var(--hairline)" : "none" }}>
+    <header style={{ position: "fixed", top: 0, left: 0, right: 0, zIndex: 100, transition: "all 0.5s var(--ease)", background: solid ? "var(--nav-bg)" : "transparent", backdropFilter: solid ? "blur(18px) saturate(1.5)" : "none", boxShadow: solid ? "0 1px 0 var(--hairline)" : "none" }}>
       <div className="wrap row" style={{ justifyContent: "space-between", height: 74 }}>
         <Logo light={!solid} onClick={() => go({ view: "home" })} />
         <nav className="row gap-8 desk-nav">
@@ -305,12 +305,12 @@ function Footer({ go }) {
     { h: t("footer_support") || "Support", key: "f_s", items: ["Help centre", "Booking terms", "Travel insurance", "Contact us", "FAQ"] },
   ];
   return (
-    <footer style={{ background: "var(--ink)", color: "oklch(0.85 0.02 230)", marginTop: 0 }}>
+    <footer style={{ background: "var(--footer-bg)", color: "oklch(0.72 0.018 230)", marginTop: 0, borderTop: "1px solid oklch(1 0 0 / 0.06)" }}>
       <div className="wrap" style={{ padding: "72px 28px 40px" }}>
         <div className="footer-grid" style={{ display: "grid", gridTemplateColumns: "1.5fr 1fr 1fr 1fr", gap: 48 }}>
           <div>
             <Logo light onClick={() => go({ view: "home" })} />
-            <p style={{ marginTop: 18, maxWidth: 280, lineHeight: 1.6, color: "oklch(0.78 0.02 230)" }}>{t("footer_tagline")}</p>
+            <p style={{ marginTop: 18, maxWidth: 280, lineHeight: 1.6, color: "oklch(0.68 0.02 230)" }}>{t("footer_tagline")}</p>
             <div className="row gap-3" style={{ marginTop: 22 }}>
               {["globe", "mail", "phone"].map((ic) => (
                 <span key={ic} style={{ width: 40, height: 40, borderRadius: "50%", display: "grid", placeItems: "center", background: "oklch(1 0 0 / 0.07)", color: "white" }}><Icon name={ic} size={18} /></span>

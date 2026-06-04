@@ -10,7 +10,7 @@ function HeroSearch({ go }) {
   const submit = () => go({ view: "listing", q: where, cat });
   const whenOpts = [["anytime","summer","autumn","winter","spring"].map(k => ({ k, label: t(k) }))][0];
   return (
-    <div className="hero-search anim-fade-up" style={{ background: "oklch(1 0 0 / 0.92)", backdropFilter: "blur(16px)", borderRadius: "var(--r-lg)", boxShadow: "var(--sh-xl)", padding: 10, display: "grid", gridTemplateColumns: "1.4fr 1fr 1fr auto", gap: 6, maxWidth: 880, margin: "0 auto", animationDelay: "0.3s" }}>
+    <div className="hero-search anim-fade-up" style={{ background: "var(--search-bg)", backdropFilter: "blur(20px)", borderRadius: "var(--r-lg)", boxShadow: "var(--sh-xl)", padding: 10, display: "grid", gridTemplateColumns: "1.4fr 1fr 1fr auto", gap: 6, maxWidth: 880, margin: "0 auto", animationDelay: "0.3s" }}>
       <label className="hs-field" style={hsField}>
         <Icon name="pin" size={20} style={{ color: "var(--ocean)" }} />
         <span style={hsCol}>
@@ -59,8 +59,8 @@ function Hero({ go }) {
   return (
     <section style={{ position: "relative", minHeight: "100vh", display: "flex", flexDirection: "column", justifyContent: "center", overflow: "hidden", paddingTop: 90 }}>
       <div style={{ position: "absolute", inset: 0, transform: `translateY(${p * 0.25}px) scale(1.05)`, zIndex: 0 }}>
-        <img src="https://images.unsplash.com/photo-1570077188670-e3a8d69ac5ff?auto=format&fit=crop&w=1600&q=80" alt="Santorini" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", objectPosition: "center" }} />
-        <div style={{ position: "absolute", inset: 0, background: "linear-gradient(180deg, oklch(0.25 0.05 235 / 0.45) 0%, oklch(0.3 0.05 235 / 0.1) 40%, oklch(0.99 0.01 220 / 0.0) 70%, var(--bg) 100%)" }} />
+        <img src="https://images.unsplash.com/photo-1476514525535-07fb3b4ae5f1?auto=format&fit=crop&w=1600&q=80" alt="Aerial coastal landscape" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", objectPosition: "center 40%" }} />
+        <div style={{ position: "absolute", inset: 0, background: "linear-gradient(180deg, oklch(0.15 0.05 235 / 0.72) 0%, oklch(0.18 0.05 235 / 0.45) 40%, oklch(0.1 0.03 235 / 0.1) 68%, var(--bg) 100%)" }} />
       </div>
       <div className="wrap" style={{ position: "relative", zIndex: 2, textAlign: "center", paddingBottom: 30 }}>
         <span className="anim-fade-up row gap-2" style={{ display: "inline-flex", animationDelay: "0.05s", background: "oklch(1 0 0 / 0.16)", backdropFilter: "blur(8px)", color: "white", padding: "8px 16px", borderRadius: "var(--r-pill)", fontSize: "0.82rem", fontWeight: 600, marginBottom: 26 }}>

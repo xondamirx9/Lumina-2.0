@@ -54,25 +54,38 @@
   --spring: cubic-bezier(0.34, 1.56, 0.64, 1);
 
   --maxw: 1240px;
+
+  /* --- Theme-adaptive surfaces --- */
+  --nav-bg:    oklch(0.99 0.004 220 / 0.88);
+  --search-bg: oklch(1 0 0 / 0.93);
+  --footer-bg: oklch(0.17 0.026 234);
 }
 
 /* =========================================================
    Dark mode overrides
    ========================================================= */
 [data-theme="dark"] {
-  --bg:            oklch(0.13 0.014 235);
-  --bg-2:          oklch(0.11 0.012 235);
-  --surface:       oklch(0.17 0.016 235);
-  --surface-2:     oklch(0.19 0.016 235);
-  --ink:           oklch(0.94 0.006 220);
-  --ink-2:         oklch(0.76 0.012 225);
-  --ink-3:         oklch(0.56 0.015 228);
-  --hairline:      oklch(0.22 0.014 230);
-  --hairline-2:    oklch(0.28 0.016 228);
-  --ocean-tint:    oklch(0.19 0.025 222);
-  --coral-soft:    oklch(0.20 0.038 50);
+  color-scheme: dark;
+  --bg:            oklch(0.12 0.014 235);
+  --bg-2:          oklch(0.10 0.012 235);
+  --surface:       oklch(0.16 0.016 235);
+  --surface-2:     oklch(0.19 0.018 235);
+  --ink:           oklch(0.93 0.006 220);
+  --ink-2:         oklch(0.74 0.012 225);
+  --ink-3:         oklch(0.54 0.015 228);
+  --hairline:      oklch(0.21 0.014 230);
+  --hairline-2:    oklch(0.27 0.016 228);
+  --ocean-tint:    oklch(0.18 0.025 222);
+  --coral-soft:    oklch(0.21 0.040 50);
   --teal-soft:     oklch(0.18 0.030 196);
   --sand:          oklch(0.28 0.022 78);
+  --sh-sm: 0 1px 2px oklch(0 0 0 / 0.28), 0 2px 6px oklch(0 0 0 / 0.22);
+  --sh-md: 0 4px 14px oklch(0 0 0 / 0.35), 0 2px 6px oklch(0 0 0 / 0.22);
+  --sh-lg: 0 18px 50px oklch(0 0 0 / 0.50), 0 6px 18px oklch(0 0 0 / 0.28);
+  --sh-xl: 0 30px 80px oklch(0 0 0 / 0.60), 0 10px 30px oklch(0 0 0 / 0.32);
+  --nav-bg:    oklch(0.11 0.014 235 / 0.94);
+  --search-bg: oklch(0.17 0.020 235 / 0.97);
+  --footer-bg: oklch(0.08 0.012 235);
 }
 
 * { box-sizing: border-box; }
