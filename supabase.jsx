@@ -8,8 +8,8 @@
       (find them in Project Settings → API)
    ================================================================ */
 
-const SUPABASE_URL      = "YOUR_SUPABASE_URL";
-const SUPABASE_ANON_KEY = "YOUR_SUPABASE_ANON_KEY";
+const SUPABASE_URL      = "https://ekudvabndtdxlgubymgg.supabase.co";
+const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVrdWR2YWJuZHRkeGxndWJ5bWdnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA1OTU0MDIsImV4cCI6MjA5NjE3MTQwMn0.QBclhu2BRNPjJZcRjWJYE_2dYFHgnJi7AiQzQzomuuY";
 
 const _ok = SUPABASE_URL !== "YOUR_SUPABASE_URL" && typeof window.supabase !== "undefined";
 const _sb  = _ok
