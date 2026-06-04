@@ -1,38 +1,41 @@
 /* ================================================================
-   Lumina Voyages — Admin Panel
+   Lumina Voyages — Admin Panel v2 (CRM Dashboard)
    ================================================================ */
 
-/* ── helpers ──────────────────────────────────────────────────── */
-function AdminBadge({ status }) {
-  const colors = {
-    confirmed:  { bg: "var(--ocean-tint)",  color: "var(--ocean-deep)" },
-    completed:  { bg: "var(--teal-soft)",   color: "oklch(0.38 0.07 200)" },
-    cancelled:  { bg: "var(--coral-soft)",  color: "var(--coral-deep)" },
-    pending:    { bg: "var(--sand)",        color: "oklch(0.46 0.06 78)" },
-  };
-  const s = colors[status] || colors.pending;
+/* ── Shared primitives ──────────────────────────────────────────── */
+function StatCard({ icon, label, value, sub, color = "var(--ocean)", onClick }) {
   return (
-    <span style={{ ...s, fontSize: "0.76rem", fontWeight: 700, padding: "4px 10px", borderRadius: "var(--r-pill)", textTransform: "capitalize" }}>
-      {status}
-    </span>
+    <div onClick={onClick} style={{ background: "var(--surface)", borderRadius: "var(--r-md)", padding: "20px 22px", border: "1px solid var(--hairline)", cursor: onClick ? "pointer" : "default", transition: "box-shadow 0.3s, transform 0.3s" }}
+      onMouseEnter={e => { if (onClick) { e.currentTarget.style.boxShadow = "var(--sh-md)"; e.currentTarget.style.transform = "translateY(-2px)"; } }}
+      onMouseLeave={e => { e.currentTarget.style.boxShadow = ""; e.currentTarget.style.transform = ""; }}>
+      <div className="row" style={{ justifyContent: "space-between", marginBottom: 14 }}>
+        <span style={{ width: 42, height: 42, borderRadius: "var(--r-sm)", background: color + "1a", display: "grid", placeItems: "center", color }}><Icon name={icon} size={20} /></span>
+        {sub && <span style={{ fontSize: "0.74rem", color: "var(--ink-3)", fontWeight: 600, background: "var(--bg-2)", padding: "3px 8px", borderRadius: "var(--r-pill)" }}>{sub}</span>}
+      </div>
+      <div style={{ fontSize: "2rem", fontWeight: 800, letterSpacing: "-0.03em", color: "var(--ink)" }}>{value}</div>
+      <div style={{ fontSize: "0.84rem", color: "var(--ink-3)", marginTop: 4 }}>{label}</div>
+    </div>
   );
 }
 
-function AdminTable({ cols, rows, keyFn }) {
+function ATable({ cols, rows, empty = "No data yet." }) {
+  if (!rows.length) return (
+    <div style={{ textAlign: "center", padding: "52px 20px", background: "var(--surface)", borderRadius: "var(--r-md)", color: "var(--ink-3)", border: "1px solid var(--hairline)" }}>{empty}</div>
+  );
   return (
-    <div style={{ overflowX: "auto", borderRadius: "var(--r-md)", boxShadow: "var(--sh-sm)", border: "1px solid var(--hairline)" }}>
+    <div style={{ overflowX: "auto", borderRadius: "var(--r-md)", border: "1px solid var(--hairline)" }}>
       <table style={{ width: "100%", borderCollapse: "collapse", background: "var(--surface)", fontSize: "0.88rem" }}>
         <thead>
-          <tr style={{ borderBottom: "1px solid var(--hairline)", background: "var(--surface-2)" }}>
-            {cols.map(c => <th key={c} style={{ padding: "12px 16px", textAlign: "left", fontWeight: 700, fontSize: "0.78rem", letterSpacing: "0.06em", textTransform: "uppercase", color: "var(--ink-3)", whiteSpace: "nowrap" }}>{c}</th>)}
+          <tr style={{ background: "var(--surface-2)", borderBottom: "1px solid var(--hairline)" }}>
+            {cols.map((c, i) => <th key={i} style={{ padding: "11px 16px", textAlign: "left", fontWeight: 700, fontSize: "0.76rem", letterSpacing: "0.07em", textTransform: "uppercase", color: "var(--ink-3)", whiteSpace: "nowrap" }}>{c}</th>)}
           </tr>
         </thead>
         <tbody>
-          {rows.map((r, i) => (
-            <tr key={keyFn ? keyFn(r) : i} style={{ borderBottom: "1px solid var(--hairline)", transition: "background 0.2s" }}
+          {rows.map((row, i) => (
+            <tr key={i} style={{ borderBottom: i < rows.length - 1 ? "1px solid var(--hairline)" : "none", transition: "background 0.15s" }}
               onMouseEnter={e => e.currentTarget.style.background = "var(--surface-2)"}
               onMouseLeave={e => e.currentTarget.style.background = ""}>
-              {r}
+              {row}
             </tr>
           ))}
         </tbody>
@@ -40,221 +43,223 @@ function AdminTable({ cols, rows, keyFn }) {
     </div>
   );
 }
-
-function td(content, style = {}) {
-  return <td style={{ padding: "13px 16px", color: "var(--ink)", verticalAlign: "middle", ...style }}>{content}</td>;
+function TD({ children, style }) {
+  return <td style={{ padding: "12px 16px", verticalAlign: "middle", color: "var(--ink)", ...style }}>{children}</td>;
 }
 
-function AdminStatCard({ icon, label, value, sub, color }) {
-  return (
-    <div style={{ background: "var(--surface)", borderRadius: "var(--r-md)", boxShadow: "var(--sh-sm)", padding: "20px 22px", border: "1px solid var(--hairline)" }}>
-      <div className="row" style={{ justifyContent: "space-between", marginBottom: 14 }}>
-        <span style={{ width: 42, height: 42, borderRadius: "var(--r-sm)", background: color + " / 0.12", display: "grid", placeItems: "center", color }}>
-          <Icon name={icon} size={20} />
-        </span>
-        <span style={{ fontSize: "0.76rem", color: "var(--ink-3)", fontWeight: 600 }}>{sub}</span>
-      </div>
-      <div style={{ fontSize: "1.8rem", fontWeight: 800, letterSpacing: "-0.03em" }}>{value}</div>
-      <div style={{ fontSize: "0.84rem", color: "var(--ink-3)", marginTop: 4 }}>{label}</div>
-    </div>
-  );
+function StatusBadge({ status }) {
+  const map = {
+    active:      { bg: "var(--ocean-tint)",  color: "var(--ocean-deep)",  label: "Active" },
+    draft:       { bg: "var(--sand)",         color: "oklch(0.46 0.06 78)", label: "Draft" },
+    hidden:      { bg: "var(--hairline)",     color: "var(--ink-3)",       label: "Hidden" },
+    new:         { bg: "var(--coral-soft)",   color: "var(--coral-deep)",  label: "New" },
+    contacted:   { bg: "var(--ocean-tint)",   color: "var(--ocean-deep)",  label: "Contacted" },
+    in_progress: { bg: "var(--teal-soft)",    color: "oklch(0.38 0.07 200)", label: "In Progress" },
+    closed:      { bg: "var(--surface-2)",    color: "var(--ink-3)",       label: "Closed" },
+    confirmed:   { bg: "var(--ocean-tint)",   color: "var(--ocean-deep)",  label: "Confirmed" },
+    completed:   { bg: "var(--teal-soft)",    color: "oklch(0.38 0.07 200)", label: "Completed" },
+    cancelled:   { bg: "var(--coral-soft)",   color: "var(--coral-deep)",  label: "Cancelled" },
+  };
+  const s = map[status] || map.draft;
+  return <span style={{ ...s, fontSize: "0.74rem", fontWeight: 700, padding: "4px 10px", borderRadius: "var(--r-pill)", textTransform: "capitalize", whiteSpace: "nowrap" }}>{s.label}</span>;
 }
 
-/* ── Tours tab ────────────────────────────────────────────────── */
-function AdminTours() {
-  const [tours, setTours] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [editing, setEditing] = useState(null); // null | tour object
-  const [saving, setSaving] = useState(false);
-  const [uploading, setUploading] = useState(false);
-  const toast = useToast();
-
-  const load = async () => {
-    setLoading(true);
-    try {
-      if (SB.ok) {
-        const sbTours = await SB.tours.list();
-        // merge with hardcoded TOURS to fill in any missing fields
-        const merged = TOURS.map(t => {
-          const sb = sbTours.find(s => s.id === t.id);
-          return sb ? { ...t, ...sb, image_url: sb.image_url } : t;
-        });
-        // include any DB-only tours not in hardcoded list
-        const extra = sbTours.filter(s => !TOURS.find(t => t.id === s.id));
-        setTours([...merged, ...extra]);
-      } else {
-        setTours(TOURS);
-      }
-    } catch(e) { toast("Failed to load tours", "x"); }
-    setLoading(false);
-  };
-
-  useState(() => { load(); }, []);
-  useEffect(() => { load(); }, []);
-
-  const openEdit = (tour) => setEditing({ ...tour });
-
-  const handleSave = async () => {
-    setSaving(true);
-    try {
-      await SB.tours.upsert({
-        id: editing.id, title: editing.title, blurb: editing.blurb,
-        region: editing.region, place: editing.place, days: Number(editing.days),
-        price: Number(editing.price), old_price: editing.old_price ? Number(editing.old_price) : null,
-        theme: editing.theme, image_url: editing.image_url || null,
-        featured: !!editing.featured, popular: !!editing.popular,
-        category: editing.category, difficulty: editing.difficulty,
-        group_max: Number(editing.groupMax || editing.group_max),
-        season: editing.season
-      });
-      toast("Tour saved!", "check");
-      setEditing(null);
-      load();
-    } catch(e) { toast("Save failed: " + e.message, "x"); }
-    setSaving(false);
-  };
-
-  const handleUpload = async (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
-    setUploading(true);
-    try {
-      const url = await SB.storage.upload(file);
-      setEditing(prev => ({ ...prev, image_url: url }));
-      toast("Image uploaded!", "check");
-    } catch(e) { toast("Upload failed: " + e.message, "x"); }
-    setUploading(false);
-  };
-
-  const handleDelete = async (id) => {
-    if (!confirm("Delete this tour? This cannot be undone.")) return;
-    try {
-      await SB.tours.delete(id);
-      toast("Tour deleted", "check");
-      load();
-    } catch(e) { toast("Delete failed: " + e.message, "x"); }
-  };
-
-  const Field = ({ label, children }) => (
-    <div className="field">
-      <label>{label}</label>
-      {children}
-    </div>
+/* ── SVG Bar Chart ─────────────────────────────────────────────── */
+function BarChart({ data, color = "var(--ocean)" }) {
+  if (!data || !data.length) return (
+    <div style={{ height: 120, display: "grid", placeItems: "center", color: "var(--ink-3)", fontSize: "0.85rem" }}>No booking data yet</div>
   );
-
-  if (loading) return <div style={{ textAlign: "center", padding: 48, color: "var(--ink-3)" }}>Loading tours…</div>;
-
+  const max = Math.max(...data.map(d => d.count), 1);
   return (
-    <div>
-      <div className="row" style={{ justifyContent: "space-between", marginBottom: 22 }}>
-        <div>
-          <h2 style={{ fontSize: "1.1rem", marginBottom: 4 }}>{tours.length} tours</h2>
-          <p style={{ color: "var(--ink-3)", fontSize: "0.85rem" }}>Edit title, price, images and visibility of each tour.</p>
+    <div style={{ display: "flex", alignItems: "flex-end", gap: 8, height: 120, padding: "0 4px" }}>
+      {data.map((d, i) => (
+        <div key={i} style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", gap: 6, height: "100%" }}>
+          <div style={{ flex: 1, display: "flex", alignItems: "flex-end", width: "100%" }}>
+            <div title={`${d.label}: ${d.count} bookings`} style={{ width: "100%", background: color, borderRadius: "4px 4px 0 0", height: Math.max((d.count / max) * 100, d.count > 0 ? 8 : 2) + "%", transition: "height 0.8s var(--ease-out)", opacity: 0.85 }} />
+          </div>
+          <span style={{ fontSize: "0.7rem", color: "var(--ink-3)", fontWeight: 600 }}>{d.label}</span>
         </div>
-        {!SB.ok && <span className="badge badge-coral">Supabase not configured — changes won't be saved</span>}
+      ))}
+    </div>
+  );
+}
+
+/* ── Drag & drop image zone ────────────────────────────────────── */
+function DropZone({ onFile, uploading, preview, label = "Drop image or click to upload" }) {
+  const [dragging, setDragging] = useState(false);
+  const ref = useRef(null);
+  const handle = (file) => { if (file && file.type.startsWith("image/")) onFile(file); };
+  return (
+    <div onDragOver={e => { e.preventDefault(); setDragging(true); }}
+      onDragLeave={() => setDragging(false)}
+      onDrop={e => { e.preventDefault(); setDragging(false); handle(e.dataTransfer.files[0]); }}
+      onClick={() => !uploading && ref.current?.click()}
+      style={{ border: `2px dashed ${dragging ? "var(--ocean)" : "var(--hairline-2)"}`, borderRadius: "var(--r-md)", padding: preview ? "8px" : "28px 16px", textAlign: "center", cursor: uploading ? "wait" : "pointer", background: dragging ? "var(--ocean-tint)" : "var(--bg-2)", transition: "all 0.25s", position: "relative", overflow: "hidden" }}>
+      {preview
+        ? <img src={preview} alt="" style={{ width: "100%", height: 140, objectFit: "cover", borderRadius: 8, display: "block" }} />
+        : <div>
+            <Icon name="camera" size={28} style={{ color: "var(--ink-3)", margin: "0 auto 8px", display: "block" }} />
+            <div style={{ fontWeight: 600, fontSize: "0.88rem", color: "var(--ink-2)" }}>{uploading ? "Uploading…" : label}</div>
+            <div style={{ fontSize: "0.76rem", color: "var(--ink-3)", marginTop: 3 }}>PNG, JPG, WEBP · max 10 MB</div>
+          </div>
+      }
+      {preview && <div style={{ position: "absolute", inset: 0, background: "oklch(0 0 0 / 0)", display: "flex", alignItems: "center", justifyContent: "center", transition: "background 0.3s" }}
+        onMouseEnter={e => e.currentTarget.style.background = "oklch(0 0 0 / 0.35)"}
+        onMouseLeave={e => e.currentTarget.style.background = "oklch(0 0 0 / 0)"}>
+        <span style={{ color: "white", fontWeight: 700, fontSize: "0.82rem", background: "oklch(0 0 0 / 0.5)", padding: "6px 12px", borderRadius: "var(--r-pill)" }}>Change image</span>
+      </div>}
+      <input ref={ref} type="file" accept="image/*" style={{ display: "none" }} onChange={e => handle(e.target.files[0])} />
+    </div>
+  );
+}
+
+/* ── Tags input ────────────────────────────────────────────────── */
+function TagsInput({ value = [], onChange }) {
+  const [input, setInput] = useState("");
+  const add = () => {
+    const v = input.trim();
+    if (v && !value.includes(v)) onChange([...value, v]);
+    setInput("");
+  };
+  return (
+    <div style={{ border: "1px solid var(--hairline-2)", borderRadius: "var(--r-sm)", padding: "8px 10px", background: "var(--surface)", minHeight: 46 }}>
+      <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: value.length ? 8 : 0 }}>
+        {value.map(t => (
+          <span key={t} style={{ background: "var(--ocean-tint)", color: "var(--ocean-deep)", padding: "3px 10px", borderRadius: "var(--r-pill)", fontSize: "0.8rem", fontWeight: 600, display: "flex", alignItems: "center", gap: 5 }}>
+            {t}
+            <button onClick={() => onChange(value.filter(x => x !== t))} style={{ color: "var(--ocean-deep)", lineHeight: 1, fontSize: "1rem" }}>×</button>
+          </span>
+        ))}
+      </div>
+      <div style={{ display: "flex", gap: 6 }}>
+        <input value={input} onChange={e => setInput(e.target.value)}
+          onKeyDown={e => { if (e.key === "Enter" || e.key === ",") { e.preventDefault(); add(); } }}
+          placeholder="Add tag, press Enter" style={{ border: "none", outline: "none", background: "transparent", fontFamily: "var(--font-sans)", fontSize: "0.9rem", flex: 1, color: "var(--ink)", minWidth: 100 }} />
+        <button onClick={add} style={{ color: "var(--ocean)", fontWeight: 700, fontSize: "0.8rem", flexShrink: 0 }}>+ Add</button>
+      </div>
+    </div>
+  );
+}
+
+/* ── List input (included/excluded) ───────────────────────────── */
+function ListInput({ value = [], onChange, placeholder }) {
+  const [input, setInput] = useState("");
+  const add = () => { const v = input.trim(); if (v) { onChange([...value, v]); setInput(""); } };
+  return (
+    <div style={{ border: "1px solid var(--hairline-2)", borderRadius: "var(--r-sm)", background: "var(--surface)" }}>
+      {value.map((item, i) => (
+        <div key={i} className="row gap-2" style={{ padding: "8px 12px", borderBottom: "1px solid var(--hairline)" }}>
+          <span style={{ flex: 1, fontSize: "0.88rem" }}>{item}</span>
+          <button onClick={() => onChange(value.filter((_, j) => j !== i))} style={{ color: "var(--ink-3)", flexShrink: 0 }}><Icon name="x" size={14} /></button>
+        </div>
+      ))}
+      <div style={{ display: "flex", gap: 0, padding: "6px 8px" }}>
+        <input value={input} onChange={e => setInput(e.target.value)}
+          onKeyDown={e => { if (e.key === "Enter") { e.preventDefault(); add(); } }}
+          placeholder={placeholder} style={{ border: "none", outline: "none", background: "transparent", fontFamily: "var(--font-sans)", fontSize: "0.88rem", flex: 1, color: "var(--ink)", padding: "4px 6px" }} />
+        <button onClick={add} style={{ color: "var(--ocean)", fontWeight: 700, fontSize: "0.8rem", flexShrink: 0 }}>+ Add</button>
+      </div>
+    </div>
+  );
+}
+
+/* ══════════════════════════════════════════════════════════════════
+   DASHBOARD
+══════════════════════════════════════════════════════════════════ */
+function AdminDashboard({ setTab }) {
+  const [stats, setStats] = useState(null);
+  const [inquiryStats, setInquiryStats] = useState(null);
+  const [recentInquiries, setRecentInquiries] = useState([]);
+  const [chart, setChart] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (!SB.ok) { setLoading(false); return; }
+    Promise.all([
+      SB.tours.stats(),
+      SB.inquiries.counts(),
+      SB.inquiries.all().then(d => d.slice(0, 5)),
+      SB.bookings.monthlyCounts(),
+    ]).then(([ts, is, ri, mc]) => {
+      setStats(ts); setInquiryStats(is); setRecentInquiries(ri); setChart(mc);
+    }).catch(() => {}).finally(() => setLoading(false));
+  }, []);
+
+  if (!SB.ok) return (
+    <div style={{ background: "var(--coral-soft)", color: "var(--coral-deep)", borderRadius: "var(--r-md)", padding: 28, fontWeight: 600 }}>
+      <Icon name="shield" size={20} style={{ display: "inline", marginRight: 8 }} />
+      Supabase not configured. Add your credentials to <code>supabase.jsx</code>.
+    </div>
+  );
+
+  if (loading) return (
+    <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 16 }}>
+      {[...Array(6)].map((_, i) => <div key={i} className="skel" style={{ height: 100, borderRadius: "var(--r-md)" }} />)}
+    </div>
+  );
+
+  return (
+    <div className="col gap-6">
+      {/* Stats row */}
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))", gap: 14 }}>
+        <StatCard icon="compass"  label="Total tours"       value={stats?.total || 0}          color="var(--ocean)"      onClick={() => setTab("tours")} />
+        <StatCard icon="checkC"   label="Active"            value={stats?.active || 0}          color="var(--teal)"       sub="published" />
+        <StatCard icon="minus"    label="Draft"             value={stats?.draft || 0}           color="var(--gold)"       sub="unpublished" />
+        <StatCard icon="x"        label="Hidden"            value={stats?.hidden || 0}          color="var(--ink-3)"      sub="not visible" />
+        <StatCard icon="mail"     label="Total inquiries"   value={inquiryStats?.total || 0}    color="var(--coral)"      onClick={() => setTab("inquiries")} />
+        <StatCard icon="sparkle"  label="New inquiries"     value={inquiryStats?.new || 0}      color="var(--coral-deep)" sub="unread" onClick={() => setTab("inquiries")} />
       </div>
 
-      <AdminTable
-        cols={["Image", "Title & Region", "Price", "Category", "Featured", "Actions"]}
-        rows={tours.map(tour => [
-          td(<div style={{ width: 60, height: 45, borderRadius: 8, overflow: "hidden", background: "var(--ocean-tint)" }}>
-            <img src={tour.image_url || (typeof PHOTOS !== "undefined" && PHOTOS[tour.theme]) || ""} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-          </div>),
-          td(<div>
-            <div style={{ fontWeight: 700 }}>{tour.title}</div>
-            <div style={{ fontSize: "0.8rem", color: "var(--ink-3)" }}>{tour.region}</div>
-          </div>),
-          td(<div>
-            <div style={{ fontWeight: 700 }}>{fmtPrice(tour.price)}</div>
-            {tour.old_price && <div style={{ fontSize: "0.8rem", color: "var(--ink-3)", textDecoration: "line-through" }}>{fmtPrice(tour.old_price)}</div>}
-          </div>),
-          td(<span className="badge badge-ocean" style={{ textTransform: "capitalize" }}>{tour.category}</span>),
-          td(<span style={{ fontSize: "1.2rem" }}>{tour.featured ? "✓" : "—"}</span>),
-          td(<div className="row gap-2">
-            <button className="btn btn-ghost btn-sm" onClick={() => openEdit(tour)}>Edit</button>
-            <button className="btn btn-sm" onClick={() => handleDelete(tour.id)}
-              style={{ background: "var(--coral-soft)", color: "var(--coral-deep)" }}>Delete</button>
-          </div>),
-        ])}
-      />
-
-      {/* Edit modal */}
-      {editing && (
-        <div style={{ position: "fixed", inset: 0, zIndex: 200, display: "flex", alignItems: "flex-start", justifyContent: "center", padding: "40px 20px", background: "oklch(0.1 0.02 235 / 0.7)", backdropFilter: "blur(4px)", overflowY: "auto" }}>
-          <div style={{ background: "var(--surface)", borderRadius: "var(--r-lg)", boxShadow: "var(--sh-xl)", width: "100%", maxWidth: 720, padding: 36 }}>
-            <div className="row" style={{ justifyContent: "space-between", marginBottom: 28 }}>
-              <h3 style={{ fontSize: "1.2rem" }}>Edit Tour</h3>
-              <button onClick={() => setEditing(null)} style={{ color: "var(--ink-3)" }}><Icon name="x" size={22} /></button>
-            </div>
-
-            {/* Image section */}
-            <div style={{ marginBottom: 24, padding: 20, background: "var(--bg-2)", borderRadius: "var(--r-md)" }}>
-              <label style={{ fontSize: "0.82rem", fontWeight: 600, color: "var(--ink-2)", display: "block", marginBottom: 12 }}>Tour Image</label>
-              <div className="row gap-4" style={{ alignItems: "flex-start", flexWrap: "wrap" }}>
-                <div style={{ width: 160, height: 110, borderRadius: 10, overflow: "hidden", background: "var(--ocean-tint)", flexShrink: 0 }}>
-                  <img src={editing.image_url || (typeof PHOTOS !== "undefined" && PHOTOS[editing.theme]) || ""} alt=""
-                    style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-                </div>
-                <div style={{ flex: 1, minWidth: 200 }} className="col gap-3">
-                  <div className="field">
-                    <label>Paste image URL</label>
-                    <input className="input" value={editing.image_url || ""} placeholder="https://..."
-                      onChange={e => setEditing(p => ({ ...p, image_url: e.target.value }))} />
+      {/* Chart + Recent inquiries */}
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 18 }}>
+        <div style={{ background: "var(--surface)", borderRadius: "var(--r-md)", padding: 24, border: "1px solid var(--hairline)" }}>
+          <h3 style={{ fontSize: "1rem", fontWeight: 700, marginBottom: 20, color: "var(--ink-2)" }}>Monthly Bookings</h3>
+          <BarChart data={chart} />
+          {!chart.length && <p style={{ color: "var(--ink-3)", fontSize: "0.84rem", marginTop: 8, textAlign: "center" }}>Bookings will appear here once created</p>}
+        </div>
+        <div style={{ background: "var(--surface)", borderRadius: "var(--r-md)", padding: 24, border: "1px solid var(--hairline)" }}>
+          <div className="row" style={{ justifyContent: "space-between", marginBottom: 18 }}>
+            <h3 style={{ fontSize: "1rem", fontWeight: 700, color: "var(--ink-2)" }}>Recent Inquiries</h3>
+            <button onClick={() => setTab("inquiries")} style={{ fontSize: "0.8rem", color: "var(--ocean)", fontWeight: 700 }}>View all →</button>
+          </div>
+          {!recentInquiries.length
+            ? <div style={{ textAlign: "center", padding: "24px 0", color: "var(--ink-3)", fontSize: "0.85rem" }}>No inquiries yet</div>
+            : <div className="col gap-3">
+                {recentInquiries.map(inq => (
+                  <div key={inq.id} style={{ display: "flex", gap: 12, alignItems: "flex-start", padding: "10px 0", borderBottom: "1px solid var(--hairline)" }}>
+                    <span style={{ width: 36, height: 36, borderRadius: "50%", background: "var(--ocean-tint)", color: "var(--ocean-deep)", display: "grid", placeItems: "center", fontWeight: 800, fontSize: "0.95rem", flexShrink: 0 }}>{(inq.name || "?")[0].toUpperCase()}</span>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div className="row" style={{ justifyContent: "space-between", gap: 8 }}>
+                        <span style={{ fontWeight: 700, fontSize: "0.88rem" }}>{inq.name}</span>
+                        <StatusBadge status={inq.status} />
+                      </div>
+                      <div style={{ fontSize: "0.78rem", color: "var(--ink-3)", marginTop: 2 }}>{inq.tour_title || "General inquiry"}</div>
+                      <div style={{ fontSize: "0.8rem", color: "var(--ink-2)", marginTop: 3, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{inq.message}</div>
+                    </div>
                   </div>
-                  <div style={{ fontSize: "0.82rem", color: "var(--ink-3)", fontWeight: 600 }}>— or —</div>
-                  <label className="btn btn-ghost btn-sm" style={{ cursor: "pointer", display: "inline-flex" }}>
-                    {uploading ? "Uploading…" : <><Icon name="camera" size={16} /> Upload from computer</>}
-                    <input type="file" accept="image/*" style={{ display: "none" }} onChange={handleUpload} disabled={uploading} />
-                  </label>
-                  {!SB.ok && <span style={{ fontSize: "0.78rem", color: "var(--coral-deep)" }}>Configure Supabase to enable uploads</span>}
+                ))}
+              </div>
+          }
+        </div>
+      </div>
+
+      {/* Top tours */}
+      {stats?.topViewed?.length > 0 && (
+        <div style={{ background: "var(--surface)", borderRadius: "var(--r-md)", padding: 24, border: "1px solid var(--hairline)" }}>
+          <h3 style={{ fontSize: "1rem", fontWeight: 700, color: "var(--ink-2)", marginBottom: 18 }}>Most Viewed Tours</h3>
+          <div className="col gap-0">
+            {stats.topViewed.map((tour, i) => (
+              <div key={tour.id} className="row gap-4" style={{ padding: "12px 0", borderBottom: i < stats.topViewed.length - 1 ? "1px solid var(--hairline)" : "none", alignItems: "center" }}>
+                <span style={{ width: 26, height: 26, borderRadius: "50%", background: i === 0 ? "var(--ocean)" : "var(--surface-2)", color: i === 0 ? "white" : "var(--ink-3)", display: "grid", placeItems: "center", fontWeight: 800, fontSize: "0.8rem", flexShrink: 0 }}>{i + 1}</span>
+                <div style={{ width: 44, height: 34, borderRadius: 6, overflow: "hidden", flexShrink: 0, background: "var(--ocean-tint)" }}>
+                  <img src={tour.image_url || (typeof PHOTOS !== "undefined" && PHOTOS[tour.theme]) || ""} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
                 </div>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ fontWeight: 700, fontSize: "0.9rem", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{tour.title}</div>
+                </div>
+                <div style={{ fontWeight: 800, color: "var(--ocean)", fontSize: "0.9rem", flexShrink: 0 }}>{tour.view_count || 0} <span style={{ fontWeight: 400, color: "var(--ink-3)", fontSize: "0.78rem" }}>views</span></div>
               </div>
-            </div>
-
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16, marginBottom: 16 }}>
-              <div style={{ gridColumn: "span 2" }} className="field">
-                <label>Title</label>
-                <input className="input" value={editing.title || ""} onChange={e => setEditing(p => ({ ...p, title: e.target.value }))} />
-              </div>
-              <div style={{ gridColumn: "span 2" }} className="field">
-                <label>Short description</label>
-                <textarea className="input" rows={3} value={editing.blurb || ""} onChange={e => setEditing(p => ({ ...p, blurb: e.target.value }))} />
-              </div>
-              <Field label="Region"><input className="input" value={editing.region || ""} onChange={e => setEditing(p => ({ ...p, region: e.target.value }))} /></Field>
-              <Field label="Place / City"><input className="input" value={editing.place || ""} onChange={e => setEditing(p => ({ ...p, place: e.target.value }))} /></Field>
-              <Field label="Price (USD)"><input className="input" type="number" value={editing.price || ""} onChange={e => setEditing(p => ({ ...p, price: e.target.value }))} /></Field>
-              <Field label="Original price (optional)"><input className="input" type="number" value={editing.old_price || ""} onChange={e => setEditing(p => ({ ...p, old_price: e.target.value }))} /></Field>
-              <Field label="Duration (days)"><input className="input" type="number" value={editing.days || ""} onChange={e => setEditing(p => ({ ...p, days: e.target.value }))} /></Field>
-              <Field label="Max group size"><input className="input" type="number" value={editing.groupMax || editing.group_max || ""} onChange={e => setEditing(p => ({ ...p, groupMax: e.target.value }))} /></Field>
-              <Field label="Category">
-                <select className="select" value={editing.category || ""} onChange={e => setEditing(p => ({ ...p, category: e.target.value }))}>
-                  {CATEGORIES.map(c => <option key={c.id} value={c.id}>{c.label}</option>)}
-                </select>
-              </Field>
-              <Field label="Difficulty">
-                <select className="select" value={editing.difficulty || ""} onChange={e => setEditing(p => ({ ...p, difficulty: e.target.value }))}>
-                  {["Easy", "Moderate", "Challenging", "Strenuous"].map(d => <option key={d} value={d}>{d}</option>)}
-                </select>
-              </Field>
-            </div>
-
-            <div className="row gap-6" style={{ marginBottom: 28 }}>
-              <label className="row gap-2" style={{ cursor: "pointer", fontWeight: 600, fontSize: "0.9rem" }}>
-                <input type="checkbox" checked={!!editing.featured} onChange={e => setEditing(p => ({ ...p, featured: e.target.checked }))} style={{ width: 18, height: 18 }} />
-                Featured on homepage
-              </label>
-              <label className="row gap-2" style={{ cursor: "pointer", fontWeight: 600, fontSize: "0.9rem" }}>
-                <input type="checkbox" checked={!!editing.popular} onChange={e => setEditing(p => ({ ...p, popular: e.target.checked }))} style={{ width: 18, height: 18 }} />
-                Mark as Popular
-              </label>
-            </div>
-
-            <div className="row gap-3" style={{ justifyContent: "flex-end" }}>
-              <button className="btn btn-ghost" onClick={() => setEditing(null)}>Cancel</button>
-              <button className="btn btn-primary" onClick={handleSave} disabled={saving}>
-                {saving ? "Saving…" : <><Icon name="check" size={18} /> Save changes</>}
-              </button>
-            </div>
+            ))}
           </div>
         </div>
       )}
@@ -262,231 +267,572 @@ function AdminTours() {
   );
 }
 
-/* ── Bookings tab ─────────────────────────────────────────────── */
+/* ══════════════════════════════════════════════════════════════════
+   TOUR MANAGEMENT
+══════════════════════════════════════════════════════════════════ */
+function TourEditModal({ tour, onClose, onSaved }) {
+  const isNew = !tour?.id;
+  const toast = useToast();
+
+  const blank = { id: "tour-" + Date.now(), title: "", blurb: "", full_description: "", country: "", city: "", region: "", place: "", days: 7, price: "", discount_price: "", old_price: "", category: "luxury", difficulty: "Moderate", group_max: 12, season: "summer", image_url: "", gallery_urls: [], departure_dates: [], tags_json: [], included_json: [], excluded_json: [], featured: false, popular: false, is_hot: false, status: "active" };
+
+  const [form, setForm] = useState(tour ? { ...blank, ...tour, tags_json: tour.tags_json || (tour.tags ? tour.tags : []), included_json: tour.included_json || (tour.included ? tour.included : []), excluded_json: tour.excluded_json || (tour.notIncluded ? tour.notIncluded : []) } : blank);
+  const [uploading, setUploading] = useState(false);
+  const [galUploading, setGalUploading] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [dateInput, setDateInput] = useState("");
+
+  const set = (k) => (v) => setForm(p => ({ ...p, [k]: v }));
+  const setE = (k) => (e) => setForm(p => ({ ...p, [k]: e.target.value }));
+
+  const uploadMain = async (file) => {
+    setUploading(true);
+    try { const url = await SB.storage.upload(file); set("image_url")(url); toast("Image uploaded!", "check"); }
+    catch(e) { toast("Upload failed: " + e.message, "x"); }
+    setUploading(false);
+  };
+
+  const uploadGallery = async (file) => {
+    setGalUploading(true);
+    try {
+      const url = await SB.storage.upload(file);
+      setForm(p => ({ ...p, gallery_urls: [...(p.gallery_urls || []), url] }));
+      toast("Added to gallery!", "check");
+    } catch(e) { toast("Upload failed: " + e.message, "x"); }
+    setGalUploading(false);
+  };
+
+  const removeGallery = (url) => setForm(p => ({ ...p, gallery_urls: p.gallery_urls.filter(u => u !== url) }));
+  const addDate = () => { const v = dateInput.trim(); if (v) { setForm(p => ({ ...p, departure_dates: [...(p.departure_dates || []), v] })); setDateInput(""); } };
+
+  const save = async (status = form.status) => {
+    if (!form.title.trim()) { toast("Title is required", "x"); return; }
+    setSaving(true);
+    try {
+      await SB.tours.upsert({
+        id: form.id, title: form.title, blurb: form.blurb,
+        full_description: form.full_description,
+        country: form.country, city: form.city,
+        region: form.region || form.country,
+        place: form.city && form.country ? `${form.city}, ${form.country}` : form.place,
+        days: Number(form.days) || 7,
+        price: Number(form.price) || 0,
+        discount_price: form.discount_price ? Number(form.discount_price) : null,
+        old_price: form.old_price ? Number(form.old_price) : null,
+        category: form.category, difficulty: form.difficulty,
+        group_max: Number(form.group_max) || 12,
+        season: form.season, theme: form.theme || "ocean",
+        image_url: form.image_url || null,
+        gallery_urls: form.gallery_urls || [],
+        departure_dates: form.departure_dates || [],
+        tags_json: form.tags_json || [],
+        included_json: form.included_json || [],
+        excluded_json: form.excluded_json || [],
+        featured: !!form.featured, popular: !!form.popular, is_hot: !!form.is_hot,
+        status,
+      });
+      toast(isNew ? "Tour created!" : "Tour saved!", "check");
+      onSaved();
+    } catch(e) { toast("Save failed: " + e.message, "x"); }
+    setSaving(false);
+  };
+
+  const F = ({ label, hint, children }) => (
+    <div className="field">
+      <label style={{ fontSize: "0.8rem", fontWeight: 700, color: "var(--ink-2)" }}>{label}</label>
+      {children}
+      {hint && <span style={{ fontSize: "0.74rem", color: "var(--ink-3)" }}>{hint}</span>}
+    </div>
+  );
+
+  return (
+    <div style={{ position: "fixed", inset: 0, zIndex: 300, background: "var(--bg)", display: "flex", flexDirection: "column", overflow: "hidden" }}>
+      {/* Header */}
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "16px 28px", borderBottom: "1px solid var(--hairline)", background: "var(--surface)", flexShrink: 0 }}>
+        <div className="row gap-4">
+          <button onClick={onClose} className="row gap-2" style={{ color: "var(--ink-3)", fontWeight: 600, fontSize: "0.9rem" }}><Icon name="arrowL" size={18} /> Back</button>
+          <div style={{ width: 1, height: 20, background: "var(--hairline)" }} />
+          <h2 style={{ fontSize: "1.1rem", fontWeight: 800 }}>{isNew ? "New Tour" : "Edit: " + form.title}</h2>
+        </div>
+        <div className="row gap-3">
+          <select value={form.status} onChange={setE("status")} className="select" style={{ width: "auto", padding: "8px 32px 8px 12px" }}>
+            <option value="active">Active</option>
+            <option value="draft">Draft</option>
+            <option value="hidden">Hidden</option>
+          </select>
+          <button className="btn btn-ghost" onClick={onClose} disabled={saving}>Cancel</button>
+          <button className="btn btn-ghost" onClick={() => save("draft")} disabled={saving}>Save as Draft</button>
+          <button className="btn btn-primary" onClick={() => save("active")} disabled={saving}>
+            {saving ? "Saving…" : <><Icon name="check" size={18} /> Publish</>}
+          </button>
+        </div>
+      </div>
+
+      {/* Body */}
+      <div style={{ flex: 1, overflow: "auto", padding: "28px 28px 60px" }}>
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 340px", gap: 28, maxWidth: 1100, margin: "0 auto" }}>
+          {/* Left column */}
+          <div className="col gap-5">
+            {/* Basic info */}
+            <div style={{ background: "var(--surface)", borderRadius: "var(--r-md)", padding: 24, border: "1px solid var(--hairline)" }}>
+              <h3 style={{ fontSize: "0.9rem", fontWeight: 700, color: "var(--ink-3)", marginBottom: 18, textTransform: "uppercase", letterSpacing: "0.08em" }}>Basic Information</h3>
+              <div className="col gap-4">
+                <F label="Tour title *"><input className="input" value={form.title} onChange={setE("title")} placeholder="e.g. Santorini Private Yacht Experience" /></F>
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 }}>
+                  <F label="Country"><input className="input" value={form.country} onChange={setE("country")} placeholder="Greece" /></F>
+                  <F label="City"><input className="input" value={form.city} onChange={setE("city")} placeholder="Santorini" /></F>
+                  <F label="Duration (days)"><input className="input" type="number" value={form.days} onChange={setE("days")} min={1} /></F>
+                  <F label="Category">
+                    <select className="select" value={form.category} onChange={setE("category")}>
+                      {(typeof CATEGORIES !== "undefined" ? CATEGORIES.filter(c => c.id !== "all") : []).map(c => <option key={c.id} value={c.id}>{c.label}</option>)}
+                    </select>
+                  </F>
+                  <F label="Difficulty">
+                    <select className="select" value={form.difficulty} onChange={setE("difficulty")}>
+                      {["Easy","Moderate","Challenging","Strenuous"].map(d => <option key={d}>{d}</option>)}
+                    </select>
+                  </F>
+                  <F label="Max group size"><input className="input" type="number" value={form.group_max} onChange={setE("group_max")} min={1} /></F>
+                </div>
+              </div>
+            </div>
+
+            {/* Pricing */}
+            <div style={{ background: "var(--surface)", borderRadius: "var(--r-md)", padding: 24, border: "1px solid var(--hairline)" }}>
+              <h3 style={{ fontSize: "0.9rem", fontWeight: 700, color: "var(--ink-3)", marginBottom: 18, textTransform: "uppercase", letterSpacing: "0.08em" }}>Pricing</h3>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 14 }}>
+                <F label="Price (USD) *" hint="Per person"><input className="input" type="number" value={form.price} onChange={setE("price")} placeholder="3490" /></F>
+                <F label="Discount price" hint="Shows as current price"><input className="input" type="number" value={form.discount_price} onChange={setE("discount_price")} placeholder="Optional" /></F>
+                <F label="Original price" hint="Shows crossed out"><input className="input" type="number" value={form.old_price} onChange={setE("old_price")} placeholder="Optional" /></F>
+              </div>
+            </div>
+
+            {/* Description */}
+            <div style={{ background: "var(--surface)", borderRadius: "var(--r-md)", padding: 24, border: "1px solid var(--hairline)" }}>
+              <h3 style={{ fontSize: "0.9rem", fontWeight: 700, color: "var(--ink-3)", marginBottom: 18, textTransform: "uppercase", letterSpacing: "0.08em" }}>Description</h3>
+              <div className="col gap-4">
+                <F label="Short description" hint="Shown on listing cards (1-2 sentences)"><textarea className="input" rows={2} value={form.blurb} onChange={setE("blurb")} placeholder="A captivating one-liner for cards and previews" style={{ resize: "vertical" }} /></F>
+                <F label="Full description" hint="Shown on the tour detail page"><textarea className="input" rows={6} value={form.full_description} onChange={setE("full_description")} placeholder="Full tour details, atmosphere, unique selling points…" style={{ resize: "vertical" }} /></F>
+              </div>
+            </div>
+
+            {/* Departure dates */}
+            <div style={{ background: "var(--surface)", borderRadius: "var(--r-md)", padding: 24, border: "1px solid var(--hairline)" }}>
+              <h3 style={{ fontSize: "0.9rem", fontWeight: 700, color: "var(--ink-3)", marginBottom: 18, textTransform: "uppercase", letterSpacing: "0.08em" }}>Departure Dates</h3>
+              <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginBottom: 12 }}>
+                {(form.departure_dates || []).map(d => (
+                  <span key={d} style={{ background: "var(--ocean-tint)", color: "var(--ocean-deep)", padding: "4px 12px", borderRadius: "var(--r-pill)", fontSize: "0.82rem", fontWeight: 600, display: "flex", alignItems: "center", gap: 6 }}>
+                    <Icon name="calendar" size={13} /> {d}
+                    <button onClick={() => setForm(p => ({ ...p, departure_dates: p.departure_dates.filter(x => x !== d) }))} style={{ color: "var(--ocean-deep)", lineHeight: 1 }}>×</button>
+                  </span>
+                ))}
+              </div>
+              <div style={{ display: "flex", gap: 8 }}>
+                <input className="input" value={dateInput} onChange={e => setDateInput(e.target.value)} onKeyDown={e => e.key === "Enter" && addDate()} placeholder="e.g. 14 Jun 2026" style={{ flex: 1 }} />
+                <button className="btn btn-ghost btn-sm" onClick={addDate}><Icon name="plus" size={16} /> Add</button>
+              </div>
+            </div>
+
+            {/* Tags */}
+            <div style={{ background: "var(--surface)", borderRadius: "var(--r-md)", padding: 24, border: "1px solid var(--hairline)" }}>
+              <h3 style={{ fontSize: "0.9rem", fontWeight: 700, color: "var(--ink-3)", marginBottom: 18, textTransform: "uppercase", letterSpacing: "0.08em" }}>Tags</h3>
+              <TagsInput value={form.tags_json || []} onChange={set("tags_json")} />
+            </div>
+
+            {/* Included / Excluded */}
+            <div style={{ background: "var(--surface)", borderRadius: "var(--r-md)", padding: 24, border: "1px solid var(--hairline)" }}>
+              <h3 style={{ fontSize: "0.9rem", fontWeight: 700, color: "var(--ink-3)", marginBottom: 18, textTransform: "uppercase", letterSpacing: "0.08em" }}>What's Included / Excluded</h3>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
+                <F label="Included services">
+                  <ListInput value={form.included_json || []} onChange={set("included_json")} placeholder="e.g. Private transfers" />
+                </F>
+                <F label="Excluded services">
+                  <ListInput value={form.excluded_json || []} onChange={set("excluded_json")} placeholder="e.g. International flights" />
+                </F>
+              </div>
+            </div>
+          </div>
+
+          {/* Right column */}
+          <div className="col gap-5">
+            {/* Badges */}
+            <div style={{ background: "var(--surface)", borderRadius: "var(--r-md)", padding: 20, border: "1px solid var(--hairline)" }}>
+              <h3 style={{ fontSize: "0.9rem", fontWeight: 700, color: "var(--ink-3)", marginBottom: 16, textTransform: "uppercase", letterSpacing: "0.08em" }}>Badges</h3>
+              {[
+                ["featured", "Featured", "Show on homepage featured section"],
+                ["popular", "Popular", "Show Popular badge on card"],
+                ["is_hot", "Hot Offer", "Show Hot Offer badge"],
+              ].map(([k, label, hint]) => (
+                <label key={k} className="row gap-3" style={{ cursor: "pointer", marginBottom: 12, alignItems: "flex-start" }}>
+                  <input type="checkbox" checked={!!form[k]} onChange={e => setForm(p => ({ ...p, [k]: e.target.checked }))} style={{ marginTop: 2, width: 16, height: 16, accentColor: "var(--ocean)" }} />
+                  <div>
+                    <div style={{ fontWeight: 700, fontSize: "0.9rem" }}>{label}</div>
+                    <div style={{ fontSize: "0.76rem", color: "var(--ink-3)" }}>{hint}</div>
+                  </div>
+                </label>
+              ))}
+            </div>
+
+            {/* Main image */}
+            <div style={{ background: "var(--surface)", borderRadius: "var(--r-md)", padding: 20, border: "1px solid var(--hairline)" }}>
+              <h3 style={{ fontSize: "0.9rem", fontWeight: 700, color: "var(--ink-3)", marginBottom: 14, textTransform: "uppercase", letterSpacing: "0.08em" }}>Main Image</h3>
+              <DropZone onFile={uploadMain} uploading={uploading} preview={form.image_url} />
+              {form.image_url && (
+                <div style={{ marginTop: 8 }}>
+                  <label style={{ fontSize: "0.76rem", color: "var(--ink-3)", display: "block", marginBottom: 4 }}>Or paste URL directly:</label>
+                  <input className="input" value={form.image_url} onChange={setE("image_url")} style={{ fontSize: "0.8rem" }} placeholder="https://..." />
+                </div>
+              )}
+              {!form.image_url && (
+                <div style={{ marginTop: 8 }}>
+                  <label style={{ fontSize: "0.76rem", color: "var(--ink-3)", display: "block", marginBottom: 4 }}>Or paste URL:</label>
+                  <input className="input" value={form.image_url} onChange={setE("image_url")} style={{ fontSize: "0.8rem" }} placeholder="https://images.unsplash.com/..." />
+                </div>
+              )}
+            </div>
+
+            {/* Gallery */}
+            <div style={{ background: "var(--surface)", borderRadius: "var(--r-md)", padding: 20, border: "1px solid var(--hairline)" }}>
+              <h3 style={{ fontSize: "0.9rem", fontWeight: 700, color: "var(--ink-3)", marginBottom: 14, textTransform: "uppercase", letterSpacing: "0.08em" }}>Gallery Images</h3>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginBottom: 10 }}>
+                {(form.gallery_urls || []).map((url, i) => (
+                  <div key={i} style={{ position: "relative", borderRadius: 8, overflow: "hidden" }}>
+                    <img src={url} alt="" style={{ width: "100%", height: 80, objectFit: "cover", display: "block" }} />
+                    <button onClick={() => removeGallery(url)} style={{ position: "absolute", top: 4, right: 4, width: 22, height: 22, borderRadius: "50%", background: "oklch(0 0 0 / 0.6)", color: "white", display: "grid", placeItems: "center" }}><Icon name="x" size={12} /></button>
+                  </div>
+                ))}
+              </div>
+              <DropZone onFile={uploadGallery} uploading={galUploading} label="Drop to add gallery image" />
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function AdminTours() {
+  const [tours, setTours] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [filterStatus, setFilterStatus] = useState("all");
+  const [editing, setEditing] = useState(null);
+  const [showModal, setShowModal] = useState(false);
+  const toast = useToast();
+
+  const load = async () => {
+    setLoading(true);
+    try {
+      const sbTours = SB.ok ? await SB.tours.list() : [];
+      const hardcoded = typeof TOURS !== "undefined" ? TOURS : [];
+      if (sbTours.length) {
+        const merged = hardcoded.map(t => { const sb = sbTours.find(s => s.id === t.id); return sb ? { ...t, ...sb } : t; });
+        const extra = sbTours.filter(s => !hardcoded.find(t => t.id === s.id));
+        setTours([...merged, ...extra]);
+      } else {
+        setTours(hardcoded.map(t => ({ ...t, status: "active", view_count: 0 })));
+      }
+    } catch(e) { toast("Failed to load tours", "x"); }
+    setLoading(false);
+  };
+
+  useEffect(() => { load(); }, []);
+
+  const filtered = filterStatus === "all" ? tours : tours.filter(t => (t.status || "active") === filterStatus);
+
+  const deleteTour = async (id) => {
+    if (!confirm("Delete this tour? This cannot be undone.")) return;
+    try { await SB.tours.delete(id); toast("Deleted", "check"); load(); }
+    catch(e) { toast("Delete failed", "x"); }
+  };
+
+  const openEdit = (tour) => { setEditing(tour); setShowModal(true); };
+  const openNew  = () => { setEditing(null); setShowModal(true); };
+  const onSaved  = () => { setShowModal(false); load(); };
+
+  const tabs = [["all","All"], ["active","Active"], ["draft","Draft"], ["hidden","Hidden"]];
+
+  if (showModal) return <TourEditModal tour={editing} onClose={() => setShowModal(false)} onSaved={onSaved} />;
+
+  return (
+    <div>
+      <div className="row" style={{ justifyContent: "space-between", marginBottom: 20, flexWrap: "wrap", gap: 12 }}>
+        <div className="row gap-2">
+          {tabs.map(([v, l]) => (
+            <button key={v} onClick={() => setFilterStatus(v)} className="btn btn-sm" style={{ background: filterStatus === v ? "var(--ink)" : "var(--surface)", color: filterStatus === v ? "white" : "var(--ink-2)", border: "1px solid var(--hairline)" }}>{l}</button>
+          ))}
+        </div>
+        <button className="btn btn-primary btn-sm" onClick={openNew}><Icon name="plus" size={16} /> New Tour</button>
+      </div>
+
+      {!SB.ok && <div style={{ background: "var(--sand)", color: "oklch(0.46 0.06 78)", padding: "10px 16px", borderRadius: "var(--r-sm)", marginBottom: 16, fontSize: "0.85rem", fontWeight: 600 }}>Supabase not configured — changes won't persist</div>}
+
+      {loading
+        ? <div style={{ textAlign: "center", padding: 48, color: "var(--ink-3)" }}>Loading tours…</div>
+        : <ATable
+            cols={["", "Tour", "Status", "Price", "Views", "Badges", "Actions"]}
+            empty="No tours found."
+            rows={filtered.map(tour => [
+              <TD><div style={{ width: 56, height: 42, borderRadius: 6, overflow: "hidden", background: "var(--ocean-tint)" }}><img src={tour.image_url || (typeof PHOTOS !== "undefined" && PHOTOS[tour.theme]) || ""} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} /></div></TD>,
+              <TD><div style={{ fontWeight: 700, maxWidth: 220 }}>{tour.title}</div><div style={{ fontSize: "0.78rem", color: "var(--ink-3)" }}>{tour.place || `${tour.city || ""}${tour.country ? ", " + tour.country : ""}`}</div></TD>,
+              <TD><StatusBadge status={tour.status || "active"} /></TD>,
+              <TD><div style={{ fontWeight: 700 }}>${(tour.discount_price || tour.price || 0).toLocaleString()}</div>{tour.old_price && <div style={{ fontSize: "0.76rem", color: "var(--ink-3)", textDecoration: "line-through" }}>${(tour.old_price).toLocaleString()}</div>}</TD>,
+              <TD><span style={{ fontWeight: 700, color: "var(--ocean)" }}>{tour.view_count || 0}</span></TD>,
+              <TD><div style={{ display: "flex", gap: 4, flexWrap: "wrap" }}>{tour.featured && <span style={{ fontSize: "0.68rem", background: "var(--ocean-tint)", color: "var(--ocean-deep)", padding: "2px 7px", borderRadius: "var(--r-pill)", fontWeight: 700 }}>Featured</span>}{tour.popular && <span style={{ fontSize: "0.68rem", background: "var(--coral-soft)", color: "var(--coral-deep)", padding: "2px 7px", borderRadius: "var(--r-pill)", fontWeight: 700 }}>Popular</span>}{tour.is_hot && <span style={{ fontSize: "0.68rem", background: "var(--sand)", color: "oklch(0.46 0.06 78)", padding: "2px 7px", borderRadius: "var(--r-pill)", fontWeight: 700 }}>Hot</span>}</div></TD>,
+              <TD><div className="row gap-2"><button className="btn btn-ghost btn-sm" onClick={() => openEdit(tour)}>Edit</button><button className="btn btn-sm" onClick={() => deleteTour(tour.id)} style={{ background: "var(--coral-soft)", color: "var(--coral-deep)" }}>Delete</button></div></TD>,
+            ])}
+          />
+      }
+    </div>
+  );
+}
+
+/* ══════════════════════════════════════════════════════════════════
+   INQUIRIES
+══════════════════════════════════════════════════════════════════ */
+function AdminInquiries() {
+  const [inquiries, setInquiries] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [filter, setFilter] = useState("all");
+  const [selected, setSelected] = useState(null);
+  const toast = useToast();
+
+  useEffect(() => {
+    if (!SB.ok) { setLoading(false); return; }
+    SB.inquiries.all().then(setInquiries).catch(() => toast("Failed to load", "x")).finally(() => setLoading(false));
+  }, []);
+
+  const setStatus = async (id, status) => {
+    try {
+      await SB.inquiries.updateStatus(id, status);
+      setInquiries(is => is.map(i => i.id === id ? { ...i, status } : i));
+      if (selected?.id === id) setSelected(s => ({ ...s, status }));
+      toast("Status updated", "check");
+    } catch(e) { toast("Update failed", "x"); }
+  };
+
+  const statuses = ["all","new","contacted","in_progress","closed"];
+  const filtered = filter === "all" ? inquiries : inquiries.filter(i => i.status === filter);
+
+  if (!SB.ok) return <div style={{ textAlign: "center", padding: 60, color: "var(--ink-3)" }}>Configure Supabase to see inquiries.</div>;
+  if (loading)  return <div style={{ textAlign: "center", padding: 48, color: "var(--ink-3)" }}>Loading inquiries…</div>;
+
+  return (
+    <div style={{ display: "grid", gridTemplateColumns: selected ? "1fr 380px" : "1fr", gap: 20 }}>
+      <div>
+        <div className="row gap-2" style={{ marginBottom: 18, flexWrap: "wrap" }}>
+          {statuses.map(s => (
+            <button key={s} onClick={() => setFilter(s)} className="btn btn-sm" style={{ background: filter === s ? "var(--ink)" : "var(--surface)", color: filter === s ? "white" : "var(--ink-2)", border: "1px solid var(--hairline)", textTransform: "capitalize" }}>
+              {s === "all" ? "All" : s.replace("_", " ")} {s !== "all" && `(${inquiries.filter(i => i.status === s).length})`}
+            </button>
+          ))}
+        </div>
+        <ATable
+          cols={["Name", "Contact", "Tour", "Message", "Date", "Status", ""]}
+          empty="No inquiries yet — they'll appear here when visitors submit the inquiry form."
+          rows={filtered.map(inq => [
+            <TD><div style={{ fontWeight: 700 }}>{inq.name}</div></TD>,
+            <TD><div style={{ fontSize: "0.84rem" }}>{inq.email}</div>{inq.phone && <div style={{ fontSize: "0.78rem", color: "var(--ink-3)" }}>{inq.phone}</div>}</TD>,
+            <TD><div style={{ fontSize: "0.84rem", maxWidth: 160, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{inq.tour_title || "General"}</div></TD>,
+            <TD><div style={{ maxWidth: 200, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", fontSize: "0.84rem", color: "var(--ink-2)" }}>{inq.message}</div></TD>,
+            <TD><span style={{ fontSize: "0.8rem", color: "var(--ink-3)" }}>{inq.created_at ? new Date(inq.created_at).toLocaleDateString() : "—"}</span></TD>,
+            <TD><select value={inq.status} onChange={e => setStatus(inq.id, e.target.value)} style={{ border: "none", background: "transparent", fontWeight: 700, cursor: "pointer", color: "var(--ink)", fontFamily: "var(--font-sans)", fontSize: "0.82rem" }}>{["new","contacted","in_progress","closed"].map(s => <option key={s} value={s}>{s.replace("_"," ")}</option>)}</select></TD>,
+            <TD><button onClick={() => setSelected(selected?.id === inq.id ? null : inq)} style={{ fontSize: "0.8rem", color: "var(--ocean)", fontWeight: 700 }}>{selected?.id === inq.id ? "Close" : "View"}</button></TD>,
+          ])}
+        />
+      </div>
+
+      {/* Detail panel */}
+      {selected && (
+        <div style={{ background: "var(--surface)", borderRadius: "var(--r-md)", padding: 24, border: "1px solid var(--hairline)", height: "fit-content", position: "sticky", top: 20 }}>
+          <div className="row" style={{ justifyContent: "space-between", marginBottom: 20 }}>
+            <h3 style={{ fontSize: "1rem", fontWeight: 800 }}>Inquiry detail</h3>
+            <button onClick={() => setSelected(null)} style={{ color: "var(--ink-3)" }}><Icon name="x" size={18} /></button>
+          </div>
+          <div className="col gap-3">
+            <div><div style={{ fontSize: "0.74rem", fontWeight: 700, color: "var(--ink-3)", textTransform: "uppercase", letterSpacing: "0.08em" }}>Name</div><div style={{ fontWeight: 700, marginTop: 2 }}>{selected.name}</div></div>
+            <div><div style={{ fontSize: "0.74rem", fontWeight: 700, color: "var(--ink-3)", textTransform: "uppercase", letterSpacing: "0.08em" }}>Email</div><a href={"mailto:" + selected.email} style={{ color: "var(--ocean)", marginTop: 2, display: "block" }}>{selected.email}</a></div>
+            {selected.phone && <div><div style={{ fontSize: "0.74rem", fontWeight: 700, color: "var(--ink-3)", textTransform: "uppercase", letterSpacing: "0.08em" }}>Phone</div><a href={"tel:" + selected.phone} style={{ color: "var(--ocean)", marginTop: 2, display: "block" }}>{selected.phone}</a></div>}
+            {selected.tour_title && <div><div style={{ fontSize: "0.74rem", fontWeight: 700, color: "var(--ink-3)", textTransform: "uppercase", letterSpacing: "0.08em" }}>Tour</div><div style={{ marginTop: 2 }}>{selected.tour_title}</div></div>}
+            <div><div style={{ fontSize: "0.74rem", fontWeight: 700, color: "var(--ink-3)", textTransform: "uppercase", letterSpacing: "0.08em" }}>Message</div><div style={{ marginTop: 6, padding: 14, background: "var(--bg-2)", borderRadius: "var(--r-sm)", fontSize: "0.9rem", lineHeight: 1.6, color: "var(--ink-2)" }}>{selected.message}</div></div>
+            <div><div style={{ fontSize: "0.74rem", fontWeight: 700, color: "var(--ink-3)", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 8 }}>Status</div>
+              <div className="row gap-2" style={{ flexWrap: "wrap" }}>
+                {["new","contacted","in_progress","closed"].map(s => (
+                  <button key={s} onClick={() => setStatus(selected.id, s)} className="btn btn-sm" style={{ background: selected.status === s ? "var(--ink)" : "var(--surface)", color: selected.status === s ? "white" : "var(--ink-2)", border: "1px solid var(--hairline)", textTransform: "capitalize", fontSize: "0.76rem" }}>{s.replace("_"," ")}</button>
+                ))}
+              </div>
+            </div>
+            <a href={"mailto:" + selected.email + "?subject=Re: " + (selected.tour_title || "Your inquiry") + " — Lumina Voyages"} className="btn btn-primary btn-sm btn-block" style={{ marginTop: 8 }}><Icon name="mail" size={16} /> Reply by email</a>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* ══════════════════════════════════════════════════════════════════
+   BOOKINGS
+══════════════════════════════════════════════════════════════════ */
 function AdminBookings() {
   const [bookings, setBookings] = useState([]);
   const [loading, setLoading] = useState(true);
   const toast = useToast();
 
   useEffect(() => {
-    (async () => {
-      try {
-        if (SB.ok) {
-          setBookings(await SB.bookings.all());
-        }
-      } catch(e) { toast("Failed to load bookings", "x"); }
-      setLoading(false);
-    })();
+    if (!SB.ok) { setLoading(false); return; }
+    SB.bookings.all().then(setBookings).catch(() => toast("Failed to load", "x")).finally(() => setLoading(false));
   }, []);
 
   const setStatus = async (id, status) => {
-    try {
-      await SB.bookings.updateStatus(id, status);
-      setBookings(bs => bs.map(b => b.id === id ? { ...b, status } : b));
-      toast("Status updated", "check");
-    } catch(e) { toast("Update failed", "x"); }
+    try { await SB.bookings.updateStatus(id, status); setBookings(bs => bs.map(b => b.id === id ? { ...b, status } : b)); toast("Updated", "check"); }
+    catch(e) { toast("Failed", "x"); }
   };
 
   const total = bookings.reduce((s, b) => s + (Number(b.total) || 0), 0);
-  const confirmed = bookings.filter(b => b.status === "confirmed").length;
 
+  if (!SB.ok) return <div style={{ textAlign: "center", padding: 60, color: "var(--ink-3)" }}>Configure Supabase to see bookings.</div>;
   if (loading) return <div style={{ textAlign: "center", padding: 48, color: "var(--ink-3)" }}>Loading bookings…</div>;
-  if (!SB.ok)  return <div style={{ textAlign: "center", padding: 48, color: "var(--ink-3)" }}>Configure Supabase to see bookings.</div>;
 
   return (
     <div>
-      <div className="row gap-4" style={{ marginBottom: 28, flexWrap: "wrap" }}>
-        <AdminStatCard icon="compass" label="Total bookings" value={bookings.length} sub="all time" color="var(--ocean)" />
-        <AdminStatCard icon="check"   label="Confirmed"      value={confirmed}        sub="active"   color="var(--teal)" />
-        <AdminStatCard icon="tag"     label="Total revenue"  value={fmtPrice(total)}  sub="all time" color="var(--coral)" />
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 14, marginBottom: 24 }}>
+        <StatCard icon="compass"  label="Total bookings" value={bookings.length}    color="var(--ocean)" />
+        <StatCard icon="checkC"   label="Confirmed"      value={bookings.filter(b => b.status === "confirmed").length} color="var(--teal)" />
+        <StatCard icon="tag"      label="Total revenue"  value={"$" + total.toLocaleString()}  color="var(--coral)" />
       </div>
-
-      {bookings.length === 0
-        ? <div style={{ textAlign: "center", padding: 60, color: "var(--ink-3)" }}>No bookings yet.</div>
-        : <AdminTable
-            cols={["ID", "Guest", "Tour", "Date", "Guests", "Total", "Status", "Booked"]}
-            rows={bookings.map(b => [
-              td(<span style={{ fontFamily: "monospace", fontSize: "0.8rem", color: "var(--ink-3)" }}>{b.id.slice(0,8)}</span>),
-              td(<div>
-                <div style={{ fontWeight: 600 }}>{b.profiles?.name || b.guest_name || "—"}</div>
-                <div style={{ fontSize: "0.8rem", color: "var(--ink-3)" }}>{b.profiles?.email || b.guest_email || ""}</div>
-              </div>),
-              td(<div style={{ fontWeight: 600 }}>{b.tours?.title || b.tour_id || "—"}</div>),
-              td(b.date || "—"),
-              td(b.guests),
-              td(<span style={{ fontWeight: 700 }}>{b.total ? fmtPrice(b.total) : "—"}</span>),
-              td(<select value={b.status} onChange={e => setStatus(b.id, e.target.value)}
-                style={{ border: "none", background: "transparent", fontWeight: 700, cursor: "pointer", color: "var(--ink)", fontFamily: "var(--font-sans)", fontSize: "0.85rem" }}>
-                {["confirmed", "completed", "cancelled", "pending"].map(s => <option key={s} value={s}>{s}</option>)}
-              </select>),
-              td(<span style={{ fontSize: "0.8rem", color: "var(--ink-3)" }}>{b.created_at ? new Date(b.created_at).toLocaleDateString() : "—"}</span>),
-            ])}
-          />
-      }
+      <ATable
+        cols={["ID", "Guest", "Tour", "Date", "Guests", "Total", "Status", "Booked on"]}
+        empty="No bookings yet."
+        rows={bookings.map(b => [
+          <TD><span style={{ fontFamily: "monospace", fontSize: "0.78rem", color: "var(--ink-3)" }}>{b.id?.slice(0,8)}</span></TD>,
+          <TD><div style={{ fontWeight: 600 }}>{b.profiles?.name || b.guest_name || "—"}</div><div style={{ fontSize: "0.78rem", color: "var(--ink-3)" }}>{b.profiles?.email || b.guest_email}</div></TD>,
+          <TD><div style={{ fontWeight: 600, maxWidth: 160, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{b.tours?.title || b.tour_id || "—"}</div></TD>,
+          <TD><span style={{ fontSize: "0.85rem" }}>{b.date || "—"}</span></TD>,
+          <TD>{b.guests}</TD>,
+          <TD><span style={{ fontWeight: 700 }}>{b.total ? "$" + Number(b.total).toLocaleString() : "—"}</span></TD>,
+          <TD><select value={b.status} onChange={e => setStatus(b.id, e.target.value)} style={{ border: "none", background: "transparent", fontWeight: 700, cursor: "pointer", color: "var(--ink)", fontFamily: "var(--font-sans)", fontSize: "0.82rem" }}>{["confirmed","completed","cancelled","pending"].map(s => <option key={s}>{s}</option>)}</select></TD>,
+          <TD><span style={{ fontSize: "0.78rem", color: "var(--ink-3)" }}>{b.created_at ? new Date(b.created_at).toLocaleDateString() : "—"}</span></TD>,
+        ])}
+      />
     </div>
   );
 }
 
-/* ── Users tab ────────────────────────────────────────────────── */
+/* ══════════════════════════════════════════════════════════════════
+   USERS
+══════════════════════════════════════════════════════════════════ */
 function AdminUsers() {
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const toast = useToast();
 
   useEffect(() => {
-    (async () => {
-      try {
-        if (SB.ok) setUsers(await SB.users.all());
-      } catch(e) { toast("Failed to load users", "x"); }
-      setLoading(false);
-    })();
+    if (!SB.ok) { setLoading(false); return; }
+    SB.users.all().then(setUsers).catch(() => toast("Failed to load", "x")).finally(() => setLoading(false));
   }, []);
 
-  const toggleAdmin = async (userId, current) => {
-    try {
-      await SB.users.setAdmin(userId, !current);
-      setUsers(us => us.map(u => u.id === userId ? { ...u, is_admin: !current } : u));
-      toast(!current ? "Admin granted" : "Admin removed", "check");
-    } catch(e) { toast("Update failed", "x"); }
+  const toggleAdmin = async (id, cur) => {
+    try { await SB.users.setAdmin(id, !cur); setUsers(us => us.map(u => u.id === id ? { ...u, is_admin: !cur } : u)); toast(!cur ? "Admin granted" : "Admin removed", "check"); }
+    catch(e) { toast("Failed", "x"); }
   };
 
+  if (!SB.ok) return <div style={{ textAlign: "center", padding: 60, color: "var(--ink-3)" }}>Configure Supabase to see users.</div>;
   if (loading) return <div style={{ textAlign: "center", padding: 48, color: "var(--ink-3)" }}>Loading users…</div>;
-  if (!SB.ok)  return <div style={{ textAlign: "center", padding: 48, color: "var(--ink-3)" }}>Configure Supabase to see users.</div>;
 
   return (
     <div>
-      <div className="row" style={{ marginBottom: 22, gap: 12, flexWrap: "wrap" }}>
-        <AdminStatCard icon="users" label="Registered users" value={users.length} sub="total" color="var(--ocean)" />
-        <AdminStatCard icon="shield" label="Admins" value={users.filter(u => u.is_admin).length} sub="with access" color="var(--coral)" />
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14, marginBottom: 24 }}>
+        <StatCard icon="users"  label="Registered users" value={users.length} color="var(--ocean)" />
+        <StatCard icon="shield" label="Admins"            value={users.filter(u => u.is_admin).length} color="var(--coral)" />
       </div>
-
-      {users.length === 0
-        ? <div style={{ textAlign: "center", padding: 60, color: "var(--ink-3)" }}>No users yet.</div>
-        : <AdminTable
-            cols={["User", "Email", "Joined", "Admin"]}
-            rows={users.map(u => [
-              td(<div className="row gap-3">
-                <span style={{ width: 36, height: 36, borderRadius: "50%", background: "var(--ocean-tint)", color: "var(--ocean-deep)", display: "grid", placeItems: "center", fontWeight: 800, fontSize: "1rem", flexShrink: 0 }}>
-                  {(u.name || u.email || "?")[0].toUpperCase()}
-                </span>
-                <div>
-                  <div style={{ fontWeight: 600 }}>{u.name || "—"}</div>
-                  {u.is_admin && <span style={{ fontSize: "0.7rem", background: "var(--coral-soft)", color: "var(--coral-deep)", padding: "1px 7px", borderRadius: "var(--r-pill)", fontWeight: 700 }}>Admin</span>}
-                </div>
-              </div>),
-              td(<span style={{ color: "var(--ink-2)" }}>{u.email}</span>),
-              td(<span style={{ fontSize: "0.85rem", color: "var(--ink-3)" }}>{u.created_at ? new Date(u.created_at).toLocaleDateString() : "—"}</span>),
-              td(
-                <button onClick={() => toggleAdmin(u.id, u.is_admin)}
-                  style={{ padding: "5px 14px", borderRadius: "var(--r-pill)", fontWeight: 700, fontSize: "0.8rem", cursor: "pointer", border: "none",
-                    background: u.is_admin ? "var(--coral-soft)" : "var(--ocean-tint)",
-                    color: u.is_admin ? "var(--coral-deep)" : "var(--ocean-deep)" }}>
-                  {u.is_admin ? "Remove admin" : "Make admin"}
-                </button>
-              ),
-            ])}
-          />
-      }
+      <ATable
+        cols={["User", "Email", "Joined", "Role", "Action"]}
+        empty="No users yet."
+        rows={users.map(u => [
+          <TD><div className="row gap-3"><span style={{ width: 36, height: 36, borderRadius: "50%", background: "var(--ocean-tint)", color: "var(--ocean-deep)", display: "grid", placeItems: "center", fontWeight: 800, flexShrink: 0 }}>{(u.name || u.email || "?")[0].toUpperCase()}</span><span style={{ fontWeight: 700 }}>{u.name || "—"}</span></div></TD>,
+          <TD><span style={{ color: "var(--ink-2)" }}>{u.email}</span></TD>,
+          <TD><span style={{ fontSize: "0.82rem", color: "var(--ink-3)" }}>{u.created_at ? new Date(u.created_at).toLocaleDateString() : "—"}</span></TD>,
+          <TD>{u.is_admin ? <StatusBadge status="active" /> : <span style={{ fontSize: "0.82rem", color: "var(--ink-3)" }}>User</span>}</TD>,
+          <TD><button onClick={() => toggleAdmin(u.id, u.is_admin)} className="btn btn-sm" style={{ background: u.is_admin ? "var(--coral-soft)" : "var(--ocean-tint)", color: u.is_admin ? "var(--coral-deep)" : "var(--ocean-deep)" }}>{u.is_admin ? "Remove admin" : "Make admin"}</button></TD>,
+        ])}
+      />
     </div>
   );
 }
 
-/* ── Settings tab ─────────────────────────────────────────────── */
+/* ══════════════════════════════════════════════════════════════════
+   SETTINGS
+══════════════════════════════════════════════════════════════════ */
 function AdminSettings() {
-  const [form, setForm] = useState({
-    hero_image_url: "", hero_heading: "", hero_sub: "",
-    contact_email: "", whatsapp: "", instagram: ""
-  });
+  const [form, setForm] = useState({ hero_image_url: "", hero_heading: "", hero_sub: "", contact_email: "", whatsapp: "", instagram: "" });
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const toast = useToast();
 
   useEffect(() => {
-    (async () => {
-      if (SB.ok) {
-        const all = await SB.settings.getAll();
-        setForm(prev => ({ ...prev, ...all }));
-      }
-      setLoading(false);
-    })();
+    if (!SB.ok) { setLoading(false); return; }
+    SB.settings.getAll().then(all => setForm(p => ({ ...p, ...all }))).finally(() => setLoading(false));
   }, []);
 
   const save = async () => {
     setSaving(true);
-    try {
-      await Promise.all(Object.entries(form).map(([k, v]) => SB.settings.set(k, v)));
-      toast("Settings saved!", "check");
-    } catch(e) { toast("Save failed: " + e.message, "x"); }
+    try { await Promise.all(Object.entries(form).map(([k, v]) => SB.settings.set(k, v))); toast("Settings saved!", "check"); }
+    catch(e) { toast("Save failed: " + e.message, "x"); }
     setSaving(false);
   };
 
-  const SF = ({ label, id, placeholder, hint }) => (
+  const SF = ({ id, label, placeholder, hint }) => (
     <div className="field">
       <label>{label}</label>
-      <input className="input" placeholder={placeholder || ""} value={form[id] || ""}
-        onChange={e => setForm(p => ({ ...p, [id]: e.target.value }))} />
-      {hint && <span style={{ fontSize: "0.78rem", color: "var(--ink-3)" }}>{hint}</span>}
+      <input className="input" placeholder={placeholder || ""} value={form[id] || ""} onChange={e => setForm(p => ({ ...p, [id]: e.target.value }))} />
+      {hint && <span style={{ fontSize: "0.76rem", color: "var(--ink-3)" }}>{hint}</span>}
     </div>
   );
 
+  if (!SB.ok) return <div style={{ background: "var(--coral-soft)", color: "var(--coral-deep)", borderRadius: "var(--r-md)", padding: 28, fontWeight: 600 }}>Configure Supabase to enable settings.</div>;
   if (loading) return <div style={{ textAlign: "center", padding: 48, color: "var(--ink-3)" }}>Loading settings…</div>;
-  if (!SB.ok) return (
-    <div style={{ background: "var(--coral-soft)", borderRadius: "var(--r-md)", padding: 28, color: "var(--coral-deep)" }}>
-      <strong>Supabase not configured.</strong> Add your credentials to <code>supabase.jsx</code> to enable settings.
-    </div>
-  );
 
   return (
-    <div style={{ maxWidth: 660 }}>
-      <p style={{ color: "var(--ink-3)", marginBottom: 28, fontSize: "0.9rem" }}>
-        These values override the default site content. Leave blank to use the built-in defaults.
-      </p>
-
-      <div style={{ background: "var(--surface)", borderRadius: "var(--r-md)", boxShadow: "var(--sh-sm)", padding: 28, marginBottom: 20 }}>
-        <h3 style={{ fontSize: "1rem", marginBottom: 20, color: "var(--ink-2)" }}>Homepage Hero</h3>
-        <div className="col gap-4">
-          <SF id="hero_image_url" label="Hero background image URL" placeholder="https://images.unsplash.com/..." hint="Paste any Unsplash or direct image URL" />
-          <SF id="hero_heading"   label="Main heading (leave blank for default)" placeholder="Discover the World" />
-          <SF id="hero_sub"       label="Subtitle" placeholder="Extraordinary journeys, beautifully planned." />
+    <div style={{ maxWidth: 680 }}>
+      <p style={{ color: "var(--ink-3)", marginBottom: 28, fontSize: "0.9rem" }}>These override built-in defaults. Leave blank to use defaults.</p>
+      <div className="col gap-4">
+        <div style={{ background: "var(--surface)", borderRadius: "var(--r-md)", padding: 28, border: "1px solid var(--hairline)" }}>
+          <h3 style={{ fontSize: "1rem", marginBottom: 20, color: "var(--ink-2)" }}>Homepage Hero</h3>
+          <div className="col gap-4">
+            <SF id="hero_image_url" label="Hero background image URL" placeholder="https://images.unsplash.com/..." hint="Any direct image URL" />
+            <SF id="hero_heading"   label="Main heading" placeholder="Discover the World" />
+            <SF id="hero_sub"       label="Subtitle"     placeholder="Extraordinary journeys, beautifully planned." />
+          </div>
         </div>
-      </div>
-
-      <div style={{ background: "var(--surface)", borderRadius: "var(--r-md)", boxShadow: "var(--sh-sm)", padding: 28, marginBottom: 28 }}>
-        <h3 style={{ fontSize: "1rem", marginBottom: 20, color: "var(--ink-2)" }}>Contact & Social</h3>
-        <div className="col gap-4">
-          <SF id="contact_email" label="Contact email" placeholder="hello@luminavoyages.com" />
-          <SF id="whatsapp"      label="WhatsApp number" placeholder="+1 234 567 8900" />
-          <SF id="instagram"     label="Instagram handle" placeholder="@luminavoyages" />
+        <div style={{ background: "var(--surface)", borderRadius: "var(--r-md)", padding: 28, border: "1px solid var(--hairline)" }}>
+          <h3 style={{ fontSize: "1rem", marginBottom: 20, color: "var(--ink-2)" }}>Contact & Social</h3>
+          <div className="col gap-4">
+            <SF id="contact_email" label="Contact email"  placeholder="hello@luminavoyages.com" />
+            <SF id="whatsapp"      label="WhatsApp"       placeholder="+1 234 567 8900" />
+            <SF id="instagram"     label="Instagram"      placeholder="@luminavoyages" />
+          </div>
         </div>
+        <button className="btn btn-primary btn-lg" onClick={save} disabled={saving}>{saving ? "Saving…" : <><Icon name="check" size={20} /> Save all settings</>}</button>
       </div>
-
-      <button className="btn btn-primary btn-lg" onClick={save} disabled={saving}>
-        {saving ? "Saving…" : <><Icon name="check" size={20} /> Save all settings</>}
-      </button>
     </div>
   );
 }
 
-/* ── Main AdminPage ────────────────────────────────────────────── */
+/* ══════════════════════════════════════════════════════════════════
+   MAIN AdminPage
+══════════════════════════════════════════════════════════════════ */
 function AdminPage({ go, store }) {
-  const [tab, setTab] = useState("tours");
+  const [tab, setTab] = useState("dashboard");
   const user = store?.user;
 
   if (!user || !user.isAdmin) {
     return (
       <div style={{ minHeight: "100vh", display: "grid", placeItems: "center", background: "var(--bg)", paddingTop: 74 }}>
         <div style={{ textAlign: "center", padding: "48px 32px", maxWidth: 420 }}>
-          <span style={{ width: 72, height: 72, borderRadius: "50%", background: "var(--coral-soft)", display: "grid", placeItems: "center", margin: "0 auto 24px", color: "var(--coral-deep)" }}>
-            <Icon name="shield" size={34} />
-          </span>
+          <span style={{ width: 72, height: 72, borderRadius: "50%", background: "var(--coral-soft)", display: "grid", placeItems: "center", margin: "0 auto 24px", color: "var(--coral-deep)" }}><Icon name="shield" size={34} /></span>
           <h2 style={{ marginBottom: 12 }}>Admin access required</h2>
-          <p style={{ color: "var(--ink-2)", lineHeight: 1.6, marginBottom: 28 }}>
-            {user ? "Your account does not have admin privileges." : "Please sign in to access the admin panel."}
-          </p>
+          <p style={{ color: "var(--ink-2)", lineHeight: 1.6, marginBottom: 28 }}>{user ? "Your account does not have admin privileges." : "Please sign in with an admin account."}</p>
           <div className="row gap-3" style={{ justifyContent: "center" }}>
-            <button className="btn btn-primary" onClick={() => go({ view: "account" })}>
-              {user ? "Go to account" : "Sign in"}
-            </button>
+            <button className="btn btn-primary" onClick={() => go({ view: "account" })}>{user ? "My account" : "Sign in"}</button>
             <button className="btn btn-ghost" onClick={() => go({ view: "home" })}>Back to site</button>
           </div>
         </div>
@@ -495,66 +841,58 @@ function AdminPage({ go, store }) {
   }
 
   const sideLinks = [
-    { id: "tours",    label: "Tours",    icon: "compass",  desc: "Manage listings" },
-    { id: "bookings", label: "Bookings", icon: "calendar", desc: "View & update" },
-    { id: "users",    label: "Users",    icon: "users",    desc: "Accounts & roles" },
-    { id: "settings", label: "Settings", icon: "shield",   desc: "Site content" },
+    { id: "dashboard", label: "Dashboard",  icon: "globe",    desc: "Overview & stats" },
+    { id: "tours",     label: "Tours",       icon: "compass",  desc: "Manage listings" },
+    { id: "inquiries", label: "Inquiries",   icon: "mail",     desc: "Contact requests" },
+    { id: "bookings",  label: "Bookings",    icon: "calendar", desc: "All bookings" },
+    { id: "users",     label: "Users",       icon: "users",    desc: "Accounts & roles" },
+    { id: "settings",  label: "Settings",    icon: "shield",   desc: "Site content" },
   ];
+
+  const tabLabels = { dashboard: "Dashboard", tours: "Tour Management", inquiries: "Inquiries", bookings: "Bookings", users: "Users", settings: "Site Settings" };
 
   return (
     <ToastProvider>
       <div style={{ display: "flex", minHeight: "100vh", background: "var(--bg-2)" }}>
         {/* Sidebar */}
         <aside style={{ width: 230, background: "var(--footer-bg)", color: "white", display: "flex", flexDirection: "column", flexShrink: 0, position: "sticky", top: 0, height: "100vh", overflow: "hidden" }}>
-          <div style={{ padding: "26px 20px 20px", borderBottom: "1px solid oklch(1 0 0 / 0.07)" }}>
+          <div style={{ padding: "22px 18px 18px", borderBottom: "1px solid oklch(1 0 0 / 0.07)" }}>
             <Logo light onClick={() => go({ view: "home" })} />
-            <div style={{ marginTop: 8, fontSize: "0.68rem", letterSpacing: "0.18em", textTransform: "uppercase", color: "oklch(0.5 0.02 230)", fontWeight: 700 }}>Admin Panel</div>
+            <div style={{ marginTop: 7, fontSize: "0.66rem", letterSpacing: "0.18em", textTransform: "uppercase", color: "oklch(0.48 0.02 230)", fontWeight: 700 }}>Admin Panel</div>
           </div>
-          <nav style={{ flex: 1, padding: "14px 12px" }}>
+          <nav style={{ flex: 1, padding: "10px 10px", overflow: "auto" }}>
             {sideLinks.map(l => (
-              <button key={l.id} onClick={() => setTab(l.id)} className="row gap-3" style={{ width: "100%", padding: "12px 14px", borderRadius: "var(--r-sm)", marginBottom: 3, fontWeight: 600, fontSize: "0.9rem", textAlign: "left", color: tab === l.id ? "white" : "oklch(0.65 0.018 228)", background: tab === l.id ? "oklch(1 0 0 / 0.11)" : "transparent", transition: "all 0.2s", border: tab === l.id ? "1px solid oklch(1 0 0 / 0.1)" : "1px solid transparent" }}>
-                <Icon name={l.icon} size={18} />
+              <button key={l.id} onClick={() => setTab(l.id)} className="row gap-3" style={{ width: "100%", padding: "10px 14px", borderRadius: "var(--r-sm)", marginBottom: 2, fontWeight: 600, fontSize: "0.88rem", textAlign: "left", color: tab === l.id ? "white" : "oklch(0.60 0.016 228)", background: tab === l.id ? "oklch(1 0 0 / 0.11)" : "transparent", transition: "all 0.18s", border: tab === l.id ? "1px solid oklch(1 0 0 / 0.09)" : "1px solid transparent" }}>
+                <Icon name={l.icon} size={17} />
                 <div>
-                  <div>{l.label}</div>
-                  <div style={{ fontSize: "0.72rem", color: "oklch(0.52 0.016 228)", fontWeight: 500 }}>{l.desc}</div>
+                  <div style={{ lineHeight: 1.2 }}>{l.label}</div>
+                  <div style={{ fontSize: "0.68rem", color: "oklch(0.48 0.016 228)", fontWeight: 400 }}>{l.desc}</div>
                 </div>
               </button>
             ))}
           </nav>
-          <div style={{ padding: "16px 16px 20px", borderTop: "1px solid oklch(1 0 0 / 0.07)" }}>
-            <div style={{ fontSize: "0.82rem", color: "oklch(0.72 0.018 230)", marginBottom: 10, fontWeight: 600 }}>
-              {user.name}
-            </div>
-            <div className="row gap-2" style={{ flexWrap: "wrap" }}>
-              <button onClick={() => go({ view: "home" })} className="btn btn-sm" style={{ background: "oklch(1 0 0 / 0.07)", color: "oklch(0.72 0.018 230)", fontSize: "0.78rem", padding: "6px 12px" }}>
-                <Icon name="arrowL" size={14} /> Site
-              </button>
-              <button onClick={async () => { if (SB.ok) await SB.auth.signOut(); Store.signOut(); go({ view: "home" }); }}
-                className="btn btn-sm" style={{ background: "oklch(1 0 0 / 0.07)", color: "var(--coral)", fontSize: "0.78rem", padding: "6px 12px" }}>
-                Sign out
-              </button>
+          <div style={{ padding: "14px 16px 18px", borderTop: "1px solid oklch(1 0 0 / 0.07)" }}>
+            <div style={{ fontSize: "0.8rem", color: "oklch(0.65 0.018 230)", marginBottom: 8, fontWeight: 600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{user.name}</div>
+            <div className="row gap-2">
+              <button onClick={() => go({ view: "home" })} className="btn btn-sm" style={{ background: "oklch(1 0 0 / 0.07)", color: "oklch(0.65 0.018 230)", fontSize: "0.76rem", padding: "5px 10px" }}><Icon name="arrowL" size={13} /> Site</button>
+              <button onClick={async () => { if (SB.ok) await SB.auth.signOut(); Store.signOut(); go({ view: "home" }); }} className="btn btn-sm" style={{ background: "oklch(1 0 0 / 0.07)", color: "var(--coral)", fontSize: "0.76rem", padding: "5px 10px" }}>Sign out</button>
             </div>
           </div>
         </aside>
 
-        {/* Main */}
-        <main style={{ flex: 1, overflow: "auto" }}>
-          {/* Topbar */}
-          <div style={{ padding: "20px 32px", borderBottom: "1px solid var(--hairline)", background: "var(--surface)", display: "flex", alignItems: "center", justifyContent: "space-between", position: "sticky", top: 0, zIndex: 10 }}>
-            <h1 style={{ fontSize: "1.35rem", fontWeight: 800 }}>
-              {sideLinks.find(l => l.id === tab)?.label}
-            </h1>
-            {!SB.ok && (
-              <div className="row gap-2" style={{ background: "var(--coral-soft)", color: "var(--coral-deep)", padding: "8px 16px", borderRadius: "var(--r-pill)", fontSize: "0.82rem", fontWeight: 700 }}>
-                <Icon name="shield" size={16} /> Supabase not configured — read-only mode
-              </div>
-            )}
+        {/* Main content */}
+        <main style={{ flex: 1, overflow: "auto", display: "flex", flexDirection: "column" }}>
+          <div style={{ padding: "18px 28px", borderBottom: "1px solid var(--hairline)", background: "var(--surface)", display: "flex", alignItems: "center", justifyContent: "space-between", position: "sticky", top: 0, zIndex: 10 }}>
+            <h1 style={{ fontSize: "1.3rem", fontWeight: 800 }}>{tabLabels[tab]}</h1>
+            {!SB.ok && <span style={{ display: "flex", alignItems: "center", gap: 6, background: "var(--coral-soft)", color: "var(--coral-deep)", padding: "6px 14px", borderRadius: "var(--r-pill)", fontSize: "0.8rem", fontWeight: 700 }}><Icon name="shield" size={14} /> Supabase not configured</span>}
           </div>
-          <div style={{ padding: "32px 32px 80px" }}>
-            {tab === "tours"    && <AdminTours />}
-            {tab === "bookings" && <AdminBookings />}
-            {tab === "users"    && <AdminUsers />}
-            {tab === "settings" && <AdminSettings />}
+          <div style={{ padding: "28px 28px 80px", flex: 1 }}>
+            {tab === "dashboard" && <AdminDashboard setTab={setTab} />}
+            {tab === "tours"     && <AdminTours />}
+            {tab === "inquiries" && <AdminInquiries />}
+            {tab === "bookings"  && <AdminBookings />}
+            {tab === "users"     && <AdminUsers />}
+            {tab === "settings"  && <AdminSettings />}
           </div>
         </main>
       </div>

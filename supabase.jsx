@@ -1,15 +1,10 @@
 /* ================================================================
-   Lumina Voyages — Supabase client & API layer
-
-   SETUP (3 steps):
-   1. Go to https://supabase.com → New project
-   2. SQL Editor → paste SCHEMA.sql → Run
-   3. Replace the two values below with your project's URL and anon key
-      (find them in Project Settings → API)
+   Lumina Voyages — Supabase client & API (v2)
+   Fill in SUPABASE_URL and SUPABASE_ANON_KEY, then run SCHEMA_V2.sql
    ================================================================ */
 
-const SUPABASE_URL      = "https://ekudvabndtdxlgubymgg.supabase.co";
-const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVrdWR2YWJuZHRkeGxndWJ5bWdnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA1OTU0MDIsImV4cCI6MjA5NjE3MTQwMn0.QBclhu2BRNPjJZcRjWJYE_2dYFHgnJi7AiQzQzomuuY";
+const SUPABASE_URL      = "YOUR_SUPABASE_URL";
+const SUPABASE_ANON_KEY = "YOUR_SUPABASE_ANON_KEY";
 
 const _ok = SUPABASE_URL !== "YOUR_SUPABASE_URL" && typeof window.supabase !== "undefined";
 const _sb  = _ok
@@ -22,12 +17,10 @@ const SB = {
   ok: _ok,
   client: _sb,
 
-  /* ───── AUTH ──────────────────────────────────────────────────── */
+  /* ── AUTH ──────────────────────────────────────────────────── */
   auth: {
     async signUp(email, password, name) {
-      const { data, error } = await _sb.auth.signUp({
-        email, password, options: { data: { name } }
-      });
+      const { data, error } = await _sb.auth.signUp({ email, password, options: { data: { name } } });
       if (error) throw error;
       return data;
     },
@@ -47,10 +40,7 @@ const SB = {
       const { error } = await _sb.auth.updateUser({ password });
       if (error) throw error;
     },
-    async session() {
-      const { data } = await _sb.auth.getSession();
-      return data?.session ?? null;
-    },
+    async session() { const { data } = await _sb.auth.getSession(); return data?.session ?? null; },
     async profile(userId) {
       const { data } = await _sb.from("profiles").select("*").eq("id", userId).single();
       return data;
@@ -65,12 +55,19 @@ const SB = {
     }
   },
 
-  /* ───── TOURS ─────────────────────────────────────────────────── */
+  /* ── TOURS ────────────────────────────────────────────────── */
   tours: {
-    async list() {
-      const { data, error } = await _sb.from("tours").select("*").order("created_at", { ascending: false });
+    async list(status = null) {
+      let q = _sb.from("tours").select("*").order("created_at", { ascending: false });
+      if (status) q = q.eq("status", status);
+      const { data, error } = await q;
       if (error) throw error;
       return data || [];
+    },
+    async get(id) {
+      const { data, error } = await _sb.from("tours").select("*").eq("id", id).single();
+      if (error) throw error;
+      return data;
     },
     async upsert(tour) {
       const payload = { ...tour, updated_at: new Date().toISOString() };
@@ -90,8 +87,14 @@ const SB = {
         days: t.days, price: t.price, old_price: t.oldPrice || null,
         rating: t.rating, reviews: t.reviews, theme: t.theme,
         featured: !!t.featured, popular: !!t.popular,
-        category: t.category, difficulty: t.difficulty,
-        group_max: t.groupMax, season: t.season
+        category: t.categories?.[0] || t.category || "luxury",
+        difficulty: t.difficulty, group_max: t.groupMax,
+        season: t.season, status: "active", view_count: 0,
+        country: t.place?.split(",")[1]?.trim() || "",
+        city: t.place?.split(",")[0]?.trim() || "",
+        tags_json: t.tags || [],
+        included_json: t.included || [],
+        excluded_json: t.notIncluded || [],
       }));
       await _sb.from("tours").insert(rows);
     },
@@ -100,10 +103,24 @@ const SB = {
       const map = {};
       (data || []).forEach(r => { if (r.image_url) map[r.id] = r.image_url; });
       return map;
+    },
+    async trackView(id) {
+      await _sb.rpc("increment_tour_view", { tour_id: id }).catch(() => {});
+    },
+    async stats() {
+      const { data } = await _sb.from("tours").select("status, view_count, title, id, image_url, theme");
+      const all = data || [];
+      return {
+        total: all.length,
+        active: all.filter(t => t.status === "active").length,
+        draft: all.filter(t => t.status === "draft").length,
+        hidden: all.filter(t => t.status === "hidden").length,
+        topViewed: [...all].sort((a, b) => (b.view_count || 0) - (a.view_count || 0)).slice(0, 5),
+      };
     }
   },
 
-  /* ───── BOOKINGS ──────────────────────────────────────────────── */
+  /* ── BOOKINGS ─────────────────────────────────────────────── */
   bookings: {
     async create(booking) {
       const { data, error } = await _sb.from("bookings").insert(booking).select().single();
@@ -127,10 +144,54 @@ const SB = {
     async updateStatus(id, status) {
       const { error } = await _sb.from("bookings").update({ status }).eq("id", id);
       if (error) throw error;
+    },
+    async monthlyCounts() {
+      const { data } = await _sb.from("bookings").select("created_at, total").order("created_at");
+      const months = {};
+      const labels = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+      (data || []).forEach(b => {
+        const d = new Date(b.created_at);
+        const key = d.getFullYear() + "-" + d.getMonth();
+        if (!months[key]) months[key] = { label: labels[d.getMonth()], count: 0, revenue: 0 };
+        months[key].count++;
+        months[key].revenue += Number(b.total) || 0;
+      });
+      return Object.values(months).slice(-6);
     }
   },
 
-  /* ───── USERS (admin) ─────────────────────────────────────────── */
+  /* ── INQUIRIES ────────────────────────────────────────────── */
+  inquiries: {
+    async create(inquiry) {
+      const { data, error } = await _sb.from("inquiries").insert(inquiry).select().single();
+      if (error) throw error;
+      return data;
+    },
+    async all() {
+      const { data, error } = await _sb.from("inquiries")
+        .select("*")
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      return data || [];
+    },
+    async updateStatus(id, status) {
+      const { error } = await _sb.from("inquiries").update({ status }).eq("id", id);
+      if (error) throw error;
+    },
+    async counts() {
+      const { data } = await _sb.from("inquiries").select("status");
+      const all = data || [];
+      return {
+        total: all.length,
+        new: all.filter(i => i.status === "new").length,
+        contacted: all.filter(i => i.status === "contacted").length,
+        in_progress: all.filter(i => i.status === "in_progress").length,
+        closed: all.filter(i => i.status === "closed").length,
+      };
+    }
+  },
+
+  /* ── USERS ────────────────────────────────────────────────── */
   users: {
     async all() {
       const { data, error } = await _sb.from("profiles").select("*").order("created_at", { ascending: false });
@@ -143,7 +204,7 @@ const SB = {
     }
   },
 
-  /* ───── STORAGE ───────────────────────────────────────────────── */
+  /* ── STORAGE ──────────────────────────────────────────────── */
   storage: {
     async upload(file, bucket = "tour-images") {
       const ext = file.name.split(".").pop().toLowerCase();
@@ -155,7 +216,7 @@ const SB = {
     }
   },
 
-  /* ───── SETTINGS ──────────────────────────────────────────────── */
+  /* ── SETTINGS ─────────────────────────────────────────────── */
   settings: {
     _cache: {},
     async getAll() {
@@ -171,7 +232,6 @@ const SB = {
   }
 };
 
-/* global image overrides — populated on boot if SB configured */
 const _imgOverrides = {};
 if (_ok) {
   SB.tours.imageOverrides().then(map => Object.assign(_imgOverrides, map)).catch(() => {});

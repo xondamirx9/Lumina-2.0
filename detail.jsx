@@ -16,6 +16,7 @@ function TourPage({ go, route }) {
   const { t } = useI18n();
 
   useEffect(() => { window.scrollTo(0, 0); }, [route.id]);
+  useEffect(() => { if (typeof SB !== "undefined" && SB.ok) SB.tours.trackView(tour?.id).catch(() => {}); }, [tour?.id]);
   if (!tour) return null;
 
   const total = tour.price * travellers;
@@ -242,6 +243,7 @@ function TourPage({ go, route }) {
           <div className="row gap-3" style={{ marginTop: 14, justifyContent: "center", color: "var(--ink-2)", fontSize: "0.86rem", fontWeight: 600 }}>
             <Icon name="phone" size={16} style={{ color: "var(--ocean)" }} /> {t("detail_call")}
           </div>
+          <InquiryForm tour={tour} />
         </aside>
       </div>
 
@@ -282,6 +284,51 @@ function ReviewForm({ tour, onClose }) {
         <textarea className="input" rows="3" placeholder={t("rev_text")} value={text} onChange={(e) => setText(e.target.value)} style={{ resize: "vertical" }} />
         <div className="row gap-3"><button className="btn btn-ocean" onClick={submit}>{t("rev_post")}</button><button className="btn btn-ghost" onClick={onClose}>{t("rev_cancel")}</button></div>
       </div>
+    </div>
+  );
+}
+
+function InquiryForm({ tour }) {
+  const user = Store.get().user;
+  const toast = useToast();
+  const [open, setOpen] = useState(false);
+  const [name, setName] = useState(user?.name || "");
+  const [email, setEmail] = useState(user?.email || "");
+  const [phone, setPhone] = useState("");
+  const [msg, setMsg] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  const submit = async () => {
+    if (!name.trim() || !email.trim() || !msg.trim()) { toast("Please fill in name, email and message", "x"); return; }
+    setLoading(true);
+    try {
+      if (typeof SB !== "undefined" && SB.ok) {
+        await SB.inquiries.create({ tour_id: tour.id, tour_title: tour.title, name: name.trim(), email: email.trim(), phone: phone.trim(), message: msg.trim() });
+      }
+      toast("Inquiry sent! We'll be in touch soon.", "checkC");
+      setMsg(""); setPhone(""); setOpen(false);
+    } catch (e) {
+      toast("Failed to send — please try again", "x");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="card" style={{ marginTop: 16, padding: 20, boxShadow: "var(--sh-sm)" }}>
+      <button className="row gap-2" style={{ width: "100%", justifyContent: "space-between", fontWeight: 700, fontSize: "0.95rem" }} onClick={() => setOpen(o => !o)}>
+        <span className="row gap-2"><Icon name="mail" size={17} style={{ color: "var(--ocean)" }} /> Have a question?</span>
+        <Icon name={open ? "chevD" : "chevR"} size={16} style={{ color: "var(--ink-3)", transform: open ? "rotate(0deg)" : "none" }} />
+      </button>
+      {open && (
+        <div className="col gap-3 anim-scale-in" style={{ marginTop: 16 }}>
+          <input className="input" placeholder="Your name" value={name} onChange={e => setName(e.target.value)} />
+          <input className="input" type="email" placeholder="Email address" value={email} onChange={e => setEmail(e.target.value)} />
+          <input className="input" type="tel" placeholder="Phone (optional)" value={phone} onChange={e => setPhone(e.target.value)} />
+          <textarea className="input" rows="3" placeholder="Your message…" value={msg} onChange={e => setMsg(e.target.value)} style={{ resize: "vertical" }} />
+          <button className="btn btn-ocean btn-block" onClick={submit} disabled={loading}>{loading ? "Sending…" : "Send Inquiry"}</button>
+        </div>
+      )}
     </div>
   );
 }
