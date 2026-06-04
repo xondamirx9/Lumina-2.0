@@ -78,8 +78,8 @@ const PHOTOS = {
   sunset:    "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?auto=format&fit=crop&w=1400&q=80",
 };
 
-function Scenic({ theme, label, className = "", style, children, rounded }) {
-  const src = PHOTOS[theme] || PHOTOS.ocean;
+function Scenic({ theme, imageUrl, label, className = "", style, children, rounded }) {
+  const src = imageUrl || PHOTOS[theme] || PHOTOS.ocean;
   return (
     <div className={"scenic-wrap " + className} data-label={label}
       style={{ position: "relative", overflow: "hidden", borderRadius: rounded, ...style }}>

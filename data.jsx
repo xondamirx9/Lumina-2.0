@@ -454,15 +454,16 @@ const DESTINATIONS = [
 ];
 
 /* =========================================================
-   Store — simulated backend with localStorage persistence
+   Store — localStorage + Supabase auth sync
    ========================================================= */
 const LS_KEY = "lumina_store_v1";
 
 const Store = (() => {
   const defaults = { saved: [], bookings: [], user: null, userReviews: {} };
-  let state = load();
+  let state = _loadState();
+  const listeners = new Set();
 
-  function load() {
+  function _loadState() {
     try {
       const raw = localStorage.getItem(LS_KEY);
       if (raw) return { ...defaults, ...JSON.parse(raw) };
@@ -473,7 +474,42 @@ const Store = (() => {
     try { localStorage.setItem(LS_KEY, JSON.stringify(state)); } catch (e) {}
     listeners.forEach((fn) => fn(state));
   }
-  const listeners = new Set();
+
+  /* Sync user from Supabase session on startup */
+  if (typeof SB !== "undefined" && SB.ok) {
+    SB.auth.session().then(async (session) => {
+      if (session?.user) {
+        const profile = await SB.auth.profile(session.user.id);
+        state.user = {
+          id: session.user.id,
+          name: profile?.name || session.user.user_metadata?.name || session.user.email.split("@")[0],
+          email: session.user.email,
+          avatar: profile?.avatar_url || null,
+          isAdmin: profile?.is_admin || false,
+        };
+        persist();
+      }
+    }).catch(() => {});
+
+    SB.auth.onChange(async (event, session) => {
+      if (event === "SIGNED_IN" && session?.user) {
+        const profile = await SB.auth.profile(session.user.id).catch(() => null);
+        state.user = {
+          id: session.user.id,
+          name: profile?.name || session.user.user_metadata?.name || session.user.email.split("@")[0],
+          email: session.user.email,
+          avatar: profile?.avatar_url || null,
+          isAdmin: profile?.is_admin || false,
+        };
+      } else if (event === "SIGNED_OUT") {
+        state.user = null;
+      }
+      persist();
+    });
+
+    /* Seed tours DB on first run */
+    SB.tours.seed(TOURS).catch(() => {});
+  }
 
   return {
     get: () => state,
@@ -490,6 +526,16 @@ const Store = (() => {
       const booking = { id: "LV-" + Math.random().toString(36).slice(2, 7).toUpperCase(), createdAt: Date.now(), status: "Confirmed", ...b };
       state.bookings = [booking, ...state.bookings];
       persist();
+      /* also persist to Supabase */
+      if (typeof SB !== "undefined" && SB.ok && state.user) {
+        SB.bookings.create({
+          tour_id: b.tourId, user_id: state.user.id,
+          date: b.date, guests: b.guests, total: b.total,
+          guest_name: b.name || state.user.name,
+          guest_email: b.email || state.user.email,
+          guest_phone: b.phone || "", status: "confirmed"
+        }).catch(() => {});
+      }
       return booking;
     },
     cancelBooking(id) {

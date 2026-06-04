@@ -70,10 +70,12 @@
   </svg>
 </template>
 
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js" crossorigin="anonymous"></script>
 <script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
 <script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
 <script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
 
+<script type="text/babel" src="supabase.jsx"></script>
 <script type="text/babel" src="data.jsx"></script>
 <script type="text/babel" src="i18n.jsx"></script>
 <script type="text/babel" src="components.jsx"></script>
@@ -82,6 +84,7 @@
 <script type="text/babel" src="detail.jsx"></script>
 <script type="text/babel" src="booking.jsx"></script>
 <script type="text/babel" src="account.jsx"></script>
+<script type="text/babel" src="admin.jsx"></script>
 
 <script type="text/babel" data-presets="react">
 const { useState: useStateApp, useEffect: useEffectApp } = React;
@@ -95,6 +98,8 @@ function parseHash() {
   if (seg === "tour" && param) return { view: "tour", id: param };
   if (seg === "booking" && param) return { view: "booking", id: param };
   if (seg === "account") return { view: "account", tab: param };
+  if (seg === "admin")   return { view: "admin" };
+  if (seg === "reset-password") return { view: "account", resetPassword: true };
   return { view: "home" };
 }
 
@@ -116,7 +121,7 @@ function App() {
   const go = (r) => {
     setRoute(r);
     try { sessionStorage.setItem("lumina_route", JSON.stringify(r)); } catch (e) {}
-    const hashMap = { home: "#/", listing: "#/journeys", tour: "#/tour/" + (r.id || ""), booking: "#/booking/" + (r.id || ""), account: "#/account" + (r.tab ? "/" + r.tab : "") };
+    const hashMap = { home: "#/", listing: "#/journeys", tour: "#/tour/" + (r.id || ""), booking: "#/booking/" + (r.id || ""), account: "#/account" + (r.tab ? "/" + r.tab : ""), admin: "#/admin" };
     history.replaceState(null, "", hashMap[r.view] || "#/");
     window.scrollTo(0, 0);
   };
@@ -128,8 +133,8 @@ function App() {
     return () => window.removeEventListener("popstate", onPop);
   }, []);
 
-  const showChrome = route.view !== "account" || store.user; // hide nav/footer on full-screen auth
-  const hideFooter = route.view === "booking" || (route.view === "account" && !store.user);
+  const showChrome = (route.view !== "account" || store.user) && route.view !== "admin";
+  const hideFooter = route.view === "booking" || route.view === "admin" || (route.view === "account" && !store.user);
 
   return (
     <ToastProvider>
@@ -140,6 +145,7 @@ function App() {
         {route.view === "tour" && <TourPage go={go} route={route} />}
         {route.view === "booking" && <BookingPage go={go} route={route} />}
         {route.view === "account" && <AccountPage go={go} route={route} store={store} />}
+        {route.view === "admin"   && <AdminPage go={go} store={store} />}
       </main>
       {showChrome && !hideFooter && <Footer go={go} />}
     </ToastProvider>
