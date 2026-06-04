@@ -456,55 +456,64 @@ const DESTINATIONS = [
 /* =========================================================
    Store — localStorage + Supabase auth sync
    ========================================================= */
-const LS_KEY = "lumina_store_v1";
+const LS_KEY_PREFIX = "lumina_store_v2_";
 
 const Store = (() => {
   const defaults = { saved: [], bookings: [], user: null, userReviews: {} };
-  let state = _loadState();
+  let state = { ...defaults };
   const listeners = new Set();
 
-  function _loadState() {
+  /* key is per-user so two accounts never share data */
+  function _key(userId) { return LS_KEY_PREFIX + (userId || "guest"); }
+
+  function _loadForUser(userId) {
     try {
-      const raw = localStorage.getItem(LS_KEY);
+      const raw = localStorage.getItem(_key(userId));
       if (raw) return { ...defaults, ...JSON.parse(raw) };
     } catch (e) {}
     return { ...defaults };
   }
   function persist() {
-    try { localStorage.setItem(LS_KEY, JSON.stringify(state)); } catch (e) {}
+    try {
+      const userId = state.user?.id || null;
+      localStorage.setItem(_key(userId), JSON.stringify(state));
+    } catch (e) {}
     listeners.forEach((fn) => fn(state));
+  }
+
+  function _applySession(session, profile) {
+    const userId = session.user.id;
+    const saved = _loadForUser(userId);
+    state = {
+      ...saved,
+      user: {
+        id: userId,
+        name: profile?.name || session.user.user_metadata?.name || session.user.email.split("@")[0],
+        email: session.user.email,
+        avatar: profile?.avatar_url || null,
+        isAdmin: profile?.is_admin || false,
+      }
+    };
+    persist();
   }
 
   /* Sync user from Supabase session on startup */
   if (typeof SB !== "undefined" && SB.ok) {
     SB.auth.session().then(async (session) => {
       if (session?.user) {
-        const profile = await SB.auth.profile(session.user.id);
-        state.user = {
-          id: session.user.id,
-          name: profile?.name || session.user.user_metadata?.name || session.user.email.split("@")[0],
-          email: session.user.email,
-          avatar: profile?.avatar_url || null,
-          isAdmin: profile?.is_admin || false,
-        };
-        persist();
+        const profile = await SB.auth.profile(session.user.id).catch(() => null);
+        _applySession(session, profile);
       }
     }).catch(() => {});
 
     SB.auth.onChange(async (event, session) => {
       if (event === "SIGNED_IN" && session?.user) {
         const profile = await SB.auth.profile(session.user.id).catch(() => null);
-        state.user = {
-          id: session.user.id,
-          name: profile?.name || session.user.user_metadata?.name || session.user.email.split("@")[0],
-          email: session.user.email,
-          avatar: profile?.avatar_url || null,
-          isAdmin: profile?.is_admin || false,
-        };
+        _applySession(session, profile);
       } else if (event === "SIGNED_OUT") {
-        state.user = null;
+        state = { ...defaults };
+        persist();
       }
-      persist();
     });
 
     /* Seed tours DB on first run */
