@@ -66,17 +66,35 @@ function TourPage({ go, route }) {
           <a href="#/journeys" onClick={(e) => { e.preventDefault(); go({ view: "listing" }); }} style={{ color: "var(--ocean)" }}>{t("detail_journeys")}</a>
           <Icon name="chevR" size={13} /> <span>{tour.title}</span>
         </div>
-        <div className="gallery" style={{ display: "grid", gridTemplateColumns: "2fr 1fr", gridTemplateRows: "200px 200px", gap: 12, borderRadius: "var(--r-lg)", overflow: "hidden" }}>
-          <Scenic theme={tour.theme} label={tour.place} style={{ gridRow: "span 2", height: "100%", minHeight: 412 }}>
-            <div style={{ position: "absolute", top: 18, left: 18, display: "flex", gap: 8 }}>
-              {(tour.tags || tour.tags_json || []).slice(0, 2).map((tg) => <span key={tg} className="badge badge-glass">{tg}</span>)}
+        {(() => {
+          const mainImg = tour.image_url;
+          const gallery = tour.gallery_urls && tour.gallery_urls.length ? tour.gallery_url : null;
+          const g1 = (tour.gallery_urls || [])[0];
+          const g2 = (tour.gallery_urls || [])[1];
+          const ImgCell = ({ src, theme, label, style, children }) => (
+            <div style={{ position: "relative", overflow: "hidden", ...style }}>
+              {src
+                ? <img src={src} alt={label} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                : <Scenic theme={theme} label={label} style={{ width: "100%", height: "100%" }} />
+              }
+              {label && !src && <span style={{ position: "absolute", bottom: 10, left: 14, fontSize: "0.75rem", color: "white", fontWeight: 600, background: "oklch(0 0 0 / 0.4)", padding: "3px 8px", borderRadius: 6 }}>{label}</span>}
+              {children}
             </div>
-          </Scenic>
-          <Scenic theme="maldives" label="moment · two" style={{ height: "100%" }} />
-          <Scenic theme={tour.theme === "santorini" ? "sunset" : "ocean"} label="moment · three" style={{ height: "100%" }}>
-            <button className="btn btn-ghost btn-sm" style={{ position: "absolute", right: 14, bottom: 14, background: "oklch(1 0 0 / 0.92)" }}><Icon name="camera" size={16} /> {t("detail_photos")}</button>
-          </Scenic>
-        </div>
+          );
+          return (
+            <div className="gallery" style={{ display: "grid", gridTemplateColumns: "2fr 1fr", gridTemplateRows: "200px 200px", gap: 12, borderRadius: "var(--r-lg)", overflow: "hidden" }}>
+              <ImgCell src={mainImg} theme={tour.theme} label={tour.place} style={{ gridRow: "span 2", height: "100%", minHeight: 412 }}>
+                <div style={{ position: "absolute", top: 18, left: 18, display: "flex", gap: 8 }}>
+                  {(tour.tags || tour.tags_json || []).slice(0, 2).map((tg) => <span key={tg} className="badge badge-glass">{tg}</span>)}
+                </div>
+              </ImgCell>
+              <ImgCell src={g1 || null} theme="maldives" label="moment · two" style={{ height: "100%" }} />
+              <ImgCell src={g2 || null} theme={tour.theme === "santorini" ? "sunset" : "ocean"} label="moment · three" style={{ height: "100%" }}>
+                <button className="btn btn-ghost btn-sm" style={{ position: "absolute", right: 14, bottom: 14, background: "oklch(1 0 0 / 0.92)" }}><Icon name="camera" size={16} /> {t("detail_photos")}</button>
+              </ImgCell>
+            </div>
+          );
+        })()}
       </div>
 
       <div className="wrap" style={{ paddingTop: 28 }}>
@@ -92,10 +110,10 @@ function TourPage({ go, route }) {
             <p style={{ color: "var(--ink-2)", fontSize: "1.1rem", marginTop: 14, maxWidth: 640, lineHeight: 1.55 }}>{tour.blurb}</p>
             <div className="row gap-4" style={{ marginTop: 22, flexWrap: "wrap" }}>
               {[
-                ["clock", tour.days + " " + t("detail_days_nights") + tour.nights + t("detail_nights")],
-                ["users", tour.groupMax <= 2 ? t("detail_private_j") : tour.groupMin + "–" + tour.groupMax + " " + t("detail_travellers")],
+                ["clock", tour.days + " " + t("detail_days") ],
+                ["users", (tour.group_max || tour.groupMax) <= 2 ? t("detail_private_j") : "Max " + (tour.group_max || tour.groupMax || 12) + " " + t("detail_travellers")],
                 ["mountain", tour.difficulty],
-                ["globe", tour.pace + " " + t("detail_pace")],
+                ["globe", (tour.season || tour.pace || t("detail_year_round"))],
               ].map(([ic, l]) => (
                 <span key={l} className="row gap-2" style={{ fontWeight: 600, color: "var(--ink-2)", fontSize: "0.92rem" }}><Icon name={ic} size={18} style={{ color: "var(--ocean)" }} /> {l}</span>
               ))}
