@@ -248,7 +248,7 @@ function TripsTab({ store, go }) {
   useEffect(() => {
     if (SB.ok) SB.bookings.mine().then(setSbBookings).catch(() => {});
   }, []);
-  const bookings = sbBookings || store.bookings || [];
+  const bookings = (sbBookings !== null ? sbBookings : null) || store.bookings || [];
 
   if (!bookings.length) return (
     <div style={{ textAlign: "center", padding: "70px 20px", background: "var(--surface)", borderRadius: "var(--r-lg)", boxShadow: "var(--sh-sm)" }}>
@@ -291,7 +291,15 @@ function TripsTab({ store, go }) {
 function SavedTab({ store, go }) {
   const { t } = useI18n();
   const saved = store.saved || [];
-  const tours = saved.map(id => getTour(id)).filter(Boolean);
+  const [extraTours, setExtraTours] = useState([]);
+  useEffect(() => {
+    const missing = saved.filter(id => !getTour(id));
+    if (!missing.length || !SB.ok) return;
+    Promise.all(missing.map(id => SB.tours.get(id).catch(() => null)))
+      .then(rows => setExtraTours(rows.filter(Boolean)));
+  }, [saved.join(",")]);
+  const allTours = [...saved.map(id => getTour(id)).filter(Boolean), ...extraTours];
+  const tours = allTours.filter((t, i, arr) => arr.findIndex(x => x.id === t.id) === i);
   if (!tours.length) return (
     <div style={{ textAlign: "center", padding: "70px 20px", background: "var(--surface)", borderRadius: "var(--r-lg)", boxShadow: "var(--sh-sm)" }}>
       <Icon name="heart" size={48} style={{ color: "var(--hairline-2)", margin: "0 auto 18px" }} />
