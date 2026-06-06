@@ -171,7 +171,7 @@ function TourCard({ tour, onOpen, delay = 0 }) {
       className="card reveal" style={{ transitionDelay: delay + "s", cursor: "pointer", display: "block" }}
       onMouseEnter={() => setHover(true)} onMouseLeave={() => setHover(false)}>
       <div style={{ position: "relative", overflow: "hidden" }}>
-        <Scenic theme={tour.theme} label={tour.place} style={{ height: 230, transition: "transform 0.7s var(--ease-out)", transform: hover ? "scale(1.06)" : "scale(1)" }} />
+        <Scenic theme={tour.theme} imageUrl={tour.image_url || null} label={tour.place} style={{ height: 230, transition: "transform 0.7s var(--ease-out)", transform: hover ? "scale(1.06)" : "scale(1)" }} />
         <div style={{ position: "absolute", top: 14, left: 14, display: "flex", gap: 8 }}>
           {(tour.oldPrice || tour.old_price) && <span className="badge badge-coral">{t("save_badge")} {fmtPrice((tour.oldPrice || tour.old_price) - tour.price)}</span>}
           {tour.popular && !(tour.oldPrice || tour.old_price) && <span className="badge badge-glass">{t("card_popular")}</span>}
