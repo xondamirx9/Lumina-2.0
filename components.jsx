@@ -216,7 +216,7 @@ function TourCard({ tour, onOpen, delay = 0 }) {
 
 const LOGO_URL = "https://ekudvabndtdxlgubymgg.supabase.co/storage/v1/object/public/tour-images/tours/ChatGPT%20Image%20Jun%207,%202026,%2002_45_02%20AM.png";
 
-function Logo({ light, onClick, size = 72 }) {
+function Logo({ light, onClick, size = 110 }) {
   return (
     <a href="#/" onClick={(e) => { e.preventDefault(); onClick && onClick(); }} style={{ alignItems: "center", textDecoration: "none", display: "inline-flex" }}>
       <img
