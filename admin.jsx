@@ -357,7 +357,6 @@ function TourEditModal({ tour, onClose, onSaved }) {
         category: form.category || "luxury",
         difficulty: form.difficulty || "Moderate",
         group_max: Number(form.group_max) || 12,
-        group_min: Number(form.group_min) || 1,
         season: form.season || "year-round",
         theme: form.theme || "ocean",
         image_url: form.image_url || null,

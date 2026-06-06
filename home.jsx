@@ -107,14 +107,12 @@ function CategoryStrip({ go }) {
 
 function FeaturedTours({ go }) {
   const { t } = useI18n();
-  const [tours, setTours] = useState(null);
+  const [tours, setTours] = useState(() => TOURS.filter((tr) => tr.featured).slice(0, 6));
 
   useEffect(() => {
-    // Short timeout to allow Supabase to potentially override, then fall back to static
-    const tmr = setTimeout(() => {
-      setTours(TOURS.filter((tr) => tr.featured).slice(0, 6));
-    }, 300);
-    return () => clearTimeout(tmr);
+    if (typeof SB !== "undefined" && SB.ok) {
+      SB.tours.list({ featured: true, limit: 6 }).then((rows) => { if (rows && rows.length) setTours(rows); }).catch(() => {});
+    }
   }, []);
 
   return (
