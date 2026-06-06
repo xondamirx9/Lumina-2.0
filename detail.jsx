@@ -49,7 +49,7 @@ function TourPage({ go, route }) {
         <div className="gallery" style={{ display: "grid", gridTemplateColumns: "2fr 1fr", gridTemplateRows: "200px 200px", gap: 12, borderRadius: "var(--r-lg)", overflow: "hidden" }}>
           <Scenic theme={tour.theme} label={tour.place} style={{ gridRow: "span 2", height: "100%", minHeight: 412 }}>
             <div style={{ position: "absolute", top: 18, left: 18, display: "flex", gap: 8 }}>
-              {tour.tags.slice(0, 2).map((tg) => <span key={tg} className="badge badge-glass">{tg}</span>)}
+              {(tour.tags || tour.tags_json || []).slice(0, 2).map((tg) => <span key={tg} className="badge badge-glass">{tg}</span>)}
             </div>
           </Scenic>
           <Scenic theme="maldives" label="moment · two" style={{ height: "100%" }} />
@@ -101,7 +101,7 @@ function TourPage({ go, route }) {
             <p style={{ color: "var(--ink-2)", fontSize: "1.05rem", lineHeight: 1.7, marginBottom: 26 }}>{tour.blurb} {t("detail_exp_body")}</p>
             <h3 style={{ fontSize: "1.25rem", marginBottom: 16 }}>{t("detail_highlights")}</h3>
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 }}>
-              {tour.highlights.map((h, i) => (
+              {(tour.highlights || []).map((h, i) => (
                 <div key={i} className="row gap-3" style={{ alignItems: "flex-start", background: "var(--surface)", padding: "16px 18px", borderRadius: "var(--r-sm)", boxShadow: "var(--sh-sm)" }}>
                   <span style={{ flexShrink: 0, color: "var(--coral)", marginTop: 1 }}><Icon name="sparkle" size={20} fill="current" /></span>
                   <span style={{ fontWeight: 600, fontSize: "0.94rem", lineHeight: 1.45 }}>{h}</span>
@@ -114,13 +114,13 @@ function TourPage({ go, route }) {
             <h2 className="display" style={{ fontSize: "2rem", marginBottom: 6 }}>{t("detail_day_h")}</h2>
             <p style={{ color: "var(--ink-3)", marginBottom: 22 }}>{tour.days}-{t("detail_day_sub")}</p>
             <div style={{ position: "relative", paddingLeft: 4 }}>
-              {tour.itinerary.map((d, i) => {
+              {(tour.itinerary || []).map((d, i) => {
                 const open = openDay === i;
                 return (
                   <div key={i} style={{ display: "flex", gap: 18 }}>
                     <div className="col" style={{ alignItems: "center", flexShrink: 0 }}>
                       <span style={{ width: 38, height: 38, borderRadius: "50%", display: "grid", placeItems: "center", fontWeight: 800, fontSize: "0.82rem", background: open ? "var(--ocean)" : "var(--ocean-tint)", color: open ? "white" : "var(--ocean-deep)", transition: "all 0.3s", zIndex: 2 }}>{i + 1}</span>
-                      {i < tour.itinerary.length - 1 && <span style={{ width: 2, flex: 1, background: "var(--hairline)", minHeight: 20 }} />}
+                      {i < (tour.itinerary || []).length - 1 && <span style={{ width: 2, flex: 1, background: "var(--hairline)", minHeight: 20 }} />}
                     </div>
                     <button onClick={() => setOpenDay(open ? -1 : i)} style={{ flex: 1, textAlign: "left", paddingBottom: 16 }}>
                       <div className="row" style={{ justifyContent: "space-between", gap: 12 }}>
@@ -146,7 +146,7 @@ function TourPage({ go, route }) {
               <div>
                 <h4 className="row gap-2" style={{ fontSize: "1rem", marginBottom: 14, color: "var(--ocean-deep)" }}><Icon name="checkC" size={20} /> {t("detail_inc_yes")}</h4>
                 <div className="col gap-3">
-                  {tour.included.map((x) => (
+                  {(tour.included || tour.included_json || []).map((x) => (
                     <div key={x} className="row gap-3"><span style={{ color: "var(--ocean)", flexShrink: 0 }}><Icon name="check" size={18} strokeWidth={2.5} /></span><span style={{ fontSize: "0.94rem", color: "var(--ink-2)" }}>{x}</span></div>
                   ))}
                 </div>
@@ -154,7 +154,7 @@ function TourPage({ go, route }) {
               <div>
                 <h4 className="row gap-2" style={{ fontSize: "1rem", marginBottom: 14, color: "var(--ink-3)" }}><Icon name="x" size={18} /> {t("detail_inc_no")}</h4>
                 <div className="col gap-3">
-                  {tour.notIncluded.map((x) => (
+                  {(tour.notIncluded || tour.excluded_json || []).map((x) => (
                     <div key={x} className="row gap-3"><span style={{ color: "var(--ink-3)", flexShrink: 0 }}><Icon name="minus" size={18} /></span><span style={{ fontSize: "0.94rem", color: "var(--ink-3)" }}>{x}</span></div>
                   ))}
                 </div>
@@ -339,7 +339,12 @@ function InquiryForm({ tour }) {
 
 function RelatedTours({ go, current }) {
   const { t } = useI18n();
-  const related = TOURS.filter((tr) => tr.id !== current.id && tr.categories.some((c) => current.categories.includes(c))).slice(0, 3);
+  const curCats = current.categories || (current.category ? [current.category] : []);
+  const related = TOURS.filter((tr) => {
+    if (tr.id === current.id) return false;
+    const trCats = tr.categories || (tr.category ? [tr.category] : []);
+    return trCats.some((c) => curCats.includes(c));
+  }).slice(0, 3);
   if (!related.length) return null;
   return (
     <section style={{ background: "var(--bg-2)", padding: "70px 0" }}>

@@ -2,6 +2,9 @@
    Lumina Voyages — Booking / checkout flow
    ========================================================= */
 
+const _BOOKING_DEPARTURES = (typeof DEPARTURES !== "undefined" && DEPARTURES) ||
+  ["14 Jun 2026", "12 Jul 2026", "9 Aug 2026", "13 Sep 2026", "11 Oct 2026"];
+
 const ADDONS = [
   { id: "insurance", icon: "shield", name: "Travel protection", desc: "Comprehensive cover incl. cancellation & medical", price: 180, per: true, popular: true },
   { id: "upgrade",   icon: "bed",    name: "Premium room upgrade", desc: "Best available suites & villas throughout", price: 640, per: true },
@@ -14,7 +17,7 @@ function BookingPage({ go, route }) {
   const tour = getTour(route.id);
   const [step, setStep] = useState(0);
   const [travellers, setTravellers] = useState(route.travellers || 2);
-  const [departure, setDeparture] = useState(route.departure || DEPARTURES[0]);
+  const [departure, setDeparture] = useState(route.departure || _BOOKING_DEPARTURES[0]);
   const [lead, setLead] = useState({ first: "", last: "", email: "", phone: "", country: "" });
   const [addons, setAddons] = useState(["insurance"]);
   const [card, setCard] = useState({ num: "", name: "", exp: "", cvc: "" });
@@ -112,7 +115,7 @@ function StepDetails({ lead, setLead, travellers, setTravellers, departure, setD
       <div className="row gap-4" style={{ marginBottom: 24, flexWrap: "wrap" }}>
         <div className="field" style={{ flex: "1 1 200px" }}>
           <label>{t("book_depart")}</label>
-          <select className="select" value={departure} onChange={(e) => setDeparture(e.target.value)}>{DEPARTURES.map((d) => <option key={d}>{d}</option>)}</select>
+          <select className="select" value={departure} onChange={(e) => setDeparture(e.target.value)}>{_BOOKING_DEPARTURES.map((d) => <option key={d}>{d}</option>)}</select>
         </div>
         <div className="field" style={{ flex: "1 1 200px" }}>
           <label>{t("book_travellers")}</label>

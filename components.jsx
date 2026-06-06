@@ -169,8 +169,8 @@ function TourCard({ tour, onOpen, delay = 0 }) {
       <div style={{ position: "relative", overflow: "hidden" }}>
         <Scenic theme={tour.theme} label={tour.place} style={{ height: 230, transition: "transform 0.7s var(--ease-out)", transform: hover ? "scale(1.06)" : "scale(1)" }} />
         <div style={{ position: "absolute", top: 14, left: 14, display: "flex", gap: 8 }}>
-          {tour.oldPrice && <span className="badge badge-coral">{t("save_badge")} {fmtPrice(tour.oldPrice - tour.price)}</span>}
-          {tour.popular && !tour.oldPrice && <span className="badge badge-glass">{t("card_popular")}</span>}
+          {(tour.oldPrice || tour.old_price) && <span className="badge badge-coral">{t("save_badge")} {fmtPrice((tour.oldPrice || tour.old_price) - tour.price)}</span>}
+          {tour.popular && !(tour.oldPrice || tour.old_price) && <span className="badge badge-glass">{t("card_popular")}</span>}
         </div>
         <div style={{ position: "absolute", top: 12, right: 12 }}><SaveButton tourId={tour.id} /></div>
       </div>
@@ -187,7 +187,7 @@ function TourCard({ tour, onOpen, delay = 0 }) {
         <div className="row gap-3" style={{ margin: "14px 0 16px", color: "var(--ink-2)", fontSize: "0.84rem", fontWeight: 600, flexWrap: "wrap" }}>
           <span className="row gap-2"><Icon name="clock" size={15} /> {tour.days} {t("card_days")}</span>
           <span style={{ color: "var(--hairline-2)" }}>·</span>
-          <span className="row gap-2"><Icon name="users" size={15} /> {tour.groupMax <= 2 ? t("card_private") : t("card_max") + " " + tour.groupMax}</span>
+          <span className="row gap-2"><Icon name="users" size={15} /> {(tour.groupMax || tour.group_max || 12) <= 2 ? t("card_private") : t("card_max") + " " + (tour.groupMax || tour.group_max || 12)}</span>
           <span style={{ color: "var(--hairline-2)" }}>·</span>
           <span className="row gap-2"><Icon name="mountain" size={15} /> {tour.difficulty}</span>
         </div>
@@ -197,7 +197,7 @@ function TourCard({ tour, onOpen, delay = 0 }) {
             <span style={{ fontSize: "0.78rem", color: "var(--ink-3)" }}>{t("card_from")}</span>
             <div className="row gap-2" style={{ alignItems: "baseline" }}>
               <span style={{ fontSize: "1.4rem", fontWeight: 800, letterSpacing: "-0.03em" }}>{fmtPrice(tour.price)}</span>
-              {tour.oldPrice && <span style={{ color: "var(--ink-3)", textDecoration: "line-through", fontSize: "0.9rem" }}>{fmtPrice(tour.oldPrice)}</span>}
+              {(tour.oldPrice || tour.old_price) && <span style={{ color: "var(--ink-3)", textDecoration: "line-through", fontSize: "0.9rem" }}>{fmtPrice(tour.oldPrice || tour.old_price)}</span>}
               <span style={{ color: "var(--ink-3)", fontSize: "0.8rem" }}>{t("card_person")}</span>
             </div>
           </div>

@@ -19,8 +19,13 @@ function ListingPage({ go, route }) {
   const toggle = (arr, set, v) => set(arr.includes(v) ? arr.filter((x) => x !== v) : [...arr, v]);
 
   const filtered = TOURS.filter((tr) => {
-    if (cat !== "all" && !tr.categories.includes(cat)) return false;
-    if (q) { const hay = (tr.title + " " + tr.place + " " + tr.region + " " + tr.tags.join(" ")).toLowerCase(); if (!hay.includes(q.toLowerCase())) return false; }
+    const cats = tr.categories || (tr.category ? [tr.category] : []);
+    if (cat !== "all" && !cats.includes(cat)) return false;
+    if (q) {
+      const tags = Array.isArray(tr.tags) ? tr.tags : (Array.isArray(tr.tags_json) ? tr.tags_json : []);
+      const hay = (tr.title + " " + (tr.place || "") + " " + (tr.region || "") + " " + tags.join(" ")).toLowerCase();
+      if (!hay.includes(q.toLowerCase())) return false;
+    }
     if (tr.price > maxPrice) return false;
     if (durations.length) { const band = tr.days <= 6 ? "short" : tr.days <= 8 ? "mid" : "long"; if (!durations.includes(band)) return false; }
     if (difficulties.length && !difficulties.includes(tr.difficulty)) return false;
