@@ -816,6 +816,19 @@ function AdminUsers() {
   );
 }
 
+function SettingsField({ id, label, placeholder, hint, form, setForm, textarea }) {
+  const El = textarea ? "textarea" : "input";
+  return (
+    <div className="field">
+      <label>{label}</label>
+      <El className="input" placeholder={placeholder || ""} value={form[id] || ""} rows={textarea ? 3 : undefined}
+        onChange={e => setForm(p => ({ ...p, [id]: e.target.value }))}
+        style={textarea ? { resize: "vertical" } : undefined} />
+      {hint && <span style={{ fontSize: "0.76rem", color: "var(--ink-3)" }}>{hint}</span>}
+    </div>
+  );
+}
+
 /* ══════════════════════════════════════════════════════════════════
    SETTINGS
 ══════════════════════════════════════════════════════════════════ */
@@ -837,19 +850,13 @@ function AdminSettings() {
     setSaving(false);
   };
 
-  const SF = ({ id, label, placeholder, hint }) => (
-    <div className="field">
-      <label>{label}</label>
-      <input className="input" placeholder={placeholder || ""} value={form[id] || ""} onChange={e => setForm(p => ({ ...p, [id]: e.target.value }))} />
-      {hint && <span style={{ fontSize: "0.76rem", color: "var(--ink-3)" }}>{hint}</span>}
-    </div>
-  );
-
   if (!SB.ok) return <div style={{ background: "var(--coral-soft)", color: "var(--coral-deep)", borderRadius: "var(--r-md)", padding: 28, fontWeight: 600 }}>Configure Supabase to enable settings.</div>;
   if (loading) return <div style={{ textAlign: "center", padding: 48, color: "var(--ink-3)" }}>Loading settings…</div>;
 
+  const SF = (props) => <SettingsField {...props} form={form} setForm={setForm} />;
+
   return (
-    <div style={{ maxWidth: 680 }}>
+    <div style={{ maxWidth: 720 }}>
       <p style={{ color: "var(--ink-3)", marginBottom: 28, fontSize: "0.9rem" }}>These override built-in defaults. Leave blank to use defaults.</p>
       <div className="col gap-4">
         <div style={{ background: "var(--surface)", borderRadius: "var(--r-md)", padding: 28, border: "1px solid var(--hairline)" }}>
@@ -858,6 +865,17 @@ function AdminSettings() {
             <SF id="hero_image_url" label="Hero background image URL" placeholder="https://images.unsplash.com/..." hint="Any direct image URL" />
             <SF id="hero_heading"   label="Main heading" placeholder="Discover the World" />
             <SF id="hero_sub"       label="Subtitle"     placeholder="Extraordinary journeys, beautifully planned." />
+          </div>
+        </div>
+        <div style={{ background: "var(--surface)", borderRadius: "var(--r-md)", padding: 28, border: "1px solid var(--hairline)" }}>
+          <h3 style={{ fontSize: "1rem", marginBottom: 20, color: "var(--ink-2)" }}>Footer</h3>
+          <div className="col gap-4">
+            <SF id="footer_tagline"  label="Footer tagline" placeholder="Curated journeys to the world's most beautiful places…" textarea />
+            <SF id="footer_col2_h"   label="Column 2 heading" placeholder="Company" />
+            <SF id="footer_col2"     label="Column 2 links (one per line)" placeholder={"Our story\nTravel guides\nSustainability\nCareers\nPress"} textarea hint="One link label per line" />
+            <SF id="footer_col3_h"   label="Column 3 heading" placeholder="Support" />
+            <SF id="footer_col3"     label="Column 3 links (one per line)" placeholder={"Help centre\nBooking terms\nTravel insurance\nContact us\nFAQ"} textarea hint="One link label per line" />
+            <SF id="footer_copy"     label="Copyright text" placeholder="© 2026 Lumina Voyages. Crafted for the curious." />
           </div>
         </div>
         <div style={{ background: "var(--surface)", borderRadius: "var(--r-md)", padding: 28, border: "1px solid var(--hairline)" }}>

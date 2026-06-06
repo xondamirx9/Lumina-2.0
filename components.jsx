@@ -358,21 +358,37 @@ function Nav({ go, route, savedCount, user }) {
 
 function Footer({ go }) {
   const { t } = useI18n();
+  const [cfg, setCfg] = useState({});
+
+  useEffect(() => {
+    if (typeof SB !== "undefined" && SB.ok) {
+      SB.settings.getAll().then(all => setCfg(all || {})).catch(() => {});
+    }
+  }, []);
+
+  const col2Items = cfg.footer_col2 ? cfg.footer_col2.split("\n").filter(Boolean) : ["Our story", "Travel guides", "Sustainability", "Careers", "Press"];
+  const col3Items = cfg.footer_col3 ? cfg.footer_col3.split("\n").filter(Boolean) : ["Help centre", "Booking terms", "Travel insurance", "Contact us", "FAQ"];
+
   const cols = [
     { h: t("footer_journeys"), key: "f_j", items: [t("cat_luxury"), t("cat_adventure"), t("cat_group"), t("cat_cruise"), t("cat_cultural")] },
-    { h: t("footer_company") || "Company", key: "f_c", items: ["Our story", "Travel guides", "Sustainability", "Careers", "Press"] },
-    { h: t("footer_support") || "Support", key: "f_s", items: ["Help centre", "Booking terms", "Travel insurance", "Contact us", "FAQ"] },
+    { h: cfg.footer_col2_h || t("footer_company"), key: "f_c", items: col2Items },
+    { h: cfg.footer_col3_h || t("footer_support"), key: "f_s", items: col3Items },
   ];
+
   return (
     <footer style={{ background: "var(--footer-bg)", color: "oklch(0.72 0.018 230)", marginTop: 0, borderTop: "1px solid oklch(1 0 0 / 0.06)" }}>
       <div className="wrap" style={{ padding: "72px 28px 40px" }}>
         <div className="footer-grid" style={{ display: "grid", gridTemplateColumns: "1.5fr 1fr 1fr 1fr", gap: 48 }}>
           <div>
             <Logo light onClick={() => go({ view: "home" })} />
-            <p style={{ marginTop: 18, maxWidth: 280, lineHeight: 1.6, color: "oklch(0.68 0.02 230)" }}>{t("footer_tagline")}</p>
+            <p style={{ marginTop: 18, maxWidth: 280, lineHeight: 1.6, color: "oklch(0.68 0.02 230)" }}>{cfg.footer_tagline || t("footer_tagline")}</p>
             <div className="row gap-3" style={{ marginTop: 22 }}>
-              {["globe", "mail", "phone"].map((ic) => (
-                <span key={ic} style={{ width: 40, height: 40, borderRadius: "50%", display: "grid", placeItems: "center", background: "oklch(1 0 0 / 0.07)", color: "white" }}><Icon name={ic} size={18} /></span>
+              {[
+                { ic: "globe",  href: cfg.instagram ? "https://instagram.com/" + cfg.instagram.replace("@","") : "#" },
+                { ic: "mail",   href: cfg.contact_email ? "mailto:" + cfg.contact_email : "#" },
+                { ic: "phone",  href: cfg.whatsapp ? "https://wa.me/" + cfg.whatsapp.replace(/\D/g,"") : "#" },
+              ].map(({ ic, href }) => (
+                <a key={ic} href={href} target="_blank" rel="noopener" style={{ width: 40, height: 40, borderRadius: "50%", display: "grid", placeItems: "center", background: "oklch(1 0 0 / 0.07)", color: "white" }}><Icon name={ic} size={18} /></a>
               ))}
             </div>
           </div>
@@ -390,7 +406,7 @@ function Footer({ go }) {
         </div>
         <div className="hr" style={{ background: "oklch(1 0 0 / 0.1)", margin: "44px 0 24px" }} />
         <div className="row footer-bottom" style={{ justifyContent: "space-between", fontSize: "0.84rem", color: "oklch(0.7 0.02 230)" }}>
-          <span>{t("footer_copy")}</span>
+          <span>{cfg.footer_copy || t("footer_copy")}</span>
           <div className="row gap-6">
             <a href="#" onClick={(e) => e.preventDefault()}>{t("footer_privacy")}</a>
             <a href="#" onClick={(e) => e.preventDefault()}>{t("footer_terms")}</a>
