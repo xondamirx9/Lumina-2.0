@@ -214,12 +214,16 @@ function TourCard({ tour, onOpen, delay = 0 }) {
   );
 }
 
-const LOGO_URL = "https://ekudvabndtdxlgubymgg.supabase.co/storage/v1/object/public/tour-images/tours/ChatGPT%20Image%20Jun%207,%202026,%2002_45_02%20AM.png";
+const LOGO_URL       = "https://ekudvabndtdxlgubymgg.supabase.co/storage/v1/object/public/tour-images/tours/ChatGPT%20Image%20Jun%207,%202026,%2002_45_02%20AM.png";
+const LOGO_WHITE_URL = "https://ekudvabndtdxlgubymgg.supabase.co/storage/v1/object/public/tour-images/tours/LogoWhite.png";
 
 function Logo({ light, onClick, size = 110 }) {
+  const { theme } = useI18n();
+  const isDark = theme === "dark";
+  const src = (light || isDark) ? LOGO_WHITE_URL : LOGO_URL;
   return (
     <a href="#/" onClick={(e) => { e.preventDefault(); onClick && onClick(); }} style={{ alignItems: "center", textDecoration: "none", display: "inline-flex" }}>
-      <img src={LOGO_URL} alt="Lumina Voyages" style={{ height: size, width: "auto", objectFit: "contain" }} />
+      <img src={src} alt="Lumina Voyages" style={{ height: size, width: "auto", objectFit: "contain" }} />
     </a>
   );
 }
