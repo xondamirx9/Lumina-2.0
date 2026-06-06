@@ -219,18 +219,7 @@ const LOGO_URL = "https://ekudvabndtdxlgubymgg.supabase.co/storage/v1/object/pub
 function Logo({ light, onClick, size = 110 }) {
   return (
     <a href="#/" onClick={(e) => { e.preventDefault(); onClick && onClick(); }} style={{ alignItems: "center", textDecoration: "none", display: "inline-flex" }}>
-      <img
-        src={LOGO_URL}
-        alt="Lumina Voyages"
-        style={{
-          height: size,
-          width: "auto",
-          objectFit: "contain",
-          borderRadius: light ? 8 : 0,
-          background: light ? "oklch(1 0 0 / 0.10)" : "transparent",
-          padding: light ? "4px 8px" : 0,
-        }}
-      />
+      <img src={LOGO_URL} alt="Lumina Voyages" style={{ height: size, width: "auto", objectFit: "contain" }} />
     </a>
   );
 }
