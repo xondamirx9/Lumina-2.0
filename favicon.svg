@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <!-- Outer circle (open at bottom with wave) -->
+  <path d="M 50 8 A 42 42 0 1 1 18 72" fill="none" stroke="#0e6f9e" stroke-width="6" stroke-linecap="round"/>
+  <!-- Wave at bottom -->
+  <path d="M 22 76 Q 36 68 50 74 Q 64 80 78 72" fill="none" stroke="#0e6f9e" stroke-width="5" stroke-linecap="round"/>
+  <!-- 4-pointed star -->
+  <path d="M 50 14 L 56 44 L 86 50 L 56 56 L 50 86 L 44 56 L 14 50 L 44 44 Z" fill="url(#starGrad)"/>
+  <!-- Orange dot -->
+  <circle cx="78" cy="24" r="8" fill="#f4956a"/>
+  <defs>
+    <linearGradient id="starGrad" x1="50" y1="14" x2="50" y2="86" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#3ecfea"/>
+      <stop offset="100%" stop-color="#1a9e8a"/>
+    </linearGradient>
+  </defs>
+</svg>
