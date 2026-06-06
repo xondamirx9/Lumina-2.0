@@ -109,13 +109,17 @@ function Stars({ value, size = 15 }) {
 function useReveal() {
   const ref = useRef(null);
   useEffect(() => {
-    const els = ref.current ? ref.current.querySelectorAll(".reveal") : [];
-    if (!els.length) return;
+    if (!ref.current) return;
     const io = new IntersectionObserver((entries) => {
       entries.forEach((e) => { if (e.isIntersecting) { e.target.classList.add("in"); io.unobserve(e.target); } });
-    }, { threshold: 0.12, rootMargin: "0px 0px -40px 0px" });
-    els.forEach((el) => io.observe(el));
-    return () => io.disconnect();
+    }, { threshold: 0.08, rootMargin: "0px 0px -20px 0px" });
+    const observe = () => {
+      ref.current.querySelectorAll(".reveal:not(.in)").forEach((el) => io.observe(el));
+    };
+    observe();
+    const mo = new MutationObserver(observe);
+    mo.observe(ref.current, { childList: true, subtree: true });
+    return () => { io.disconnect(); mo.disconnect(); };
   }, []);
   return ref;
 }

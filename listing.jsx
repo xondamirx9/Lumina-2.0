@@ -14,7 +14,7 @@ function ListingPage({ go, route }) {
   const { t } = useI18n();
 
   useEffect(() => { setQ(route.q || ""); setCat(route.cat || "all"); }, [route.q, route.cat]);
-  useEffect(() => { setLoading(true); const tmr = setTimeout(() => setLoading(false), 480); return () => clearTimeout(tmr); }, [q, cat, sort, maxPrice, durations, difficulties]);
+  useEffect(() => { setLoading(true); const tmr = setTimeout(() => setLoading(false), 60); return () => clearTimeout(tmr); }, [q, cat, sort, maxPrice, durations, difficulties]);
 
   const toggle = (arr, set, v) => set(arr.includes(v) ? arr.filter((x) => x !== v) : [...arr, v]);
 
