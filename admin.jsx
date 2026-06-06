@@ -59,6 +59,7 @@ function StatusBadge({ status }) {
     confirmed:   { bg: "var(--ocean-tint)",   color: "var(--ocean-deep)",  label: "Confirmed" },
     completed:   { bg: "var(--teal-soft)",    color: "oklch(0.38 0.07 200)", label: "Completed" },
     cancelled:   { bg: "var(--coral-soft)",   color: "var(--coral-deep)",  label: "Cancelled" },
+    pending:     { bg: "var(--sand)",         color: "oklch(0.46 0.06 78)", label: "Pending" },
   };
   const s = map[status] || map.draft;
   return <span style={{ ...s, fontSize: "0.74rem", fontWeight: 700, padding: "4px 10px", borderRadius: "var(--r-pill)", textTransform: "capitalize", whiteSpace: "nowrap" }}>{s.label}</span>;
@@ -172,23 +173,57 @@ function AdminDashboard({ setTab }) {
   const [recentInquiries, setRecentInquiries] = useState([]);
   const [chart, setChart] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [err, setErr] = useState(null);
 
   useEffect(() => {
     if (!SB.ok) { setLoading(false); return; }
     Promise.all([
-      SB.tours.stats(),
-      SB.inquiries.counts(),
-      SB.inquiries.all().then(d => d.slice(0, 5)),
-      SB.bookings.monthlyCounts(),
+      SB.tours.stats().catch(() => null),
+      SB.inquiries.counts().catch(() => null),
+      SB.inquiries.all().then(d => d.slice(0, 5)).catch(() => []),
+      SB.bookings.monthlyCounts().catch(() => []),
     ]).then(([ts, is, ri, mc]) => {
-      setStats(ts); setInquiryStats(is); setRecentInquiries(ri); setChart(mc);
-    }).catch(() => {}).finally(() => setLoading(false));
+      if (!ts && !is) { setErr("Database error — run the RLS fix SQL in Supabase SQL Editor (see setup guide)."); }
+      setStats(ts); setInquiryStats(is); setRecentInquiries(ri || []); setChart(mc || []);
+    }).finally(() => setLoading(false));
   }, []);
 
   if (!SB.ok) return (
     <div style={{ background: "var(--coral-soft)", color: "var(--coral-deep)", borderRadius: "var(--r-md)", padding: 28, fontWeight: 600 }}>
       <Icon name="shield" size={20} style={{ display: "inline", marginRight: 8 }} />
       Supabase not configured. Add your credentials to <code>supabase.jsx</code>.
+    </div>
+  );
+
+  if (err) return (
+    <div style={{ background: "var(--coral-soft)", color: "var(--coral-deep)", borderRadius: "var(--r-md)", padding: 28 }}>
+      <div style={{ fontWeight: 700, marginBottom: 8 }}><Icon name="shield" size={18} style={{ display: "inline", marginRight: 8 }} />Database Error</div>
+      <p style={{ marginBottom: 16, lineHeight: 1.6 }}>{err}</p>
+      <details style={{ fontSize: "0.85rem" }}>
+        <summary style={{ cursor: "pointer", fontWeight: 600 }}>How to fix</summary>
+        <pre style={{ marginTop: 12, padding: 14, background: "oklch(0 0 0 / 0.06)", borderRadius: 8, overflowX: "auto", lineHeight: 1.5, fontSize: "0.8rem" }}>{`-- Run this in Supabase SQL Editor:
+CREATE OR REPLACE FUNCTION public.is_admin()
+RETURNS boolean LANGUAGE sql SECURITY DEFINER STABLE AS $$
+  SELECT COALESCE((SELECT is_admin FROM public.profiles WHERE id = auth.uid()), false);
+$$;
+
+DROP POLICY IF EXISTS "admin read profiles" ON public.profiles;
+DROP POLICY IF EXISTS "admin read all profiles" ON public.profiles;
+CREATE POLICY "profiles_select" ON public.profiles FOR SELECT
+  USING (auth.uid() = id OR public.is_admin());
+
+DROP POLICY IF EXISTS "admin tours" ON public.tours;
+CREATE POLICY "admin tours" ON public.tours FOR ALL USING (public.is_admin());
+
+DROP POLICY IF EXISTS "admin all bookings" ON public.bookings;
+CREATE POLICY "admin all bookings" ON public.bookings FOR ALL USING (public.is_admin());
+
+DROP POLICY IF EXISTS "admin settings" ON public.site_settings;
+CREATE POLICY "admin settings" ON public.site_settings FOR ALL USING (public.is_admin());
+
+DROP POLICY IF EXISTS "Admin manages inquiries" ON public.inquiries;
+CREATE POLICY "Admin manages inquiries" ON public.inquiries FOR ALL USING (public.is_admin());`}</pre>
+      </details>
     </div>
   );
 
@@ -274,7 +309,7 @@ function TourEditModal({ tour, onClose, onSaved }) {
   const isNew = !tour?.id;
   const toast = useToast();
 
-  const blank = { id: "tour-" + Date.now(), title: "", blurb: "", full_description: "", country: "", city: "", region: "", place: "", days: 7, price: "", discount_price: "", old_price: "", category: "luxury", difficulty: "Moderate", group_max: 12, season: "summer", image_url: "", gallery_urls: [], departure_dates: [], tags_json: [], included_json: [], excluded_json: [], featured: false, popular: false, is_hot: false, status: "active" };
+  const blank = { id: "tour-" + Date.now(), title: "", blurb: "", full_description: "", country: "", city: "", region: "", place: "", days: 7, price: "", discount_price: "", old_price: "", category: "luxury", theme: "ocean", difficulty: "Moderate", group_max: 12, group_min: 1, season: "year-round", image_url: "", gallery_urls: [], departure_dates: [], tags_json: [], included_json: [], excluded_json: [], featured: false, popular: false, is_hot: false, status: "active", rating: 5.0, reviews: 0 };
 
   const [form, setForm] = useState(tour ? { ...blank, ...tour, tags_json: tour.tags_json || (tour.tags ? tour.tags : []), included_json: tour.included_json || (tour.included ? tour.included : []), excluded_json: tour.excluded_json || (tour.notIncluded ? tour.notIncluded : []) } : blank);
   const [uploading, setUploading] = useState(false);
@@ -313,15 +348,18 @@ function TourEditModal({ tour, onClose, onSaved }) {
         id: form.id, title: form.title, blurb: form.blurb,
         full_description: form.full_description,
         country: form.country, city: form.city,
-        region: form.region || form.country,
-        place: form.city && form.country ? `${form.city}, ${form.country}` : form.place,
+        region: form.region || form.country || form.city || "",
+        place: form.city && form.country ? `${form.city}, ${form.country}` : (form.place || ""),
         days: Number(form.days) || 7,
         price: Number(form.price) || 0,
         discount_price: form.discount_price ? Number(form.discount_price) : null,
         old_price: form.old_price ? Number(form.old_price) : null,
-        category: form.category, difficulty: form.difficulty,
+        category: form.category || "luxury",
+        difficulty: form.difficulty || "Moderate",
         group_max: Number(form.group_max) || 12,
-        season: form.season, theme: form.theme || "ocean",
+        group_min: Number(form.group_min) || 1,
+        season: form.season || "year-round",
+        theme: form.theme || "ocean",
         image_url: form.image_url || null,
         gallery_urls: form.gallery_urls || [],
         departure_dates: form.departure_dates || [],
@@ -329,6 +367,8 @@ function TourEditModal({ tour, onClose, onSaved }) {
         included_json: form.included_json || [],
         excluded_json: form.excluded_json || [],
         featured: !!form.featured, popular: !!form.popular, is_hot: !!form.is_hot,
+        rating: Number(form.rating) || 5.0,
+        reviews: Number(form.reviews) || 0,
         status,
       });
       toast(isNew ? "Tour created!" : "Tour saved!", "check");
@@ -393,6 +433,16 @@ function TourEditModal({ tour, onClose, onSaved }) {
                     </select>
                   </F>
                   <F label="Max group size"><input className="input" type="number" value={form.group_max} onChange={setE("group_max")} min={1} /></F>
+                  <F label="Theme" hint="Controls card image style">
+                    <select className="select" value={form.theme || "ocean"} onChange={setE("theme")}>
+                      {["ocean","santorini","maldives","safari","alps","tokyo","desert","jungle","city","sunset","arctic","petra","machu","amazon","bali","venice","amalfi","cappadocia","norway","iceland"].map(t => <option key={t} value={t}>{t.charAt(0).toUpperCase()+t.slice(1)}</option>)}
+                    </select>
+                  </F>
+                  <F label="Best season">
+                    <select className="select" value={form.season || "year-round"} onChange={setE("season")}>
+                      {["year-round","spring","summer","autumn","winter","spring-autumn","summer-autumn"].map(s => <option key={s} value={s}>{s.replace(/-/g," ")}</option>)}
+                    </select>
+                  </F>
                 </div>
               </div>
             </div>
@@ -477,18 +527,10 @@ function TourEditModal({ tour, onClose, onSaved }) {
             <div style={{ background: "var(--surface)", borderRadius: "var(--r-md)", padding: 20, border: "1px solid var(--hairline)" }}>
               <h3 style={{ fontSize: "0.9rem", fontWeight: 700, color: "var(--ink-3)", marginBottom: 14, textTransform: "uppercase", letterSpacing: "0.08em" }}>Main Image</h3>
               <DropZone onFile={uploadMain} uploading={uploading} preview={form.image_url} />
-              {form.image_url && (
-                <div style={{ marginTop: 8 }}>
-                  <label style={{ fontSize: "0.76rem", color: "var(--ink-3)", display: "block", marginBottom: 4 }}>Or paste URL directly:</label>
-                  <input className="input" value={form.image_url} onChange={setE("image_url")} style={{ fontSize: "0.8rem" }} placeholder="https://..." />
-                </div>
-              )}
-              {!form.image_url && (
-                <div style={{ marginTop: 8 }}>
-                  <label style={{ fontSize: "0.76rem", color: "var(--ink-3)", display: "block", marginBottom: 4 }}>Or paste URL:</label>
-                  <input className="input" value={form.image_url} onChange={setE("image_url")} style={{ fontSize: "0.8rem" }} placeholder="https://images.unsplash.com/..." />
-                </div>
-              )}
+              <div style={{ marginTop: 8 }}>
+                <label style={{ fontSize: "0.76rem", color: "var(--ink-3)", display: "block", marginBottom: 4 }}>Or paste image URL:</label>
+                <input className="input" value={form.image_url || ""} onChange={setE("image_url")} style={{ fontSize: "0.8rem" }} placeholder="https://images.unsplash.com/..." />
+              </div>
             </div>
 
             {/* Gallery */}
@@ -522,16 +564,20 @@ function AdminTours() {
   const load = async () => {
     setLoading(true);
     try {
-      const sbTours = SB.ok ? await SB.tours.list() : [];
       const hardcoded = typeof TOURS !== "undefined" ? TOURS : [];
-      if (sbTours.length) {
-        const merged = hardcoded.map(t => { const sb = sbTours.find(s => s.id === t.id); return sb ? { ...t, ...sb } : t; });
-        const extra = sbTours.filter(s => !hardcoded.find(t => t.id === s.id));
-        setTours([...merged, ...extra]);
+      if (SB.ok) {
+        const sbTours = await SB.tours.list();
+        if (sbTours.length) {
+          const merged = hardcoded.map(t => { const sb = sbTours.find(s => s.id === t.id); return sb ? { ...t, ...sb } : t; });
+          const extra = sbTours.filter(s => !hardcoded.find(t => t.id === s.id));
+          setTours([...merged, ...extra]);
+        } else {
+          setTours(hardcoded.map(t => ({ ...t, status: "active", view_count: 0 })));
+        }
       } else {
         setTours(hardcoded.map(t => ({ ...t, status: "active", view_count: 0 })));
       }
-    } catch(e) { toast("Failed to load tours", "x"); }
+    } catch(e) { toast("Failed to load tours: " + e.message, "x"); }
     setLoading(false);
   };
 
@@ -852,8 +898,7 @@ function AdminPage({ go, store }) {
   const tabLabels = { dashboard: "Dashboard", tours: "Tour Management", inquiries: "Inquiries", bookings: "Bookings", users: "Users", settings: "Site Settings" };
 
   return (
-    <ToastProvider>
-      <div style={{ display: "flex", minHeight: "100vh", background: "var(--bg-2)" }}>
+    <div style={{ display: "flex", minHeight: "100vh", background: "var(--bg-2)" }}>
         {/* Sidebar */}
         <aside style={{ width: 230, background: "var(--footer-bg)", color: "white", display: "flex", flexDirection: "column", flexShrink: 0, position: "sticky", top: 0, height: "100vh", overflow: "hidden" }}>
           <div style={{ padding: "22px 18px 18px", borderBottom: "1px solid oklch(1 0 0 / 0.07)" }}>
@@ -896,7 +941,6 @@ function AdminPage({ go, store }) {
           </div>
         </main>
       </div>
-    </ToastProvider>
   );
 }
 
