@@ -19,11 +19,11 @@ function ListingPage({ go, route }) {
 
   useEffect(() => {
     if (typeof SB !== "undefined" && SB.ok) {
-      SB.tours.list("active").then((rows) => {
+      SB.tours.list().then((rows) => {
         if (rows && rows.length) {
           const staticIds = new Set(TOURS.map(t => t.id));
-          const newOnes = rows.filter(r => !staticIds.has(r.id));
-          setAllTours([...TOURS, ...newOnes]);
+          const newOnes = rows.filter(r => !staticIds.has(r.id) && r.status !== "hidden" && r.status !== "draft");
+          if (newOnes.length) setAllTours([...TOURS, ...newOnes]);
         }
       }).catch(() => {});
     }
