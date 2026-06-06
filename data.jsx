@@ -460,7 +460,21 @@ const LS_KEY_PREFIX = "lumina_store_v2_";
 
 const Store = (() => {
   const defaults = { saved: [], bookings: [], user: null, userReviews: {} };
-  let state = { ...defaults };
+  const LAST_USER_KEY = "lumina_last_user";
+  let authReady = false;
+
+  /* Pre-load last known user so Nav doesn't flash "logged out" on refresh */
+  let state = (() => {
+    try {
+      const lastUserId = localStorage.getItem(LAST_USER_KEY);
+      if (lastUserId) {
+        const raw = localStorage.getItem(LS_KEY_PREFIX + lastUserId);
+        if (raw) return { ...defaults, ...JSON.parse(raw) };
+      }
+    } catch(e) {}
+    return { ...defaults };
+  })();
+
   const listeners = new Set();
 
   /* key is per-user so two accounts never share data */
@@ -494,6 +508,8 @@ const Store = (() => {
         isAdmin: profile?.is_admin || false,
       }
     };
+    try { localStorage.setItem(LAST_USER_KEY, userId); } catch(e) {}
+    authReady = true;
     persist();
     /* Pull bookings from Supabase so any device sees the full history */
     try {
@@ -516,14 +532,21 @@ const Store = (() => {
       if (session?.user) {
         const profile = await SB.auth.profile(session.user.id).catch(() => null);
         _applySession(session, profile);
+      } else {
+        try { localStorage.removeItem(LAST_USER_KEY); } catch(e) {}
+        authReady = true;
+        state = { ...defaults };
+        listeners.forEach(fn => fn(state));
       }
-    }).catch(() => {});
+    }).catch(() => { authReady = true; listeners.forEach(fn => fn(state)); });
 
     SB.auth.onChange(async (event, session) => {
       if (event === "SIGNED_IN" && session?.user) {
         const profile = await SB.auth.profile(session.user.id).catch(() => null);
         _applySession(session, profile);
       } else if (event === "SIGNED_OUT") {
+        try { localStorage.removeItem(LAST_USER_KEY); } catch(e) {}
+        authReady = true;
         state = { ...defaults };
         persist();
       }
