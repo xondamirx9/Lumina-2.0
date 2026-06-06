@@ -259,8 +259,9 @@ function TripsTab({ store, go }) {
     </div>
   );
 
+  const tripsRef = useReveal();
   return (
-    <div className="col gap-4">
+    <div ref={tripsRef} className="col gap-4">
       {bookings.map((b, i) => {
         const tour = b.tours || (b.tourId ? getTour(b.tourId) : null);
         const statusColor = { Confirmed: "var(--ocean)", confirmed: "var(--ocean)", Cancelled: "var(--coral)", cancelled: "var(--coral)", completed: "var(--teal)" };
@@ -308,7 +309,8 @@ function SavedTab({ store, go }) {
       <button className="btn btn-primary" onClick={() => go({ view: "listing" })}>{t("acc_explore")}</button>
     </div>
   );
-  return <div className="grid-3" style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 22 }}>
+  const revealRef = useReveal();
+  return <div ref={revealRef} className="grid-3" style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 22 }}>
     {tours.map(tr => <TourCard key={tr.id} tour={tr} onOpen={id => go({ view: "tour", id })} />)}
   </div>;
 }
