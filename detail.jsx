@@ -18,10 +18,10 @@ function TourPage({ go, route }) {
 
   useEffect(() => {
     window.scrollTo(0, 0);
-    const local = getTour(route.id);
-    if (local) { setTour(local); return; }
     if (typeof SB !== "undefined" && SB.ok) {
-      SB.tours.get(route.id).then(setTour).catch(() => {});
+      SB.tours.get(route.id).then((t) => { if (t) setTour(t); else { const local = getTour(route.id); if (local) setTour(local); } }).catch(() => { const local = getTour(route.id); if (local) setTour(local); });
+    } else {
+      const local = getTour(route.id); if (local) setTour(local);
     }
   }, [route.id]);
   useEffect(() => { if (typeof SB !== "undefined" && SB.ok && tour?.id) SB.tours.trackView(tour.id).catch(() => {}); }, [tour?.id]);

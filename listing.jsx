@@ -21,9 +21,11 @@ function ListingPage({ go, route }) {
     if (typeof SB !== "undefined" && SB.ok) {
       SB.tours.list().then((rows) => {
         if (rows && rows.length) {
+          const sbMap = new Map(rows.filter(r => r.status !== "hidden" && r.status !== "draft").map(r => [r.id, r]));
           const staticIds = new Set(TOURS.map(t => t.id));
+          const merged = TOURS.map(t => sbMap.get(t.id) || t);
           const newOnes = rows.filter(r => !staticIds.has(r.id) && r.status !== "hidden" && r.status !== "draft");
-          if (newOnes.length) setAllTours([...TOURS, ...newOnes]);
+          setAllTours([...merged, ...newOnes]);
         }
       }).catch(() => {});
     }

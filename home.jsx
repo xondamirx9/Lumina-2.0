@@ -111,12 +111,13 @@ function FeaturedTours({ go }) {
 
   useEffect(() => {
     if (typeof SB !== "undefined" && SB.ok) {
-      SB.tours.list("active").then((rows) => {
+      SB.tours.list().then((rows) => {
         if (rows && rows.length) {
+          const sbMap = new Map(rows.map(r => [r.id, r]));
           const staticIds = new Set(TOURS.map(t => t.id));
-          const newOnes = rows.filter(r => !staticIds.has(r.id) && r.featured);
-          const merged = [...TOURS.filter(t => t.featured), ...newOnes].slice(0, 6);
-          if (newOnes.length) setTours(merged);
+          const mergedStatic = TOURS.filter(t => t.featured).map(t => sbMap.get(t.id) || t).filter(t => t.status !== "hidden" && t.status !== "draft");
+          const newFeatured = rows.filter(r => !staticIds.has(r.id) && r.featured && r.status !== "hidden" && r.status !== "draft");
+          setTours([...mergedStatic, ...newFeatured].slice(0, 6));
         }
       }).catch(() => {});
     }
