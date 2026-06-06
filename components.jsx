@@ -47,6 +47,7 @@ const I = {
   quote:    "M7 7H4a1 1 0 00-1 1v4a1 1 0 001 1h2v3a1 1 0 001 1 1 1 0 001-1V8a1 1 0 00-1-1zm10 0h-3a1 1 0 00-1 1v4a1 1 0 001 1h2v3a1 1 0 002 0V8a1 1 0 00-1-1z",
   sun:      "M12 3v2M12 19v2M4.2 4.2l1.4 1.4M18.4 18.4l1.4 1.4M3 12h2M19 12h2M4.2 19.8l1.4-1.4M18.4 5.6l1.4-1.4M12 8a4 4 0 100 8 4 4 0 000-8z",
   moon:     "M21 12.8A9 9 0 1111.2 3a7 7 0 009.8 9.8z",
+  menu:     "M3 12h18M3 6h18M3 18h18",
 };
 
 function Icon({ name, size = 20, fill = "none", style, strokeWidth = 1.9, className }) {
@@ -252,8 +253,50 @@ function LangThemeBar({ solid }) {
   );
 }
 
+function MobileNavDrawer({ go, links, user, savedCount, onClose }) {
+  const { t } = useI18n();
+  // Close on Escape
+  useEffect(() => {
+    const onKey = (e) => { if (e.key === "Escape") onClose(); };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, []);
+  return (
+    <div className="mobile-nav-drawer" role="dialog" aria-modal="true" aria-label="Navigation menu">
+      <div className="mobile-nav-overlay" onClick={onClose} />
+      <div className="mobile-nav-panel">
+        <div style={{ padding: "22px 22px 16px", borderBottom: "1px solid var(--hairline)", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+          <Logo onClick={() => { go({ view: "home" }); onClose(); }} />
+          <button onClick={onClose} aria-label="Close menu" style={{ color: "var(--ink-2)", padding: 6 }}><Icon name="x" size={22} /></button>
+        </div>
+        <nav style={{ padding: "18px 16px", flex: 1 }}>
+          {links.map((l, i) => (
+            <button key={i} onClick={() => { go(l.to); onClose(); }}
+              style={{ display: "flex", width: "100%", textAlign: "left", padding: "14px 16px", borderRadius: "var(--r-sm)", fontWeight: 700, fontSize: "1rem", color: "var(--ink)", marginBottom: 4, transition: "background 0.2s" }}
+              onMouseEnter={(e) => e.currentTarget.style.background = "var(--surface-2)"}
+              onMouseLeave={(e) => e.currentTarget.style.background = "transparent"}>{l.label}</button>
+          ))}
+          <div style={{ height: 1, background: "var(--hairline)", margin: "10px 0 14px" }} />
+          <button onClick={() => { go({ view: "account", tab: "saved" }); onClose(); }}
+            style={{ display: "flex", alignItems: "center", gap: 12, width: "100%", textAlign: "left", padding: "14px 16px", borderRadius: "var(--r-sm)", fontWeight: 700, fontSize: "1rem", color: "var(--ink)", transition: "background 0.2s" }}
+            onMouseEnter={(e) => e.currentTarget.style.background = "var(--surface-2)"}
+            onMouseLeave={(e) => e.currentTarget.style.background = "transparent"}>
+            <Icon name="heart" size={20} style={{ color: savedCount ? "var(--coral)" : "var(--ink-3)" }} />
+            Saved trips {savedCount > 0 && <span style={{ background: "var(--coral)", color: "white", fontSize: "0.72rem", fontWeight: 800, minWidth: 20, height: 20, borderRadius: 10, display: "grid", placeItems: "center", padding: "0 5px" }}>{savedCount}</span>}
+          </button>
+          <button onClick={() => { go({ view: "account" }); onClose(); }}
+            className="btn btn-primary btn-block" style={{ marginTop: 18, fontSize: "1rem" }}>
+            <Icon name="user" size={18} /> {user ? user.name.split(" ")[0] : t("nav_sign_in")}
+          </button>
+        </nav>
+      </div>
+    </div>
+  );
+}
+
 function Nav({ go, route, savedCount, user }) {
   const [scrolled, setScrolled] = useState(false);
+  const [mobileOpen, setMobileOpen] = useState(false);
   const onHome = route.view === "home";
   const { t } = useI18n();
   useEffect(() => {
@@ -262,6 +305,8 @@ function Nav({ go, route, savedCount, user }) {
     window.addEventListener("scroll", onScroll, { passive: true });
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
+  // Close mobile nav when route changes
+  useEffect(() => { setMobileOpen(false); }, [route.view, route.id]);
   const solid = scrolled || !onHome;
   const links = [
     { label: t("nav_destinations"), to: { view: "listing" } },
@@ -269,31 +314,41 @@ function Nav({ go, route, savedCount, user }) {
     { label: t("nav_about"), to: { view: "home", hash: "why" } },
   ];
   return (
-    <header style={{ position: "fixed", top: 0, left: 0, right: 0, zIndex: 100, transition: "all 0.5s var(--ease)", background: solid ? "var(--nav-bg)" : "transparent", backdropFilter: solid ? "blur(18px) saturate(1.5)" : "none", boxShadow: solid ? "0 1px 0 var(--hairline)" : "none" }}>
-      <div className="wrap row" style={{ justifyContent: "space-between", height: 74 }}>
-        <Logo light={!solid} onClick={() => go({ view: "home" })} />
-        <nav className="row gap-8 desk-nav">
-          {links.map((l, i) => (
-            <a key={i} href="#" onClick={(e) => { e.preventDefault(); go(l.to); }}
-              style={{ fontWeight: 600, fontSize: "0.94rem", color: solid ? "var(--ink-2)" : "oklch(1 0 0 / 0.92)", transition: "color 0.3s" }}
-              onMouseEnter={(e) => e.currentTarget.style.color = solid ? "var(--ocean)" : "white"}
-              onMouseLeave={(e) => e.currentTarget.style.color = solid ? "var(--ink-2)" : "oklch(1 0 0 / 0.92)"}>{l.label}</a>
-          ))}
-        </nav>
-        <div className="row gap-3">
-          <LangThemeBar solid={solid} />
-          <button className="row gap-2" onClick={() => go({ view: "account", tab: "saved" })}
-            style={{ position: "relative", color: solid ? "var(--ink-2)" : "white", fontWeight: 600, fontSize: "0.9rem", padding: "6px" }}>
-            <Icon name="heart" size={20} fill={savedCount ? "current" : "none"} style={{ color: savedCount ? "var(--coral)" : "inherit" }} />
-            {savedCount > 0 && <span style={{ position: "absolute", top: -2, right: -4, background: "var(--coral)", color: "white", fontSize: "0.62rem", fontWeight: 800, minWidth: 16, height: 16, borderRadius: 8, display: "grid", placeItems: "center", padding: "0 4px" }}>{savedCount}</span>}
-          </button>
-          <button className={"btn " + (solid ? "btn-ghost" : "")} onClick={() => go({ view: "account" })}
-            style={!solid ? { background: "oklch(1 0 0 / 0.16)", color: "white", backdropFilter: "blur(8px)" } : {}}>
-            <Icon name="user" size={18} /> {user ? user.name.split(" ")[0] : t("nav_sign_in")}
-          </button>
+    <>
+      <header style={{ position: "fixed", top: 0, left: 0, right: 0, zIndex: 100, transition: "all 0.5s var(--ease)", background: solid ? "var(--nav-bg)" : "transparent", backdropFilter: solid ? "blur(18px) saturate(1.5)" : "none", boxShadow: solid ? "0 1px 0 var(--hairline)" : "none" }}>
+        <div className="wrap row" style={{ justifyContent: "space-between", height: 74 }}>
+          <Logo light={!solid} onClick={() => go({ view: "home" })} />
+          <nav className="row gap-8 desk-nav">
+            {links.map((l, i) => (
+              <a key={i} href="#" onClick={(e) => { e.preventDefault(); go(l.to); }}
+                style={{ fontWeight: 600, fontSize: "0.94rem", color: solid ? "var(--ink-2)" : "oklch(1 0 0 / 0.92)", transition: "color 0.3s" }}
+                onMouseEnter={(e) => e.currentTarget.style.color = solid ? "var(--ocean)" : "white"}
+                onMouseLeave={(e) => e.currentTarget.style.color = solid ? "var(--ink-2)" : "oklch(1 0 0 / 0.92)"}>{l.label}</a>
+            ))}
+          </nav>
+          <div className="row gap-3">
+            <LangThemeBar solid={solid} />
+            <button className="row gap-2" onClick={() => go({ view: "account", tab: "saved" })}
+              aria-label={"Saved trips" + (savedCount ? ": " + savedCount : "")}
+              style={{ position: "relative", color: solid ? "var(--ink-2)" : "white", fontWeight: 600, fontSize: "0.9rem", padding: "6px" }}>
+              <Icon name="heart" size={20} fill={savedCount ? "current" : "none"} style={{ color: savedCount ? "var(--coral)" : "inherit" }} />
+              {savedCount > 0 && <span style={{ position: "absolute", top: -2, right: -4, background: "var(--coral)", color: "white", fontSize: "0.62rem", fontWeight: 800, minWidth: 16, height: 16, borderRadius: 8, display: "grid", placeItems: "center", padding: "0 4px" }} aria-hidden="true">{savedCount}</span>}
+            </button>
+            <button className={"btn desk-nav " + (solid ? "btn-ghost" : "")} onClick={() => go({ view: "account" })}
+              style={!solid ? { background: "oklch(1 0 0 / 0.16)", color: "white", backdropFilter: "blur(8px)" } : {}}>
+              <Icon name="user" size={18} /> {user ? user.name.split(" ")[0] : t("nav_sign_in")}
+            </button>
+            {/* Hamburger — mobile only */}
+            <button className="hamburger-btn" aria-label="Open menu" aria-expanded={mobileOpen}
+              onClick={() => setMobileOpen(true)}
+              style={{ color: solid ? "var(--ink-2)" : "white", background: solid ? "var(--surface-2)" : "oklch(1 0 0 / 0.14)", backdropFilter: "blur(8px)" }}>
+              <Icon name="menu" size={22} />
+            </button>
+          </div>
         </div>
-      </div>
-    </header>
+      </header>
+      {mobileOpen && <MobileNavDrawer go={go} links={links} user={user} savedCount={savedCount} onClose={() => setMobileOpen(false)} />}
+    </>
   );
 }
 

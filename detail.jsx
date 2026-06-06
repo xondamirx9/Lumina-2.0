@@ -81,7 +81,7 @@ function TourPage({ go, route }) {
         </div>
       </div>
 
-      <div style={{ position: "sticky", top: 74, zIndex: 40, background: "oklch(1 0 0 / 0.85)", backdropFilter: "blur(12px)", borderBottom: "1px solid var(--hairline)", marginTop: 28 }}>
+      <div className="sticky-tabs" style={{ position: "sticky", top: 74, zIndex: 40, backdropFilter: "blur(12px)", borderBottom: "1px solid var(--hairline)", marginTop: 28 }}>
         <div className="wrap row gap-6" style={{ height: 58 }}>
           {tabs.map(([id, l]) => (
             <button key={id} onClick={() => scrollTo(id)}

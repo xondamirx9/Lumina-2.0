@@ -69,7 +69,7 @@ const TRANSLATIONS = {
     book_encrypted:"Your payment is encrypted and protected. This is a demo — no real card is charged.",
     book_continue:"Continue", book_confirm:"Confirm & pay",
     book_trip:"Trip", book_total:"Total", book_due:"Due today (20%)", book_taxes:"Taxes & fees",
-    book_recommended:"Recommended", book_on_request:"On request",
+    book_recommended:"Recommended", book_on_request:"On request", book_of:"of",
     conf_title:"Booking confirmed", conf_going:"You're going to", conf_email_sent:"A confirmation is on its way to",
     conf_ref:"Reference", conf_departs:"Departs", conf_travellers:"Travellers",
     conf_paid:"Paid today", conf_view:"View my trips", conf_browse:"Browse more journeys",
