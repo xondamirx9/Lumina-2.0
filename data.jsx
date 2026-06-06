@@ -564,7 +564,7 @@ const Store = (() => {
       state.bookings = state.bookings.map((b) => b.id === id ? { ...b, status: "Cancelled" } : b);
       persist();
     },
-    signIn(user) { state.user = user; persist(); },
+    signIn(user) { state.user = { isAdmin: false, ...state.user, ...user }; persist(); },
     signOut() { state.user = null; persist(); },
     addReview(tourId, review) {
       const list = state.userReviews[tourId] || [];

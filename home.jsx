@@ -107,7 +107,16 @@ function CategoryStrip({ go }) {
 
 function FeaturedTours({ go }) {
   const { t } = useI18n();
-  const featured = TOURS.filter((tr) => tr.featured).slice(0, 6);
+  const [tours, setTours] = useState(null);
+
+  useEffect(() => {
+    // Short timeout to allow Supabase to potentially override, then fall back to static
+    const tmr = setTimeout(() => {
+      setTours(TOURS.filter((tr) => tr.featured).slice(0, 6));
+    }, 300);
+    return () => clearTimeout(tmr);
+  }, []);
+
   return (
     <section className="wrap" style={{ padding: "60px 28px" }}>
       <div className="row reveal" style={{ justifyContent: "space-between", alignItems: "flex-end", marginBottom: 36, flexWrap: "wrap", gap: 16 }}>
@@ -117,9 +126,15 @@ function FeaturedTours({ go }) {
         </div>
         <button className="btn btn-ghost" onClick={() => go({ view: "listing" })}>{t("featured_browse")} <Icon name="arrow" size={18} /></button>
       </div>
-      <div className="grid-3" style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 26 }}>
-        {featured.map((tr, i) => <TourCard key={tr.id} tour={tr} onOpen={(id) => go({ view: "tour", id })} delay={(i % 3) * 0.08} />)}
-      </div>
+      {!tours ? (
+        <div className="grid-3" style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 26 }}>
+          {[0,1,2].map((i) => <SkeletonCard key={i} />)}
+        </div>
+      ) : (
+        <div className="grid-3" style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 26 }}>
+          {tours.map((tr, i) => <TourCard key={tr.id} tour={tr} onOpen={(id) => go({ view: "tour", id })} delay={(i % 3) * 0.08} />)}
+        </div>
+      )}
     </section>
   );
 }

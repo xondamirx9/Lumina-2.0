@@ -20,6 +20,7 @@ function BookingPage({ go, route }) {
   const [card, setCard] = useState({ num: "", name: "", exp: "", cvc: "" });
   const [pay, setPay] = useState("card");
   const [booking, setBooking] = useState(null);
+  const [confirming, setConfirming] = useState(false);
   const toast = useToast();
   const { t } = useI18n();
 
@@ -40,11 +41,16 @@ function BookingPage({ go, route }) {
   const validPay = pay !== "card" || (card.num.replace(/\s/g, "").length >= 15 && card.name && card.exp && card.cvc.length >= 3);
 
   const confirm = () => {
-    if (!validPay) { toast(t("book_pay_h"), "x"); return; }
-    const b = Store.addBooking({ tourId: tour.id, tourTitle: tour.title, place: tour.place, theme: tour.theme, departure, travellers, total, deposit, lead, addons });
-    if (!Store.get().user) Store.signIn({ name: lead.first + " " + lead.last, email: lead.email });
-    setBooking(b);
-    setStep(3);
+    if (!validPay) { toast("Please complete your payment details", "x"); return; }
+    setConfirming(true);
+    // Simulate brief processing delay for UX
+    setTimeout(() => {
+      const b = Store.addBooking({ tourId: tour.id, tourTitle: tour.title, place: tour.place, theme: tour.theme, departure, travellers, total, deposit, lead, addons });
+      if (!Store.get().user) Store.signIn({ name: lead.first + " " + lead.last, email: lead.email });
+      setBooking(b);
+      setConfirming(false);
+      setStep(3);
+    }, 800);
   };
 
   return (
@@ -84,7 +90,7 @@ function BookingPage({ go, route }) {
                     {t("book_continue")} <Icon name="arrow" size={18} />
                   </button>
                 ) : (
-                  <button className="btn btn-primary btn-lg" onClick={confirm}><Icon name="lock" size={17} /> {t("book_confirm")} {fmtPrice(deposit)}</button>
+                  <button className="btn btn-primary btn-lg" onClick={confirm} disabled={confirming}>{confirming ? <><Icon name="clock" size={17} /> Processing…</> : <><Icon name="lock" size={17} /> {t("book_confirm")} {fmtPrice(deposit)}</>}</button>
                 )}
               </div>
             </div>

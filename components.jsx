@@ -87,7 +87,7 @@ function Scenic({ theme, imageUrl, label, className = "", style, children, round
       <img src={src} alt={label || theme} loading="lazy" className="ph-img"
         style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", objectPosition: "center" }} />
       {label && (
-        <span style={{ position: "absolute", left: 12, bottom: 11, fontFamily: "ui-monospace,'SF Mono',Menlo,monospace", fontSize: 10, letterSpacing: "0.03em", color: "oklch(1 0 0 / 0.92)", background: "oklch(0.2 0.03 235 / 0.42)", backdropFilter: "blur(3px)", padding: "3px 8px", borderRadius: 6, zIndex: 3, pointerEvents: "none" }}>{label}</span>
+        <span style={{ position: "absolute", left: 12, bottom: 11, fontFamily: "ui-monospace,'SF Mono',Menlo,monospace", fontSize: 10, letterSpacing: "0.03em", color: "white", background: "oklch(0.2 0.03 235 / 0.55)", backdropFilter: "blur(3px)", padding: "3px 8px", borderRadius: 6, zIndex: 3, pointerEvents: "none" }}>{label}</span>
       )}
       {children}
     </div>
@@ -116,7 +116,7 @@ function useReveal() {
     }, { threshold: 0.12, rootMargin: "0px 0px -40px 0px" });
     els.forEach((el) => io.observe(el));
     return () => io.disconnect();
-  });
+  }, []);
   return ref;
 }
 
@@ -153,7 +153,7 @@ function SaveButton({ tourId, big }) {
   };
   return (
     <button className="save-btn" onClick={onClick} aria-label="Save trip"
-      style={{ width: big ? 46 : 38, height: big ? 46 : 38, borderRadius: "50%", display: "grid", placeItems: "center", background: "oklch(1 0 0 / 0.9)", backdropFilter: "blur(8px)", boxShadow: "var(--sh-sm)", color: saved ? "var(--coral)" : "var(--ink-2)", transition: "transform 0.4s var(--spring), color 0.3s", transform: saved ? "scale(1.04)" : "scale(1)" }}>
+      style={{ width: big ? 46 : 38, height: big ? 46 : 38, borderRadius: "50%", display: "grid", placeItems: "center", background: "var(--surface)", backdropFilter: "blur(8px)", boxShadow: "var(--sh-sm)", color: saved ? "var(--coral)" : "var(--ink-2)", transition: "transform 0.4s var(--spring), color 0.3s", transform: saved ? "scale(1.04)" : "scale(1)" }}>
       <Icon name="heart" size={big ? 22 : 18} fill={saved ? "current" : "none"} strokeWidth={2} />
     </button>
   );
@@ -398,4 +398,51 @@ function Footer({ go }) {
   );
 }
 
-Object.assign(window, { Icon, Scenic, Stars, useReveal, ToastProvider, useToast, SaveButton, TourCard, Logo, Nav, Footer });
+/* ---- Error Boundary ---- */
+class ErrorBoundary extends React.Component {
+  constructor(props) { super(props); this.state = { error: null }; }
+  static getDerivedStateFromError(error) { return { error }; }
+  componentDidCatch(error, info) { console.error("Lumina error:", error, info); }
+  render() {
+    if (this.state.error) {
+      return (
+        <div style={{ padding: "60px 28px", textAlign: "center", maxWidth: 520, margin: "0 auto" }}>
+          <span style={{ width: 64, height: 64, borderRadius: "50%", background: "var(--coral-soft)", color: "var(--coral-deep)", display: "grid", placeItems: "center", margin: "0 auto 20px" }}>
+            <Icon name="x" size={28} />
+          </span>
+          <h2 style={{ marginBottom: 10 }}>Something went wrong</h2>
+          <p style={{ color: "var(--ink-2)", marginBottom: 24, lineHeight: 1.6 }}>We hit an unexpected error. Please refresh the page to continue.</p>
+          <button className="btn btn-primary" onClick={() => { this.setState({ error: null }); window.location.reload(); }}>
+            Refresh page
+          </button>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
+
+/* ---- Skeleton loading components ---- */
+function SkeletonCard() {
+  return (
+    <div className="card" style={{ boxShadow: "var(--sh-sm)" }}>
+      <div className="skel" style={{ height: 220 }} />
+      <div style={{ padding: "18px 20px 20px" }}>
+        <div className="skel" style={{ height: 14, width: "55%", borderRadius: 6, marginBottom: 10 }} />
+        <div className="skel" style={{ height: 22, width: "85%", borderRadius: 6, marginBottom: 10 }} />
+        <div className="skel" style={{ height: 14, width: "100%", borderRadius: 6, marginBottom: 6 }} />
+        <div className="skel" style={{ height: 14, width: "70%", borderRadius: 6, marginBottom: 18 }} />
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+          <div className="skel" style={{ height: 28, width: 90, borderRadius: 6 }} />
+          <div className="skel" style={{ height: 34, width: 80, borderRadius: 20 }} />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function SkeletonText({ width = "100%", height = 16, style }) {
+  return <div className="skel" style={{ height, width, borderRadius: 6, ...style }} />;
+}
+
+Object.assign(window, { Icon, Scenic, Stars, useReveal, ToastProvider, useToast, SaveButton, TourCard, Logo, Nav, Footer, ErrorBoundary, SkeletonCard, SkeletonText });

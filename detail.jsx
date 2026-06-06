@@ -10,7 +10,11 @@ function TourPage({ go, route }) {
   const [tab, setTab] = useState("overview");
   const [openDay, setOpenDay] = useState(0);
   const [travellers, setTravellers] = useState(2);
-  const [departure, setDeparture] = useState(DEPARTURES[0]);
+  // Use departure_dates from Supabase if available, fall back to static DEPARTURES
+  const departureDates = (tour?.departure_dates && tour.departure_dates.length > 0)
+    ? tour.departure_dates
+    : DEPARTURES;
+  const [departure, setDeparture] = useState(departureDates[0]);
   const reviews = reviewsFor(tour ? tour.id : "");
   const [showReview, setShowReview] = useState(false);
   const { t } = useI18n();
@@ -81,7 +85,7 @@ function TourPage({ go, route }) {
         </div>
       </div>
 
-      <div className="sticky-tabs" style={{ position: "sticky", top: 74, zIndex: 40, backdropFilter: "blur(12px)", borderBottom: "1px solid var(--hairline)", marginTop: 28 }}>
+      <div className="sticky-tabs" style={{ position: "sticky", top: 74, zIndex: 40, background: "var(--nav-bg)", backdropFilter: "blur(12px)", borderBottom: "1px solid var(--hairline)", marginTop: 28 }}>
         <div className="wrap row gap-6" style={{ height: 58 }}>
           {tabs.map(([id, l]) => (
             <button key={id} onClick={() => scrollTo(id)}
@@ -218,7 +222,7 @@ function TourPage({ go, route }) {
             <div className="field" style={{ marginBottom: 14 }}>
               <label>{t("detail_depart")}</label>
               <select className="select" value={departure} onChange={(e) => setDeparture(e.target.value)}>
-                {DEPARTURES.map((d) => <option key={d}>{d}</option>)}
+                {departureDates.map((d) => <option key={d}>{d}</option>)}
               </select>
             </div>
             <div className="field" style={{ marginBottom: 18 }}>
