@@ -214,18 +214,23 @@ function TourCard({ tour, onOpen, delay = 0 }) {
   );
 }
 
-function Logo({ light, onClick }) {
+const LOGO_URL = "https://ekudvabndtdxlgubymgg.supabase.co/storage/v1/object/public/tour-images/tours/ChatGPT%20Image%20Jun%207,%202026,%2002_45_02%20AM.png";
+
+function Logo({ light, onClick, size = 44 }) {
   return (
-    <a href="#/" onClick={(e) => { e.preventDefault(); onClick && onClick(); }} className="row gap-3" style={{ alignItems: "center" }}>
-      <span style={{ position: "relative", width: 34, height: 34, display: "grid", placeItems: "center" }}>
-        <span style={{ position: "absolute", inset: 0, borderRadius: "50%", background: "linear-gradient(135deg, var(--ocean-bright), var(--teal))" }} />
-        <span style={{ position: "absolute", width: 11, height: 11, borderRadius: "50%", background: light ? "white" : "var(--bg)", top: 6, right: 6 }} />
-        <Icon name="compass" size={19} style={{ position: "relative", color: "white" }} strokeWidth={2} />
-      </span>
-      <span style={{ display: "flex", flexDirection: "column", lineHeight: 1 }}>
-        <span className="display" style={{ fontSize: "1.5rem", color: light ? "white" : "var(--ink)" }}>Lumina</span>
-        <span style={{ fontSize: "0.6rem", fontWeight: 700, letterSpacing: "0.34em", textTransform: "uppercase", color: light ? "oklch(1 0 0 / 0.7)" : "var(--ocean)", marginTop: 2 }}>Voyages</span>
-      </span>
+    <a href="#/" onClick={(e) => { e.preventDefault(); onClick && onClick(); }} style={{ alignItems: "center", textDecoration: "none", display: "inline-flex" }}>
+      <img
+        src={LOGO_URL}
+        alt="Lumina Voyages"
+        style={{
+          height: size,
+          width: "auto",
+          objectFit: "contain",
+          borderRadius: light ? 8 : 0,
+          background: light ? "oklch(1 0 0 / 0.10)" : "transparent",
+          padding: light ? "4px 8px" : 0,
+        }}
+      />
     </a>
   );
 }
