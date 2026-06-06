@@ -111,7 +111,14 @@ function FeaturedTours({ go }) {
 
   useEffect(() => {
     if (typeof SB !== "undefined" && SB.ok) {
-      SB.tours.list({ featured: true, limit: 6 }).then((rows) => { if (rows && rows.length) setTours(rows); }).catch(() => {});
+      SB.tours.list("active").then((rows) => {
+        if (rows && rows.length) {
+          const staticIds = new Set(TOURS.map(t => t.id));
+          const newOnes = rows.filter(r => !staticIds.has(r.id) && r.featured);
+          const merged = [...TOURS.filter(t => t.featured), ...newOnes].slice(0, 6);
+          if (newOnes.length) setTours(merged);
+        }
+      }).catch(() => {});
     }
   }, []);
 

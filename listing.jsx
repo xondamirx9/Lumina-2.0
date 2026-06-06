@@ -10,15 +10,28 @@ function ListingPage({ go, route }) {
   const [durations, setDurations] = useState([]);
   const [difficulties, setDifficulties] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [allTours, setAllTours] = useState(TOURS);
   const ref = useReveal();
   const { t } = useI18n();
 
   useEffect(() => { setQ(route.q || ""); setCat(route.cat || "all"); }, [route.q, route.cat]);
   useEffect(() => { setLoading(true); const tmr = setTimeout(() => setLoading(false), 60); return () => clearTimeout(tmr); }, [q, cat, sort, maxPrice, durations, difficulties]);
 
+  useEffect(() => {
+    if (typeof SB !== "undefined" && SB.ok) {
+      SB.tours.list("active").then((rows) => {
+        if (rows && rows.length) {
+          const staticIds = new Set(TOURS.map(t => t.id));
+          const newOnes = rows.filter(r => !staticIds.has(r.id));
+          setAllTours([...TOURS, ...newOnes]);
+        }
+      }).catch(() => {});
+    }
+  }, []);
+
   const toggle = (arr, set, v) => set(arr.includes(v) ? arr.filter((x) => x !== v) : [...arr, v]);
 
-  const filtered = TOURS.filter((tr) => {
+  const filtered = allTours.filter((tr) => {
     const cats = tr.categories || (tr.category ? [tr.category] : []);
     if (cat !== "all" && !cats.includes(cat)) return false;
     if (q) {

@@ -333,7 +333,12 @@ function TourEditModal({ tour, onClose, onSaved }) {
   const uploadMain = async (file) => {
     setUploading(true);
     try { const url = await SB.storage.upload(file); set("image_url")(url); toast("Image uploaded!", "check"); }
-    catch(e) { toast("Upload failed: " + e.message, "x"); }
+    catch(e) {
+      const msg = e.message && e.message.includes("Bucket not found")
+        ? 'Storage bucket missing. Go to Supabase → Storage → New bucket → name it "tour-images" (public).'
+        : "Upload failed: " + e.message;
+      toast(msg, "x");
+    }
     setUploading(false);
   };
 
@@ -343,7 +348,12 @@ function TourEditModal({ tour, onClose, onSaved }) {
       const url = await SB.storage.upload(file);
       setForm(p => ({ ...p, gallery_urls: [...(p.gallery_urls || []), url] }));
       toast("Added to gallery!", "check");
-    } catch(e) { toast("Upload failed: " + e.message, "x"); }
+    } catch(e) {
+      const msg = e.message && e.message.includes("Bucket not found")
+        ? 'Storage bucket missing. Create "tour-images" public bucket in Supabase → Storage.'
+        : "Upload failed: " + e.message;
+      toast(msg, "x");
+    }
     setGalUploading(false);
   };
 

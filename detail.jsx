@@ -5,23 +5,27 @@
 const DEPARTURES = ["14 Jun 2026", "12 Jul 2026", "9 Aug 2026", "13 Sep 2026", "11 Oct 2026"];
 
 function TourPage({ go, route }) {
-  const tour = getTour(route.id);
+  const [tour, setTour] = useState(() => getTour(route.id));
   const ref = useReveal();
   const [tab, setTab] = useState("overview");
   const [openDay, setOpenDay] = useState(0);
   const [travellers, setTravellers] = useState(2);
-  // Use departure_dates from Supabase if available, fall back to static DEPARTURES
-  const departureDates = (tour?.departure_dates && tour.departure_dates.length > 0)
-    ? tour.departure_dates
-    : DEPARTURES;
+  const departureDates = (tour?.departure_dates && tour.departure_dates.length > 0) ? tour.departure_dates : DEPARTURES;
   const [departure, setDeparture] = useState(departureDates[0]);
   const reviews = reviewsFor(tour ? tour.id : "");
   const [showReview, setShowReview] = useState(false);
   const { t } = useI18n();
 
-  useEffect(() => { window.scrollTo(0, 0); }, [route.id]);
-  useEffect(() => { if (typeof SB !== "undefined" && SB.ok) SB.tours.trackView(tour?.id).catch(() => {}); }, [tour?.id]);
-  if (!tour) return null;
+  useEffect(() => {
+    window.scrollTo(0, 0);
+    const local = getTour(route.id);
+    if (local) { setTour(local); return; }
+    if (typeof SB !== "undefined" && SB.ok) {
+      SB.tours.get(route.id).then(setTour).catch(() => {});
+    }
+  }, [route.id]);
+  useEffect(() => { if (typeof SB !== "undefined" && SB.ok && tour?.id) SB.tours.trackView(tour.id).catch(() => {}); }, [tour?.id]);
+  if (!tour) return <div style={{ paddingTop: 120, textAlign: "center", color: "var(--ink-3)" }}>Loading…</div>;
 
   const total = tour.price * travellers;
   const tabs = [
