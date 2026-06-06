@@ -23,7 +23,7 @@ function ListingPage({ go, route }) {
         if (rows && rows.length) {
           const sbMap = new Map(rows.filter(r => r.status !== "hidden" && r.status !== "draft").map(r => [r.id, r]));
           const staticIds = new Set(TOURS.map(t => t.id));
-          const merged = TOURS.map(t => sbMap.get(t.id) || t);
+          const merged = TOURS.map(t => { const sb = sbMap.get(t.id); return sb ? { ...t, ...sb, image_url: sb.image_url || t.image_url || null } : t; });
           const newOnes = rows.filter(r => !staticIds.has(r.id) && r.status !== "hidden" && r.status !== "draft");
           setAllTours([...merged, ...newOnes]);
         }

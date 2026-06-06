@@ -115,7 +115,7 @@ function FeaturedTours({ go }) {
         if (rows && rows.length) {
           const sbMap = new Map(rows.map(r => [r.id, r]));
           const staticIds = new Set(TOURS.map(t => t.id));
-          const mergedStatic = TOURS.filter(t => t.featured).map(t => sbMap.get(t.id) || t).filter(t => t.status !== "hidden" && t.status !== "draft");
+          const mergedStatic = TOURS.filter(t => t.featured).map(t => { const sb = sbMap.get(t.id); return sb ? { ...t, ...sb, image_url: sb.image_url || t.image_url || null } : t; }).filter(t => t.status !== "hidden" && t.status !== "draft");
           const newFeatured = rows.filter(r => !staticIds.has(r.id) && r.featured && r.status !== "hidden" && r.status !== "draft");
           setTours([...mergedStatic, ...newFeatured].slice(0, 6));
         }

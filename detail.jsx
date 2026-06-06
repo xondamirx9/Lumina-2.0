@@ -18,10 +18,26 @@ function TourPage({ go, route }) {
 
   useEffect(() => {
     window.scrollTo(0, 0);
+    const local = getTour(route.id);
+    if (local) setTour(local);
     if (typeof SB !== "undefined" && SB.ok) {
-      SB.tours.get(route.id).then((t) => { if (t) setTour(t); else { const local = getTour(route.id); if (local) setTour(local); } }).catch(() => { const local = getTour(route.id); if (local) setTour(local); });
-    } else {
-      const local = getTour(route.id); if (local) setTour(local);
+      SB.tours.get(route.id).then((sb) => {
+        if (!sb) return;
+        const base = local || {};
+        // Merge: Supabase fields override static, but fall back to static for fields not set in Supabase
+        setTour({
+          ...base,
+          ...sb,
+          image_url: sb.image_url || base.image_url || null,
+          gallery_urls: (sb.gallery_urls && sb.gallery_urls.length) ? sb.gallery_urls : (base.gallery || []),
+          tags: (sb.tags_json && sb.tags_json.length) ? sb.tags_json : (base.tags || []),
+          tags_json: sb.tags_json || base.tags || [],
+          included: (sb.included_json && sb.included_json.length) ? sb.included_json : (base.included || []),
+          excluded: (sb.excluded_json && sb.excluded_json.length) ? sb.excluded_json : (base.notIncluded || []),
+          highlights: sb.highlights || base.highlights || [],
+          itinerary: sb.itinerary || base.itinerary || [],
+        });
+      }).catch(() => {});
     }
   }, [route.id]);
   useEffect(() => { if (typeof SB !== "undefined" && SB.ok && tour?.id) SB.tours.trackView(tour.id).catch(() => {}); }, [tour?.id]);
