@@ -302,6 +302,16 @@ CREATE POLICY "Admin manages inquiries" ON public.inquiries FOR ALL USING (publi
   );
 }
 
+function TourField({ label, hint, children }) {
+  return (
+    <div className="field">
+      <label style={{ fontSize: "0.8rem", fontWeight: 700, color: "var(--ink-2)" }}>{label}</label>
+      {children}
+      {hint && <span style={{ fontSize: "0.74rem", color: "var(--ink-3)" }}>{hint}</span>}
+    </div>
+  );
+}
+
 /* ══════════════════════════════════════════════════════════════════
    TOUR MANAGEMENT
 ══════════════════════════════════════════════════════════════════ */
@@ -376,14 +386,6 @@ function TourEditModal({ tour, onClose, onSaved }) {
     setSaving(false);
   };
 
-  const F = ({ label, hint, children }) => (
-    <div className="field">
-      <label style={{ fontSize: "0.8rem", fontWeight: 700, color: "var(--ink-2)" }}>{label}</label>
-      {children}
-      {hint && <span style={{ fontSize: "0.74rem", color: "var(--ink-3)" }}>{hint}</span>}
-    </div>
-  );
-
   return (
     <div style={{ position: "fixed", inset: 0, zIndex: 300, background: "var(--bg)", display: "flex", flexDirection: "column", overflow: "hidden" }}>
       {/* Header */}
@@ -416,32 +418,32 @@ function TourEditModal({ tour, onClose, onSaved }) {
             <div style={{ background: "var(--surface)", borderRadius: "var(--r-md)", padding: 24, border: "1px solid var(--hairline)" }}>
               <h3 style={{ fontSize: "0.9rem", fontWeight: 700, color: "var(--ink-3)", marginBottom: 18, textTransform: "uppercase", letterSpacing: "0.08em" }}>Basic Information</h3>
               <div className="col gap-4">
-                <F label="Tour title *"><input className="input" value={form.title} onChange={setE("title")} placeholder="e.g. Santorini Private Yacht Experience" /></F>
+                <TourField label="Tour title *"><input className="input" value={form.title} onChange={setE("title")} placeholder="e.g. Santorini Private Yacht Experience" /></TourField>
                 <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 }}>
-                  <F label="Country"><input className="input" value={form.country} onChange={setE("country")} placeholder="Greece" /></F>
-                  <F label="City"><input className="input" value={form.city} onChange={setE("city")} placeholder="Santorini" /></F>
-                  <F label="Duration (days)"><input className="input" type="number" value={form.days} onChange={setE("days")} min={1} /></F>
-                  <F label="Category">
+                  <TourField label="Country"><input className="input" value={form.country} onChange={setE("country")} placeholder="Greece" /></TourField>
+                  <TourField label="City"><input className="input" value={form.city} onChange={setE("city")} placeholder="Santorini" /></TourField>
+                  <TourField label="Duration (days)"><input className="input" type="number" value={form.days} onChange={setE("days")} min={1} /></TourField>
+                  <TourField label="Category">
                     <select className="select" value={form.category} onChange={setE("category")}>
                       {(typeof CATEGORIES !== "undefined" ? CATEGORIES.filter(c => c.id !== "all") : []).map(c => <option key={c.id} value={c.id}>{c.label}</option>)}
                     </select>
-                  </F>
-                  <F label="Difficulty">
+                  </TourField>
+                  <TourField label="Difficulty">
                     <select className="select" value={form.difficulty} onChange={setE("difficulty")}>
                       {["Easy","Moderate","Challenging","Strenuous"].map(d => <option key={d}>{d}</option>)}
                     </select>
-                  </F>
-                  <F label="Max group size"><input className="input" type="number" value={form.group_max} onChange={setE("group_max")} min={1} /></F>
-                  <F label="Theme" hint="Controls card image style">
+                  </TourField>
+                  <TourField label="Max group size"><input className="input" type="number" value={form.group_max} onChange={setE("group_max")} min={1} /></TourField>
+                  <TourField label="Theme" hint="Controls card image style">
                     <select className="select" value={form.theme || "ocean"} onChange={setE("theme")}>
                       {["ocean","santorini","maldives","safari","alps","tokyo","desert","jungle","city","sunset","arctic","petra","machu","amazon","bali","venice","amalfi","cappadocia","norway","iceland"].map(t => <option key={t} value={t}>{t.charAt(0).toUpperCase()+t.slice(1)}</option>)}
                     </select>
-                  </F>
-                  <F label="Best season">
+                  </TourField>
+                  <TourField label="Best season">
                     <select className="select" value={form.season || "year-round"} onChange={setE("season")}>
                       {["year-round","spring","summer","autumn","winter","spring-autumn","summer-autumn"].map(s => <option key={s} value={s}>{s.replace(/-/g," ")}</option>)}
                     </select>
-                  </F>
+                  </TourField>
                 </div>
               </div>
             </div>
@@ -450,9 +452,9 @@ function TourEditModal({ tour, onClose, onSaved }) {
             <div style={{ background: "var(--surface)", borderRadius: "var(--r-md)", padding: 24, border: "1px solid var(--hairline)" }}>
               <h3 style={{ fontSize: "0.9rem", fontWeight: 700, color: "var(--ink-3)", marginBottom: 18, textTransform: "uppercase", letterSpacing: "0.08em" }}>Pricing</h3>
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 14 }}>
-                <F label="Price (USD) *" hint="Per person"><input className="input" type="number" value={form.price} onChange={setE("price")} placeholder="3490" /></F>
-                <F label="Discount price" hint="Shows as current price"><input className="input" type="number" value={form.discount_price} onChange={setE("discount_price")} placeholder="Optional" /></F>
-                <F label="Original price" hint="Shows crossed out"><input className="input" type="number" value={form.old_price} onChange={setE("old_price")} placeholder="Optional" /></F>
+                <TourField label="Price (USD) *" hint="Per person"><input className="input" type="number" value={form.price} onChange={setE("price")} placeholder="3490" /></TourField>
+                <TourField label="Discount price" hint="Shows as current price"><input className="input" type="number" value={form.discount_price} onChange={setE("discount_price")} placeholder="Optional" /></TourField>
+                <TourField label="Original price" hint="Shows crossed out"><input className="input" type="number" value={form.old_price} onChange={setE("old_price")} placeholder="Optional" /></TourField>
               </div>
             </div>
 
@@ -460,8 +462,8 @@ function TourEditModal({ tour, onClose, onSaved }) {
             <div style={{ background: "var(--surface)", borderRadius: "var(--r-md)", padding: 24, border: "1px solid var(--hairline)" }}>
               <h3 style={{ fontSize: "0.9rem", fontWeight: 700, color: "var(--ink-3)", marginBottom: 18, textTransform: "uppercase", letterSpacing: "0.08em" }}>Description</h3>
               <div className="col gap-4">
-                <F label="Short description" hint="Shown on listing cards (1-2 sentences)"><textarea className="input" rows={2} value={form.blurb} onChange={setE("blurb")} placeholder="A captivating one-liner for cards and previews" style={{ resize: "vertical" }} /></F>
-                <F label="Full description" hint="Shown on the tour detail page"><textarea className="input" rows={6} value={form.full_description} onChange={setE("full_description")} placeholder="Full tour details, atmosphere, unique selling points…" style={{ resize: "vertical" }} /></F>
+                <TourField label="Short description" hint="Shown on listing cards (1-2 sentences)"><textarea className="input" rows={2} value={form.blurb} onChange={setE("blurb")} placeholder="A captivating one-liner for cards and previews" style={{ resize: "vertical" }} /></TourField>
+                <TourField label="Full description" hint="Shown on the tour detail page"><textarea className="input" rows={6} value={form.full_description} onChange={setE("full_description")} placeholder="Full tour details, atmosphere, unique selling points…" style={{ resize: "vertical" }} /></TourField>
               </div>
             </div>
 
@@ -492,12 +494,12 @@ function TourEditModal({ tour, onClose, onSaved }) {
             <div style={{ background: "var(--surface)", borderRadius: "var(--r-md)", padding: 24, border: "1px solid var(--hairline)" }}>
               <h3 style={{ fontSize: "0.9rem", fontWeight: 700, color: "var(--ink-3)", marginBottom: 18, textTransform: "uppercase", letterSpacing: "0.08em" }}>What's Included / Excluded</h3>
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
-                <F label="Included services">
+                <TourField label="Included services">
                   <ListInput value={form.included_json || []} onChange={set("included_json")} placeholder="e.g. Private transfers" />
-                </F>
-                <F label="Excluded services">
+                </TourField>
+                <TourField label="Excluded services">
                   <ListInput value={form.excluded_json || []} onChange={set("excluded_json")} placeholder="e.g. International flights" />
-                </F>
+                </TourField>
               </div>
             </div>
           </div>
