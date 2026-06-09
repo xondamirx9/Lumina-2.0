@@ -10,6 +10,7 @@ function ListingPage({ go, route }) {
   const [durations, setDurations] = useState([]);
   const [difficulties, setDifficulties] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [contact, setContact] = useState({});
   const [allTours, setAllTours] = useState(TOURS);
   const ref = useReveal();
   const { t } = useI18n();
@@ -28,8 +29,19 @@ function ListingPage({ go, route }) {
           setAllTours([...merged, ...newOnes]);
         }
       }).catch(() => {});
+      SB.settings.getAll().then(all => setContact(all || {})).catch(() => {});
     }
   }, []);
+
+  const openContact = () => {
+    if (contact.whatsapp) {
+      window.open("https://wa.me/" + contact.whatsapp.replace(/\D/g, ""), "_blank");
+    } else if (contact.contact_email) {
+      window.open("mailto:" + contact.contact_email, "_blank");
+    } else {
+      window.open("mailto:hello@luminavoyages.com", "_blank");
+    }
+  };
 
   const toggle = (arr, set, v) => set(arr.includes(v) ? arr.filter((x) => x !== v) : [...arr, v]);
 
@@ -113,7 +125,9 @@ function ListingPage({ go, route }) {
             <Icon name="phone" size={22} style={{ color: "var(--ocean-deep)" }} />
             <h4 style={{ margin: "8px 0 6px", fontSize: "1rem" }}>{t("listing_help_h")}</h4>
             <p style={{ fontSize: "0.85rem", color: "var(--ink-2)", lineHeight: 1.5, marginBottom: 14 }}>{t("listing_help_p")}</p>
-            <button className="btn btn-ocean btn-sm btn-block">{t("listing_expert")}</button>
+            <button className="btn btn-ocean btn-sm btn-block" onClick={openContact}>
+              {contact.whatsapp ? <><Icon name="phone" size={15} /> WhatsApp</> : t("listing_expert")}
+            </button>
           </div>
         </aside>
 
