@@ -587,7 +587,13 @@ const Store = (() => {
       state.bookings = state.bookings.map((b) => b.id === id ? { ...b, status: "Cancelled" } : b);
       persist();
     },
-    signIn(user) { state.user = { isAdmin: false, ...state.user, ...user }; persist(); },
+    signIn(user) {
+      // Load this user's previous data first, then merge the user object — never overwrite with empty state
+      const previous = _loadForUser(user.id);
+      state = { ...previous, user: { isAdmin: false, ...previous.user, ...user } };
+      try { localStorage.setItem(LAST_USER_KEY, user.id); } catch(e) {}
+      persist();
+    },
     signOut() { state.user = null; persist(); },
     addReview(tourId, review) {
       const list = state.userReviews[tourId] || [];
