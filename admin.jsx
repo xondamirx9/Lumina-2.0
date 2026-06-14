@@ -62,7 +62,7 @@ function StatusBadge({ status }) {
     pending:     { bg: "var(--sand)",         color: "oklch(0.46 0.06 78)", label: "Pending" },
   };
   const s = map[status] || map.draft;
-  return <span style={{ ...s, fontSize: "0.74rem", fontWeight: 700, padding: "4px 10px", borderRadius: "var(--r-pill)", textTransform: "capitalize", whiteSpace: "nowrap" }}>{s.label}</span>;
+  return <span style={{ background: s.bg, color: s.color, fontSize: "0.74rem", fontWeight: 700, padding: "4px 10px", borderRadius: "var(--r-pill)", textTransform: "capitalize", whiteSpace: "nowrap" }}>{s.label}</span>;
 }
 
 /* ── SVG Bar Chart ─────────────────────────────────────────────── */

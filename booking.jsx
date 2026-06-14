@@ -48,7 +48,7 @@ function BookingPage({ go, route }) {
     setConfirming(true);
     // Simulate brief processing delay for UX
     setTimeout(() => {
-      const b = Store.addBooking({ tourId: tour.id, tourTitle: tour.title, place: tour.place, theme: tour.theme, departure, travellers, total, deposit, lead, addons });
+      const b = Store.addBooking({ tourId: tour.id, tourTitle: tour.title, place: tour.place, theme: tour.theme, departure, date: departure, travellers, guests: travellers, total, deposit, lead, name: lead.first + " " + lead.last, email: lead.email, phone: lead.phone, addons });
       if (!Store.get().user) Store.signIn({ name: lead.first + " " + lead.last, email: lead.email });
       setBooking(b);
       setConfirming(false);
@@ -115,15 +115,17 @@ function StepDetails({ lead, setLead, travellers, setTravellers, departure, setD
       <div className="row gap-4" style={{ marginBottom: 24, flexWrap: "wrap" }}>
         <div className="field" style={{ flex: "1 1 200px" }}>
           <label>{t("book_depart")}</label>
-          <select className="select" value={departure} onChange={(e) => setDeparture(e.target.value)}>{_BOOKING_DEPARTURES.map((d) => <option key={d}>{d}</option>)}</select>
+          <select className="select" value={departure} onChange={(e) => setDeparture(e.target.value)}>
+            {(tour.departure_dates && tour.departure_dates.length ? tour.departure_dates : _BOOKING_DEPARTURES).map((d) => <option key={d}>{d}</option>)}
+          </select>
         </div>
         <div className="field" style={{ flex: "1 1 200px" }}>
           <label>{t("book_travellers")}</label>
           <div className="row" style={{ justifyContent: "space-between", background: "var(--surface)", boxShadow: "inset 0 0 0 1px var(--hairline-2)", borderRadius: "var(--r-sm)", padding: "8px 14px" }}>
             <span style={{ fontWeight: 600 }}>{travellers}</span>
             <div className="row gap-3">
-              <button onClick={() => setTravellers(Math.max(tour.groupMin, travellers - 1))} style={stepBtn} disabled={travellers <= tour.groupMin}><Icon name="minus" size={16} /></button>
-              <button onClick={() => setTravellers(Math.min(tour.groupMax, travellers + 1))} style={stepBtn} disabled={travellers >= tour.groupMax}><Icon name="plus" size={16} /></button>
+              <button onClick={() => setTravellers(Math.max(tour.group_min || tour.groupMin || 1, travellers - 1))} style={stepBtn} disabled={travellers <= (tour.group_min || tour.groupMin || 1)}><Icon name="minus" size={16} /></button>
+              <button onClick={() => setTravellers(Math.min(tour.group_max || tour.groupMax || 20, travellers + 1))} style={stepBtn} disabled={travellers >= (tour.group_max || tour.groupMax || 20)}><Icon name="plus" size={16} /></button>
             </div>
           </div>
         </div>

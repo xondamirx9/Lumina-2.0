@@ -192,7 +192,7 @@ function TourPage({ go, route }) {
               <div>
                 <h4 className="row gap-2" style={{ fontSize: "1rem", marginBottom: 14, color: "var(--ink-3)" }}><Icon name="x" size={18} /> {t("detail_inc_no")}</h4>
                 <div className="col gap-3">
-                  {(tour.notIncluded || tour.excluded_json || []).map((x) => (
+                  {(tour.excluded || tour.notIncluded || tour.excluded_json || []).map((x) => (
                     <div key={x} className="row gap-3"><span style={{ color: "var(--ink-3)", flexShrink: 0 }}><Icon name="minus" size={18} /></span><span style={{ fontSize: "0.94rem", color: "var(--ink-3)" }}>{x}</span></div>
                   ))}
                 </div>
@@ -254,7 +254,7 @@ function TourPage({ go, route }) {
                   <span style={{ color: "var(--ink-3)", fontSize: "0.85rem" }}>{t("detail_person")}</span>
                 </div>
               </div>
-              {tour.oldPrice && <span className="badge badge-coral">{t("detail_save")} {fmtPrice(tour.oldPrice - tour.price)}</span>}
+              {(tour.old_price || tour.oldPrice) && <span className="badge badge-coral">{t("detail_save")} {fmtPrice((tour.old_price || tour.oldPrice) - tour.price)}</span>}
             </div>
             <div className="hr" style={{ margin: "18px 0" }} />
             <div className="field" style={{ marginBottom: 14 }}>
@@ -268,8 +268,8 @@ function TourPage({ go, route }) {
               <div className="row" style={{ justifyContent: "space-between", background: "var(--surface)", boxShadow: "inset 0 0 0 1px var(--hairline-2)", borderRadius: "var(--r-sm)", padding: "8px 14px" }}>
                 <span style={{ fontWeight: 600 }}>{travellers} {travellers === 1 ? t("detail_traveller") : t("detail_travellers")}</span>
                 <div className="row gap-3">
-                  <button onClick={() => setTravellers(Math.max(tour.groupMin, travellers - 1))} style={stepBtn} disabled={travellers <= tour.groupMin}><Icon name="minus" size={16} /></button>
-                  <button onClick={() => setTravellers(Math.min(tour.groupMax, travellers + 1))} style={stepBtn} disabled={travellers >= tour.groupMax}><Icon name="plus" size={16} /></button>
+                  <button onClick={() => setTravellers(Math.max(tour.group_min || tour.groupMin || 1, travellers - 1))} style={stepBtn} disabled={travellers <= (tour.group_min || tour.groupMin || 1)}><Icon name="minus" size={16} /></button>
+                  <button onClick={() => setTravellers(Math.min(tour.group_max || tour.groupMax || 20, travellers + 1))} style={stepBtn} disabled={travellers >= (tour.group_max || tour.groupMax || 20)}><Icon name="plus" size={16} /></button>
                 </div>
               </div>
             </div>

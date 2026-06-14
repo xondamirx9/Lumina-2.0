@@ -288,7 +288,7 @@ function MobileNavDrawer({ go, links, user, savedCount, onClose }) {
           </button>
           <button onClick={() => { go({ view: "account" }); onClose(); }}
             className="btn btn-primary btn-block" style={{ marginTop: 18, fontSize: "1rem" }}>
-            <Icon name="user" size={18} /> {user ? user.name.split(" ")[0] : t("nav_sign_in")}
+            <Icon name="user" size={18} /> {user ? (user.name || user.email || "").split(" ")[0] || t("nav_sign_in") : t("nav_sign_in")}
           </button>
         </nav>
       </div>
@@ -338,7 +338,7 @@ function Nav({ go, route, savedCount, user }) {
             </button>
             <button className={"btn desk-nav " + (solid ? "btn-ghost" : "")} onClick={() => go({ view: "account" })}
               style={!solid ? { background: "oklch(1 0 0 / 0.16)", color: "white", backdropFilter: "blur(8px)" } : {}}>
-              <Icon name="user" size={18} /> {user ? user.name.split(" ")[0] : t("nav_sign_in")}
+              <Icon name="user" size={18} /> {user ? (user.name || user.email || "").split(" ")[0] || t("nav_sign_in") : t("nav_sign_in")}
             </button>
             {/* Hamburger — mobile only */}
             <button className="hamburger-btn" aria-label="Open menu" aria-expanded={mobileOpen}
