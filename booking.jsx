@@ -8,7 +8,6 @@ const _BOOKING_DEPARTURES = (typeof DEPARTURES !== "undefined" && DEPARTURES) ||
 const ADDONS = [
   { id: "insurance", icon: "shield", name: "Travel protection", desc: "Comprehensive cover incl. cancellation & medical", price: 180, per: true, popular: true },
   { id: "upgrade",   icon: "bed",    name: "Premium room upgrade", desc: "Best available suites & villas throughout", price: 640, per: true },
-  { id: "flights",   icon: "plane",  name: "Add flights", desc: "We'll arrange the best routing from your city", price: 0, per: true, quote: true },
   { id: "transfer",  icon: "globe",  name: "Private airport transfers", desc: "Chauffeured arrival & departure", price: 120, per: false },
   { id: "extranight",icon: "camera", name: "Extra night pre-trip", desc: "Arrive early and settle in", price: 260, per: false },
 ];

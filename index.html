@@ -162,6 +162,7 @@ function App() {
         {route.view === "admin"   && <AdminPage go={go} store={store} />}
       </main>
       {showChrome && !hideFooter && <Footer go={go} />}
+      {showChrome && <FloatContact />}
     </ToastProvider>
   );
 }

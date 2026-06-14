@@ -9,14 +9,13 @@ function ListingPage({ go, route }) {
   const [maxPrice, setMaxPrice] = useState(7000);
   const [durations, setDurations] = useState([]);
   const [difficulties, setDifficulties] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [loading] = useState(false);
   const [contact, setContact] = useState({});
   const [allTours, setAllTours] = useState(TOURS);
   const ref = useReveal();
   const { t } = useI18n();
 
   useEffect(() => { setQ(route.q || ""); setCat(route.cat || "all"); }, [route.q, route.cat]);
-  useEffect(() => { setLoading(true); const tmr = setTimeout(() => setLoading(false), 60); return () => clearTimeout(tmr); }, [q, cat, sort, maxPrice, durations, difficulties]);
 
   useEffect(() => {
     if (typeof SB !== "undefined" && SB.ok) {

@@ -174,7 +174,8 @@ function TourCard({ tour, onOpen, delay = 0 }) {
         <Scenic theme={tour.theme} imageUrl={tour.image_url || null} label={tour.place} style={{ height: 230, transition: "transform 0.7s var(--ease-out)", transform: hover ? "scale(1.06)" : "scale(1)" }} />
         <div style={{ position: "absolute", top: 14, left: 14, display: "flex", gap: 8 }}>
           {(tour.oldPrice || tour.old_price) && <span className="badge badge-coral">{t("save_badge")} {fmtPrice((tour.oldPrice || tour.old_price) - tour.price)}</span>}
-          {tour.popular && !(tour.oldPrice || tour.old_price) && <span className="badge badge-glass">{t("card_popular")}</span>}
+          {tour.is_hot && !(tour.oldPrice || tour.old_price) && <span className="badge badge-coral">Filling fast</span>}
+          {tour.popular && !tour.is_hot && !(tour.oldPrice || tour.old_price) && <span className="badge badge-glass">{t("card_popular")}</span>}
         </div>
         <div style={{ position: "absolute", top: 12, right: 12 }}><SaveButton tourId={tour.id} /></div>
       </div>
@@ -194,6 +195,10 @@ function TourCard({ tour, onOpen, delay = 0 }) {
           <span className="row gap-2"><Icon name="users" size={15} /> {(tour.groupMax || tour.group_max || 12) <= 2 ? t("card_private") : t("card_max") + " " + (tour.groupMax || tour.group_max || 12)}</span>
           <span style={{ color: "var(--hairline-2)" }}>·</span>
           <span className="row gap-2"><Icon name="mountain" size={15} /> {tour.difficulty}</span>
+          {tour.departure_dates && tour.departure_dates.length > 0 && <>
+            <span style={{ color: "var(--hairline-2)" }}>·</span>
+            <span className="row gap-2" style={{ color: "var(--ocean-deep)" }}><Icon name="calendar" size={15} style={{ color: "var(--ocean)" }} /> {tour.departure_dates[0]}</span>
+          </>}
         </div>
         <div className="hr" style={{ marginBottom: 14 }} />
         <div className="row" style={{ justifyContent: "space-between" }}>
@@ -311,7 +316,6 @@ function Nav({ go, route, savedCount, user }) {
   useEffect(() => { setMobileOpen(false); }, [route.view, route.id]);
   const solid = scrolled || !onHome;
   const links = [
-    { label: t("nav_destinations"), to: { view: "listing" } },
     { label: t("nav_journeys"), to: { view: "listing" } },
     { label: t("nav_about"), to: { view: "home", hash: "why" } },
   ];
@@ -463,4 +467,105 @@ function SkeletonText({ width = "100%", height = 16, style }) {
   return <div className="skel" style={{ height, width, borderRadius: 6, ...style }} />;
 }
 
-Object.assign(window, { Icon, Scenic, Stars, useReveal, ToastProvider, useToast, SaveButton, TourCard, Logo, Nav, Footer, ErrorBoundary, SkeletonCard, SkeletonText });
+function CustomTripModal({ onClose }) {
+  const user = Store.get().user;
+  const toast = useToast();
+  const [form, setForm] = useState({ name: user?.name || "", email: user?.email || "", destination: "", dates: "", budget: "", group: "2", msg: "" });
+  const [loading, setLoading] = useState(false);
+  const f = (k) => (e) => setForm((p) => ({ ...p, [k]: e.target.value }));
+
+  const submit = async () => {
+    if (!form.name.trim() || !form.email.trim() || !form.destination.trim()) { toast("Please fill in name, email and destination", "x"); return; }
+    setLoading(true);
+    try {
+      if (typeof SB !== "undefined" && SB.ok) {
+        await SB.inquiries.create({ name: form.name.trim(), email: form.email.trim(), message: `Destination: ${form.destination}\nDates: ${form.dates || "Flexible"}\nBudget pp: ${form.budget || "Not specified"}\nGroup size: ${form.group}\n\n${form.msg}`.trim() });
+      }
+      toast("Request sent! We'll be in touch within 24 hours.", "checkC");
+      onClose();
+    } catch (e) {
+      toast("Couldn't send — please try again", "x");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div style={{ position: "fixed", inset: 0, zIndex: 900, background: "oklch(0 0 0 / 0.52)", backdropFilter: "blur(4px)", display: "grid", placeItems: "center", padding: 20 }}
+      onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}>
+      <div className="card anim-scale-in" style={{ width: "100%", maxWidth: 530, padding: 32, boxShadow: "var(--sh-xl)", maxHeight: "90vh", overflowY: "auto" }}>
+        <div className="row" style={{ justifyContent: "space-between", alignItems: "flex-start", marginBottom: 22 }}>
+          <div>
+            <h2 style={{ fontSize: "1.7rem", marginBottom: 4 }}>Plan my trip</h2>
+            <p style={{ color: "var(--ink-2)", fontSize: "0.92rem" }}>Tell us where you dream of going — we'll craft the perfect journey.</p>
+          </div>
+          <button onClick={onClose} style={{ color: "var(--ink-3)", flexShrink: 0 }}><Icon name="x" size={22} /></button>
+        </div>
+        <div className="col gap-3">
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 }}>
+            <div className="field"><label>Your name</label><input className="input" value={form.name} onChange={f("name")} placeholder="Jordan Rivera" /></div>
+            <div className="field"><label>Email</label><input className="input" type="email" value={form.email} onChange={f("email")} placeholder="you@email.com" /></div>
+          </div>
+          <div className="field"><label>Dream destination</label><input className="input" value={form.destination} onChange={f("destination")} placeholder="e.g. Japan, Patagonia, Morocco…" /></div>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 }}>
+            <div className="field"><label>Travel dates</label><input className="input" value={form.dates} onChange={f("dates")} placeholder="e.g. Oct 2026" /></div>
+            <div className="field"><label>Group size</label>
+              <select className="select" value={form.group} onChange={f("group")}>
+                {["1", "2", "3–4", "5–8", "9+"].map((v) => <option key={v}>{v}</option>)}
+              </select>
+            </div>
+          </div>
+          <div className="field"><label>Budget (per person)</label>
+            <select className="select" value={form.budget} onChange={f("budget")}>
+              <option value="">Prefer not to say</option>
+              {["Under $2,000", "$2,000–$4,000", "$4,000–$6,000", "$6,000–$10,000", "$10,000+"].map((v) => <option key={v}>{v}</option>)}
+            </select>
+          </div>
+          <div className="field"><label>Anything else? (optional)</label>
+            <textarea className="input" rows="3" value={form.msg} onChange={f("msg")} placeholder="Special interests, accessibility needs, celebration…" style={{ resize: "vertical" }} />
+          </div>
+          <button className="btn btn-ocean btn-lg" onClick={submit} disabled={loading} style={{ width: "100%" }}>
+            {loading ? <><Icon name="clock" size={17} /> Sending…</> : <><Icon name="compass" size={17} /> Send my request</>}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function FloatContact() {
+  const [cfg, setCfg] = useState({});
+  const [showTrip, setShowTrip] = useState(false);
+
+  useEffect(() => {
+    if (typeof SB !== "undefined" && SB.ok) {
+      SB.settings.getAll().then((all) => setCfg(all || {})).catch(() => {});
+    }
+  }, []);
+
+  const waUrl = cfg.whatsapp ? "https://wa.me/" + cfg.whatsapp.replace(/\D/g, "") : null;
+  const mailUrl = cfg.contact_email ? "mailto:" + cfg.contact_email : "mailto:hello@luminavoyages.com";
+
+  return (
+    <>
+      <div style={{ position: "fixed", bottom: 28, right: 24, zIndex: 200, display: "flex", flexDirection: "column", gap: 12, alignItems: "flex-end" }}>
+        <button onClick={() => setShowTrip(true)}
+          style={{ background: "var(--ocean)", color: "white", borderRadius: "var(--r-pill)", padding: "13px 22px", display: "flex", alignItems: "center", gap: 8, fontWeight: 700, fontSize: "0.9rem", boxShadow: "var(--sh-lg)", transition: "transform 0.25s, box-shadow 0.25s" }}
+          onMouseEnter={(e) => { e.currentTarget.style.transform = "translateY(-2px)"; e.currentTarget.style.boxShadow = "var(--sh-xl)"; }}
+          onMouseLeave={(e) => { e.currentTarget.style.transform = "none"; e.currentTarget.style.boxShadow = "var(--sh-lg)"; }}>
+          <Icon name="compass" size={18} /> Plan my trip
+        </button>
+        <a href={waUrl || mailUrl} target="_blank" rel="noopener"
+          title={waUrl ? "Chat on WhatsApp" : "Email us"}
+          style={{ width: 56, height: 56, borderRadius: "50%", background: waUrl ? "#25D366" : "var(--ocean)", color: "white", display: "grid", placeItems: "center", boxShadow: "var(--sh-lg)", transition: "transform 0.25s, box-shadow 0.25s" }}
+          onMouseEnter={(e) => { e.currentTarget.style.transform = "translateY(-2px) scale(1.07)"; e.currentTarget.style.boxShadow = "var(--sh-xl)"; }}
+          onMouseLeave={(e) => { e.currentTarget.style.transform = "none"; e.currentTarget.style.boxShadow = "var(--sh-lg)"; }}>
+          <Icon name={waUrl ? "phone" : "mail"} size={24} />
+        </a>
+      </div>
+      {showTrip && <CustomTripModal onClose={() => setShowTrip(false)} />}
+    </>
+  );
+}
+
+Object.assign(window, { Icon, Scenic, Stars, useReveal, ToastProvider, useToast, SaveButton, TourCard, Logo, Nav, Footer, ErrorBoundary, SkeletonCard, SkeletonText, FloatContact, CustomTripModal });
