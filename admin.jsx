@@ -177,15 +177,21 @@ function AdminDashboard({ setTab }) {
 
   useEffect(() => {
     if (!SB.ok) { setLoading(false); return; }
+    const safe = (p, fallback) => Promise.race([
+      p,
+      new Promise(res => setTimeout(() => res(fallback), 7000))
+    ]).catch(() => fallback);
+
     Promise.all([
-      SB.tours.stats().catch(() => null),
-      SB.inquiries.counts().catch(() => null),
-      SB.inquiries.all().then(d => d.slice(0, 5)).catch(() => []),
-      SB.bookings.monthlyCounts().catch(() => []),
+      safe(SB.tours.stats(), null),
+      safe(SB.inquiries.counts(), null),
+      safe(SB.inquiries.all().then(d => d.slice(0, 5)), []),
+      safe(SB.bookings.monthlyCounts(), []),
     ]).then(([ts, is, ri, mc]) => {
       if (!ts && !is) { setErr("Database error — run the RLS fix SQL in Supabase SQL Editor (see setup guide)."); }
       setStats(ts); setInquiryStats(is); setRecentInquiries(ri || []); setChart(mc || []);
-    }).finally(() => setLoading(false));
+    }).catch(() => setErr("Failed to load — check your Supabase connection."))
+      .finally(() => setLoading(false));
   }, []);
 
   if (!SB.ok) return (
@@ -897,7 +903,24 @@ function AdminSettings() {
 ══════════════════════════════════════════════════════════════════ */
 function AdminPage({ go, store }) {
   const [tab, setTab] = useState("dashboard");
+  const [authWaiting, setAuthWaiting] = useState(!store?.user && SB.ok);
   const user = store?.user;
+
+  useEffect(() => {
+    if (user) { setAuthWaiting(false); return; }
+    if (!SB.ok) { setAuthWaiting(false); return; }
+    const t = setTimeout(() => setAuthWaiting(false), 2500);
+    return () => clearTimeout(t);
+  }, [user]);
+
+  if (authWaiting) return (
+    <div style={{ minHeight: "100vh", display: "grid", placeItems: "center", background: "var(--bg)" }}>
+      <div style={{ textAlign: "center" }}>
+        <div className="boot-mark" style={{ margin: "0 auto 18px" }} />
+        <p style={{ color: "var(--ink-3)", fontWeight: 600 }}>Checking session…</p>
+      </div>
+    </div>
+  );
 
   if (!user || !user.isAdmin) {
     return (
@@ -946,7 +969,7 @@ function AdminPage({ go, store }) {
             ))}
           </nav>
           <div style={{ padding: "14px 16px 18px", borderTop: "1px solid oklch(1 0 0 / 0.07)" }}>
-            <div style={{ fontSize: "0.8rem", color: "oklch(0.65 0.018 230)", marginBottom: 8, fontWeight: 600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{user.name}</div>
+            <div style={{ fontSize: "0.8rem", color: "oklch(0.65 0.018 230)", marginBottom: 8, fontWeight: 600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{user.name || user.email || "Admin"}</div>
             <div className="row gap-2">
               <button onClick={() => go({ view: "home" })} className="btn btn-sm" style={{ background: "oklch(1 0 0 / 0.07)", color: "oklch(0.65 0.018 230)", fontSize: "0.76rem", padding: "5px 10px" }}><Icon name="arrowL" size={13} /> Site</button>
               <button onClick={async () => { if (SB.ok) await SB.auth.signOut(); Store.signOut(); go({ view: "home" }); }} className="btn btn-sm" style={{ background: "oklch(1 0 0 / 0.07)", color: "var(--coral)", fontSize: "0.76rem", padding: "5px 10px" }}>Sign out</button>
