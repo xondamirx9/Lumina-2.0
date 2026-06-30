@@ -60,7 +60,7 @@ function Hero({ go }) {
     <section style={{ position: "relative", minHeight: "100vh", display: "flex", flexDirection: "column", justifyContent: "center", overflow: "hidden", paddingTop: 90, backgroundColor: "oklch(0.14 0.04 235)" }}>
       <div style={{ position: "absolute", inset: 0, transform: `translateY(${p * 0.25}px) scale(1.05)`, zIndex: 0 }}>
         <video autoPlay muted loop playsInline style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", objectPosition: "center 50%" }}>
-          <source src="https://cdn.jsdelivr.net/gh/xondamirx9/Lumina-2.0@2834668be432d0f660a1631379b3a521c4dd1a89/hero_loop.mp4" type="video/mp4" />
+          <source src="https://ekudvabndtdxlgubymgg.supabase.co/storage/v1/object/public/tour-images/hero/loop_seamless.mp4" type="video/mp4" />
         </video>
         <div style={{ position: "absolute", inset: 0, background: "linear-gradient(180deg, oklch(0.15 0.05 235 / 0.72) 0%, oklch(0.18 0.05 235 / 0.45) 40%, oklch(0.1 0.03 235 / 0.1) 68%, var(--bg) 100%)" }} />
       </div>
