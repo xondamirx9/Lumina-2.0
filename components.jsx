@@ -112,9 +112,9 @@ function useReveal() {
     if (!ref.current) return;
     const io = new IntersectionObserver((entries) => {
       entries.forEach((e) => { if (e.isIntersecting) { e.target.classList.add("in"); io.unobserve(e.target); } });
-    }, { threshold: 0.08, rootMargin: "0px 0px -20px 0px" });
+    }, { threshold: 0.06, rootMargin: "0px 0px -10px 0px" });
     const observe = () => {
-      ref.current.querySelectorAll(".reveal:not(.in)").forEach((el) => io.observe(el));
+      ref.current.querySelectorAll(".reveal:not(.in), .reveal-left:not(.in), .reveal-right:not(.in), .reveal-scale:not(.in)").forEach((el) => io.observe(el));
     };
     observe();
     const mo = new MutationObserver(observe);

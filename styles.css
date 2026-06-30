@@ -361,3 +361,251 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 
 /* Smooth scroll */
 html { scroll-behavior: smooth; }
+
+/* =========================================================
+   Enhanced Reveal Animations — directional variants
+   ========================================================= */
+@media (prefers-reduced-motion: no-preference) {
+  .reveal-left  { opacity: 0; transform: translateX(-40px); transition: opacity 0.85s var(--ease-out), transform 0.85s var(--ease-out); }
+  .reveal-right { opacity: 0; transform: translateX(40px);  transition: opacity 0.85s var(--ease-out), transform 0.85s var(--ease-out); }
+  .reveal-scale { opacity: 0; transform: scale(0.88);       transition: opacity 0.75s var(--ease-out), transform 0.75s var(--ease-out); }
+  .reveal-left.in, .reveal-right.in, .reveal-scale.in { opacity: 1; transform: none; }
+
+  /* Stagger delays for grid children */
+  .stagger > *:nth-child(1) { transition-delay: 0.00s; }
+  .stagger > *:nth-child(2) { transition-delay: 0.09s; }
+  .stagger > *:nth-child(3) { transition-delay: 0.18s; }
+  .stagger > *:nth-child(4) { transition-delay: 0.27s; }
+  .stagger > *:nth-child(5) { transition-delay: 0.36s; }
+  .stagger > *:nth-child(6) { transition-delay: 0.45s; }
+}
+
+/* =========================================================
+   Keyframes
+   ========================================================= */
+@keyframes gradientShift {
+  0%   { background-position: 0% 50%; }
+  50%  { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+@keyframes pulseGlow {
+  0%, 100% { box-shadow: 0 0 0 0 oklch(0.55 0.11 228 / 0.4); }
+  50%       { box-shadow: 0 0 0 14px oklch(0.55 0.11 228 / 0); }
+}
+@keyframes floatY {
+  0%, 100% { transform: translateY(0px) rotate(0deg); }
+  33%       { transform: translateY(-18px) rotate(1.5deg); }
+  66%       { transform: translateY(-8px) rotate(-1deg); }
+}
+@keyframes particleDrift {
+  0%   { transform: translateY(0) translateX(0) scale(1); opacity: 0.7; }
+  50%  { transform: translateY(-30px) translateX(12px) scale(1.15); opacity: 1; }
+  100% { transform: translateY(0) translateX(0) scale(1); opacity: 0.7; }
+}
+@keyframes countUp { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
+@keyframes lineGrow { from { width: 0; } to { width: 60px; } }
+@keyframes borderPulse {
+  0%, 100% { border-color: oklch(0.55 0.11 228 / 0.3); }
+  50%       { border-color: oklch(0.55 0.11 228 / 0.9); }
+}
+@keyframes scrollLine {
+  0%   { transform: scaleY(0) translateY(-100%); opacity: 1; }
+  100% { transform: scaleY(1) translateY(0); opacity: 0; }
+}
+
+/* =========================================================
+   Glassmorphism utility
+   ========================================================= */
+.glass {
+  background: oklch(1 0 0 / 0.12);
+  backdrop-filter: blur(18px) saturate(1.6);
+  -webkit-backdrop-filter: blur(18px) saturate(1.6);
+  border: 1px solid oklch(1 0 0 / 0.18);
+}
+[data-theme="dark"] .glass {
+  background: oklch(0.18 0.018 235 / 0.65);
+  border-color: oklch(1 0 0 / 0.08);
+}
+
+/* =========================================================
+   Gradient text
+   ========================================================= */
+.gradient-text {
+  background: linear-gradient(135deg, var(--ocean-bright), var(--teal), var(--coral));
+  background-size: 200% 200%;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  animation: gradientShift 5s ease infinite;
+}
+
+/* =========================================================
+   Scroll progress bar (top of page)
+   ========================================================= */
+.scroll-progress {
+  position: fixed;
+  top: 0; left: 0;
+  height: 3px;
+  background: linear-gradient(90deg, var(--ocean), var(--teal), var(--coral));
+  z-index: 9999;
+  transform-origin: left;
+  transition: width 0.1s linear;
+}
+
+/* =========================================================
+   Enhanced Tour Card hover
+   ========================================================= */
+.card {
+  transition: transform 0.5s var(--ease-out), box-shadow 0.5s var(--ease-out);
+}
+.card:hover {
+  transform: translateY(-8px) scale(1.01);
+  box-shadow: 0 28px 60px oklch(0.40 0.07 235 / 0.18), 0 10px 24px oklch(0.40 0.07 235 / 0.10);
+}
+.card-glow::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: linear-gradient(135deg, var(--ocean-tint), transparent 60%);
+  opacity: 0;
+  transition: opacity 0.4s var(--ease);
+  pointer-events: none;
+}
+.card:hover .card-glow::after { opacity: 1; }
+
+/* =========================================================
+   Animated counter numbers
+   ========================================================= */
+.stat-number {
+  display: inline-block;
+  animation: countUp 0.6s var(--ease-out) both;
+}
+
+/* =========================================================
+   Hero particles
+   ========================================================= */
+.hero-particle {
+  position: absolute;
+  border-radius: 50%;
+  pointer-events: none;
+  animation: particleDrift linear infinite;
+}
+
+/* =========================================================
+   Section eyebrow underline animation
+   ========================================================= */
+.eyebrow-line::after {
+  content: '';
+  display: block;
+  height: 2px;
+  background: linear-gradient(90deg, var(--ocean), var(--coral));
+  border-radius: 2px;
+  margin-top: 8px;
+  width: 0;
+  animation: lineGrow 0.8s var(--ease-out) 0.3s forwards;
+}
+.reveal.in .eyebrow-line::after { animation: lineGrow 0.8s var(--ease-out) forwards; }
+
+/* =========================================================
+   Magnetic button shimmer
+   ========================================================= */
+.btn-shimmer {
+  position: relative;
+  overflow: hidden;
+}
+.btn-shimmer::before {
+  content: '';
+  position: absolute;
+  top: 0; left: -100%;
+  width: 60%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, oklch(1 0 0 / 0.25), transparent);
+  transform: skewX(-20deg);
+  transition: none;
+}
+.btn-shimmer:hover::before {
+  left: 160%;
+  transition: left 0.6s var(--ease);
+}
+
+/* =========================================================
+   Destination tile hover
+   ========================================================= */
+.dest-tile {
+  transition: transform 0.5s var(--ease-out), box-shadow 0.5s var(--ease-out);
+}
+.dest-tile:hover {
+  transform: scale(1.03);
+  box-shadow: 0 24px 50px oklch(0.3 0.05 235 / 0.3);
+  z-index: 2;
+}
+
+/* =========================================================
+   Stats animated underline
+   ========================================================= */
+.stat-item {
+  position: relative;
+  cursor: default;
+  transition: transform 0.3s var(--spring);
+}
+.stat-item:hover { transform: translateY(-4px); }
+
+/* =========================================================
+   Why Lumina feature icon glow on hover
+   ========================================================= */
+.why-icon {
+  transition: transform 0.4s var(--spring), background 0.3s var(--ease), box-shadow 0.4s;
+}
+.why-icon:hover, .why-item:hover .why-icon {
+  transform: scale(1.15) rotate(-6deg);
+  background: var(--ocean-tint);
+  box-shadow: 0 8px 24px oklch(0.55 0.11 228 / 0.25);
+}
+
+/* =========================================================
+   Category card shimmer border on hover
+   ========================================================= */
+.cat-card {
+  position: relative;
+  overflow: hidden;
+}
+.cat-card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: linear-gradient(135deg, var(--ocean) 0%, var(--teal) 50%, var(--coral) 100%);
+  opacity: 0;
+  transition: opacity 0.35s var(--ease);
+  z-index: 0;
+  padding: 1.5px;
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+}
+.cat-card:hover::before { opacity: 1; }
+
+/* =========================================================
+   Floating scroll indicator in hero
+   ========================================================= */
+.scroll-hint {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  color: oklch(1 0 0 / 0.7);
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  animation: floaty 2.5s ease-in-out infinite;
+}
+.scroll-hint-line {
+  width: 1.5px;
+  height: 40px;
+  background: linear-gradient(180deg, oklch(1 0 0 / 0.8), transparent);
+  transform-origin: top;
+  animation: scrollLine 1.5s ease-in-out infinite;
+}
