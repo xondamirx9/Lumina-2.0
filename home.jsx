@@ -59,7 +59,9 @@ function Hero({ go }) {
   return (
     <section style={{ position: "relative", minHeight: "100vh", display: "flex", flexDirection: "column", justifyContent: "center", overflow: "hidden", paddingTop: 90, backgroundColor: "oklch(0.14 0.04 235)" }}>
       <div style={{ position: "absolute", inset: 0, transform: `translateY(${p * 0.25}px) scale(1.05)`, zIndex: 0 }}>
-        <img src="https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=1920&q=85&auto=format&fit=crop" alt="Hero landscape" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", objectPosition: "center 40%" }} />
+        <video autoPlay muted loop playsInline style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", objectPosition: "center 40%" }}>
+          <source src="https://raw.githubusercontent.com/xondamirx9/Lumina-2.0/claude/laughing-bell-kuitb0/hero_loop.mp4" type="video/mp4" />
+        </video>
         <div style={{ position: "absolute", inset: 0, background: "linear-gradient(180deg, oklch(0.15 0.05 235 / 0.72) 0%, oklch(0.18 0.05 235 / 0.45) 40%, oklch(0.1 0.03 235 / 0.1) 68%, var(--bg) 100%)" }} />
       </div>
       <div className="wrap" style={{ position: "relative", zIndex: 2, textAlign: "center", paddingBottom: 30 }}>
