@@ -1,5 +1,5 @@
 /* =========================================================
-   Lumina Voyages — Tour listing + search & filters
+   Oscar Travel — Tour listing + search & filters
    ========================================================= */
 
 function ListingPage({ go, route }) {

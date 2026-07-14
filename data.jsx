@@ -1,5 +1,5 @@
 /* =========================================================
-   Lumina Voyages — Mock backend
+   Oscar Travel — Mock backend
    Tour catalogue, reviews, and a localStorage-backed store
    that simulates a real persistence layer.
    ========================================================= */
@@ -432,7 +432,7 @@ const TOURS = [
 const REVIEWS = {
   "santorini-cyclades": [
     { name: "Elena & Marco", date: "May 2026", rating: 5, title: "The trip of a lifetime", text: "Every sunset felt unreal. Our skipper found coves we'd never have reached otherwise, and the cave suite in Oia was magical.", trip: "Honeymoon" },
-    { name: "James W.", date: "Apr 2026", rating: 5, title: "Seamless and special", text: "Lumina handled every detail. The wine tasting on the volcanic vineyards was a highlight I still talk about.", trip: "Couples" },
+    { name: "James W.", date: "Apr 2026", rating: 5, title: "Seamless and special", text: "Oscar Travel handled every detail. The wine tasting on the volcanic vineyards was a highlight I still talk about.", trip: "Couples" },
     { name: "Priya S.", date: "Mar 2026", rating: 4, title: "Beautiful, slightly rushed", text: "Stunning throughout. I'd have loved one more day at sea — that's how good the sailing was.", trip: "Friends" },
   ],
   "patagonia-trek": [
@@ -579,7 +579,7 @@ const Store = (() => {
     },
     isSaved: (id) => state.saved.includes(id),
     addBooking(b) {
-      const booking = { id: "LV-" + Math.random().toString(36).slice(2, 7).toUpperCase(), createdAt: Date.now(), status: "Confirmed", ...b };
+      const booking = { id: "OT-" + Math.random().toString(36).slice(2, 7).toUpperCase(), createdAt: Date.now(), status: "Confirmed", ...b };
       state.bookings = [booking, ...state.bookings];
       persist();
       /* also persist to Supabase */

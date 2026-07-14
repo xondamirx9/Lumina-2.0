@@ -1,5 +1,5 @@
 /* ================================================================
-   Lumina Voyages — Account: auth, profile, trips, saved
+   Oscar Travel — Account: auth, profile, trips, saved
    ================================================================ */
 
 /* ── Auth panel (not logged in) ───────────────────────────────── */
@@ -115,7 +115,7 @@ function AuthPanel({ go }) {
               ))}
             </div>
           </div>
-          <p style={{ color: "oklch(1 0 0 / 0.45)", fontSize: "0.78rem" }}>© 2026 Lumina Voyages</p>
+          <p style={{ color: "oklch(1 0 0 / 0.45)", fontSize: "0.78rem" }}>© 2026 Oscar Travel</p>
         </div>
       </div>
 

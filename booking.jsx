@@ -1,5 +1,5 @@
 /* =========================================================
-   Lumina Voyages — Booking / checkout flow
+   Oscar Travel — Booking / checkout flow
    ========================================================= */
 
 const _BOOKING_DEPARTURES = (typeof DEPARTURES !== "undefined" && DEPARTURES) ||
