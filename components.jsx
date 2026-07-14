@@ -272,8 +272,57 @@ function Logo({ light, onClick, size = 110 }) {
 }
 
 /* ---------- Language + Theme controls ---------- */
+const LANGS = [
+  { id: "en", short: "EN", label: "English" },
+  { id: "ru", short: "RU", label: "Русский" },
+  { id: "uz", short: "UZ", label: "O'zbekcha" },
+];
+
+/* Custom language dropdown — a native <select> can't be styled, and its
+   options were unreadable (white text on the white system dropdown). */
+function LangSwitch({ solid }) {
+  const { lang, setLang } = useI18n();
+  const [open, setOpen] = useState(false);
+  const ref = useRef(null);
+  const col = solid ? "var(--ink-2)" : "oklch(1 0 0 / 0.88)";
+
+  useEffect(() => {
+    if (!open) return;
+    const onDoc = (e) => { if (ref.current && !ref.current.contains(e.target)) setOpen(false); };
+    const onKey = (e) => { if (e.key === "Escape") setOpen(false); };
+    document.addEventListener("mousedown", onDoc);
+    window.addEventListener("keydown", onKey);
+    return () => { document.removeEventListener("mousedown", onDoc); window.removeEventListener("keydown", onKey); };
+  }, [open]);
+
+  return (
+    <div ref={ref} style={{ position: "relative" }}>
+      <button onClick={() => setOpen(o => !o)} aria-haspopup="listbox" aria-expanded={open} aria-label="Language"
+        className="lang-btn"
+        style={{ color: col, background: solid ? "var(--surface-2)" : "oklch(1 0 0 / 0.14)" }}>
+        <Icon name="globe" size={14} />
+        {lang.toUpperCase()}
+        <Icon name="chevD" size={13} style={{ transform: open ? "rotate(180deg)" : "none", transition: "transform 0.25s" }} />
+      </button>
+      {open && (
+        <div className="lang-menu anim-scale-in" role="listbox" aria-label="Choose language">
+          {LANGS.map(l => (
+            <button key={l.id} role="option" aria-selected={l.id === lang}
+              className={"lang-item" + (l.id === lang ? " active" : "")}
+              onClick={() => { setLang(l.id); setOpen(false); }}>
+              <span className="lang-short">{l.short}</span>
+              <span style={{ flex: 1, textAlign: "left" }}>{l.label}</span>
+              {l.id === lang && <Icon name="check" size={15} strokeWidth={2.5} />}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 function LangThemeBar({ solid }) {
-  const { lang, setLang, theme, setTheme, t } = useI18n();
+  const { theme, setTheme, t } = useI18n();
   const isDark = theme === "dark";
   const col = solid ? "var(--ink-2)" : "oklch(1 0 0 / 0.88)";
   return (
@@ -284,16 +333,7 @@ function LangThemeBar({ solid }) {
         style={{ width: 36, height: 36, borderRadius: "50%", display: "grid", placeItems: "center", color: col, background: solid ? "var(--surface-2)" : "oklch(1 0 0 / 0.14)", backdropFilter: "blur(8px)", transition: "all 0.3s" }}>
         <Icon name={isDark ? "sun" : "moon"} size={17} />
       </button>
-      {/* language selector */}
-      <div style={{ position: "relative" }}>
-        <select value={lang} onChange={(e) => setLang(e.target.value)}
-          style={{ appearance: "none", border: "none", outline: "none", background: solid ? "var(--surface-2)" : "oklch(1 0 0 / 0.14)", backdropFilter: "blur(8px)", color: col, fontFamily: "var(--font-sans)", fontWeight: 700, fontSize: "0.82rem", padding: "7px 26px 7px 10px", borderRadius: "var(--r-pill)", cursor: "pointer", transition: "all 0.3s", letterSpacing: "0.04em" }}>
-          <option value="en">EN</option>
-          <option value="ru">RU</option>
-          <option value="uz">UZ</option>
-        </select>
-        <Icon name="chevD" size={13} style={{ position: "absolute", right: 7, top: "50%", transform: "translateY(-50%)", color: col, pointerEvents: "none" }} />
-      </div>
+      <LangSwitch solid={solid} />
     </div>
   );
 }
