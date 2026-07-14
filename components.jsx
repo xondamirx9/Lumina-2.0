@@ -264,10 +264,10 @@ const BRAND_GOLD = "#C6A15B";
    transparent background, adapts to dark surfaces automatically) */
 function LogoMark({ size = 46, gold = BRAND_GOLD }) {
   return (
-    <svg width={size} height={size} viewBox="0 0 96 96" aria-hidden="true" style={{ flexShrink: 0, display: "block", overflow: "visible" }}>
-      <circle cx="48" cy="44" r="36" fill="none" stroke={gold} strokeWidth="2.4" />
-      <text x="39" y="60" textAnchor="middle" fontFamily="'Instrument Serif', Georgia, 'Times New Roman', serif" fontSize="52" fill={gold}>O</text>
-      <text x="60" y="78" textAnchor="middle" fontFamily="'Instrument Serif', Georgia, 'Times New Roman', serif" fontSize="52" fill={gold}>T</text>
+    <svg width={size} height={size} viewBox="0 0 100 100" aria-hidden="true" style={{ flexShrink: 0, display: "block", overflow: "visible" }}>
+      <circle cx="50" cy="44" r="38" fill="none" stroke={gold} strokeWidth="2.2" />
+      <text x="41" y="64" textAnchor="middle" fontFamily="'Instrument Serif', Georgia, 'Times New Roman', serif" fontSize="60" fill={gold}>O</text>
+      <text x="63" y="86" textAnchor="middle" fontFamily="'Instrument Serif', Georgia, 'Times New Roman', serif" fontSize="60" fill={gold}>T</text>
     </svg>
   );
 }

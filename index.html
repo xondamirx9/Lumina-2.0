@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>Oscar Travel — Extraordinary travel, beautifully planned</title>
 <meta name="description" content="Discover handcrafted luxury tours to 60+ countries. From private sails through the Cyclades to the dunes of the Sahara — beautifully designed journeys, booked in minutes." />
-<meta name="theme-color" content="#0d4f6b" />
+<meta name="theme-color" content="#181d24" />
 <link rel="canonical" href="https://www.luminavoyages.tours/" />
 <!-- Open Graph / Social -->
 <meta property="og:type" content="website" />
@@ -63,7 +63,7 @@
   #boot {
     position: fixed; inset: 0; z-index: 999;
     display: grid; place-items: center;
-    background: radial-gradient(130% 130% at 50% 18%, oklch(0.30 0.06 235) 0%, oklch(0.17 0.045 235) 55%, oklch(0.11 0.03 235) 100%);
+    background: radial-gradient(130% 130% at 50% 18%, oklch(0.26 0.022 75) 0%, oklch(0.16 0.014 70) 55%, oklch(0.10 0.010 65) 100%);
     transition: opacity 0.6s ease, visibility 0.6s;
   }
   #boot.gone { opacity: 0; pointer-events: none; visibility: hidden; }
@@ -72,9 +72,9 @@
   .boot-globe { position: relative; width: 88px; height: 88px; }
   .boot-globe::before { /* the globe */
     content: ''; position: absolute; inset: 12px; border-radius: 50%;
-    border: 2px solid oklch(1 0 0 / 0.28);
-    background: radial-gradient(circle at 32% 32%, oklch(0.74 0.09 196 / 0.4), transparent 62%);
-    box-shadow: 0 0 34px oklch(0.66 0.11 222 / 0.35), inset 0 0 18px oklch(0.66 0.11 222 / 0.25);
+    border: 2px solid oklch(0.76 0.105 85 / 0.55);
+    background: radial-gradient(circle at 32% 32%, oklch(0.76 0.105 85 / 0.28), transparent 62%);
+    box-shadow: 0 0 38px oklch(0.72 0.10 82 / 0.35), inset 0 0 18px oklch(0.72 0.10 82 / 0.25);
   }
   .boot-globe::after { /* meridian */
     content: ''; position: absolute; inset: 12px; border-radius: 50%;
@@ -84,14 +84,14 @@
   .boot-orbit::before { /* the traveller */
     content: ''; position: absolute; top: -5px; left: 50%; margin-left: -5px;
     width: 10px; height: 10px; border-radius: 50%;
-    background: oklch(0.72 0.14 38);
-    box-shadow: 0 0 16px 4px oklch(0.72 0.14 38 / 0.55);
+    background: oklch(0.78 0.11 80);
+    box-shadow: 0 0 16px 4px oklch(0.78 0.11 80 / 0.6);
   }
   .boot-word { font-family: "Instrument Serif", Georgia, serif; font-size: 2.1rem; color: white; line-height: 1; }
-  .boot-word em { font-style: italic; color: oklch(0.9 0.05 80); }
+  .boot-word em { font-style: italic; color: oklch(0.80 0.10 85); }
   .boot-sub { font-family: "Manrope", system-ui, sans-serif; font-size: 0.64rem; font-weight: 700; letter-spacing: 0.34em; text-transform: uppercase; color: oklch(1 0 0 / 0.5); margin-top: -12px; }
   .boot-bar { width: 178px; height: 3px; border-radius: 99px; background: oklch(1 0 0 / 0.12); overflow: hidden; }
-  .boot-bar span { display: block; height: 100%; width: 40%; border-radius: 99px; background: linear-gradient(90deg, oklch(0.66 0.11 222), oklch(0.74 0.09 196), oklch(0.72 0.14 38)); animation: bootSlide 1.15s ease-in-out infinite; }
+  .boot-bar span { display: block; height: 100%; width: 40%; border-radius: 99px; background: linear-gradient(90deg, oklch(0.60 0.10 78), oklch(0.78 0.11 85), oklch(0.90 0.06 90)); animation: bootSlide 1.15s ease-in-out infinite; }
   @keyframes bootSlide { 0% { transform: translateX(-110%); } 100% { transform: translateX(460%); } }
   .boot-star { position: absolute; width: 3px; height: 3px; border-radius: 50%; background: white; opacity: 0.35; animation: bootTwinkle 2.6s ease-in-out infinite; }
   @keyframes bootTwinkle { 50% { opacity: 0.95; transform: scale(1.5); } }
