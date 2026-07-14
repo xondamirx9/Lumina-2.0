@@ -164,6 +164,28 @@ function ListInput({ value = [], onChange, placeholder }) {
   );
 }
 
+/* ── Itinerary editor (day-by-day plan) ───────────────────────── */
+function ItineraryInput({ value = [], onChange }) {
+  const update = (i, k, v) => onChange(value.map((d, j) => j === i ? { ...d, [k]: v } : d));
+  const remove = (i) => onChange(value.filter((_, j) => j !== i).map((d, j) => ({ ...d, d: "Day " + (j + 1) })));
+  const add = () => onChange([...value, { d: "Day " + (value.length + 1), t: "", x: "" }]);
+  return (
+    <div className="col gap-3">
+      {value.map((day, i) => (
+        <div key={i} style={{ border: "1px solid var(--hairline-2)", borderRadius: "var(--r-sm)", padding: 14, background: "var(--bg-2)" }}>
+          <div className="row gap-3" style={{ marginBottom: 10 }}>
+            <span style={{ width: 30, height: 30, borderRadius: "50%", background: "var(--ocean-tint)", color: "var(--ocean-deep)", display: "grid", placeItems: "center", fontWeight: 800, fontSize: "0.78rem", flexShrink: 0 }}>{i + 1}</span>
+            <input className="input" value={day.t} onChange={e => update(i, "t", e.target.value)} placeholder="Day title, e.g. Arrive in Santorini" style={{ flex: 1, padding: "9px 12px" }} />
+            <button onClick={() => remove(i)} style={{ color: "var(--coral-deep)", flexShrink: 0 }} title="Remove day"><Icon name="trash" size={16} /></button>
+          </div>
+          <textarea className="input" rows={2} value={day.x} onChange={e => update(i, "x", e.target.value)} placeholder="What happens this day…" style={{ resize: "vertical", fontSize: "0.86rem" }} />
+        </div>
+      ))}
+      <button className="btn btn-ghost btn-sm" onClick={add} style={{ alignSelf: "flex-start" }}><Icon name="plus" size={15} /> Add day</button>
+    </div>
+  );
+}
+
 /* ══════════════════════════════════════════════════════════════════
    DASHBOARD
 ══════════════════════════════════════════════════════════════════ */
@@ -239,6 +261,9 @@ CREATE POLICY "Admin manages inquiries" ON public.inquiries FOR ALL USING (publi
     </div>
   );
 
+  const chartBookings = chart.reduce((s, m) => s + (m.count || 0), 0);
+  const chartRevenue  = chart.reduce((s, m) => s + (m.revenue || 0), 0);
+
   return (
     <div className="col gap-6">
       {/* Stats row */}
@@ -249,10 +274,12 @@ CREATE POLICY "Admin manages inquiries" ON public.inquiries FOR ALL USING (publi
         <StatCard icon="x"        label="Hidden"            value={stats?.hidden || 0}          color="var(--ink-3)"      sub="not visible" />
         <StatCard icon="mail"     label="Total inquiries"   value={inquiryStats?.total || 0}    color="var(--coral)"      onClick={() => setTab("inquiries")} />
         <StatCard icon="sparkle"  label="New inquiries"     value={inquiryStats?.new || 0}      color="var(--coral-deep)" sub="unread" onClick={() => setTab("inquiries")} />
+        <StatCard icon="calendar" label="Bookings (6 mo)"   value={chartBookings}               color="var(--ocean-bright)" onClick={() => setTab("bookings")} />
+        <StatCard icon="tag"      label="Revenue (6 mo)"    value={"$" + chartRevenue.toLocaleString()} color="var(--teal)" onClick={() => setTab("bookings")} />
       </div>
 
       {/* Chart + Recent inquiries */}
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 18 }}>
+      <div className="admin-2col" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 18 }}>
         <div style={{ background: "var(--surface)", borderRadius: "var(--r-md)", padding: 24, border: "1px solid var(--hairline)" }}>
           <h3 style={{ fontSize: "1rem", fontWeight: 700, marginBottom: 20, color: "var(--ink-2)" }}>Monthly Bookings</h3>
           <BarChart data={chart} />
@@ -325,9 +352,9 @@ function TourEditModal({ tour, onClose, onSaved }) {
   const isNew = !tour?.id;
   const toast = useToast();
 
-  const blank = { id: "tour-" + Date.now(), title: "", blurb: "", full_description: "", country: "", city: "", region: "", place: "", days: 7, price: "", discount_price: "", old_price: "", category: "luxury", theme: "ocean", difficulty: "Moderate", group_max: 12, group_min: 1, season: "year-round", image_url: "", gallery_urls: [], departure_dates: [], tags_json: [], included_json: [], excluded_json: [], featured: false, popular: false, is_hot: false, status: "active", rating: 5.0, reviews: 0 };
+  const blank = { id: "tour-" + Date.now(), title: "", blurb: "", full_description: "", country: "", city: "", region: "", place: "", days: 7, price: "", discount_price: "", old_price: "", category: "luxury", theme: "ocean", difficulty: "Moderate", group_max: 12, group_min: 1, season: "year-round", image_url: "", gallery_urls: [], departure_dates: [], tags_json: [], included_json: [], excluded_json: [], highlights: [], itinerary: [], featured: false, popular: false, is_hot: false, status: "active", rating: 5.0, reviews: 0 };
 
-  const [form, setForm] = useState(tour ? { ...blank, ...tour, tags_json: tour.tags_json || (tour.tags ? tour.tags : []), included_json: tour.included_json || (tour.included ? tour.included : []), excluded_json: tour.excluded_json || (tour.notIncluded ? tour.notIncluded : []) } : blank);
+  const [form, setForm] = useState(tour ? { ...blank, ...tour, tags_json: tour.tags_json || (tour.tags ? tour.tags : []), included_json: tour.included_json || (tour.included ? tour.included : []), excluded_json: tour.excluded_json || (tour.notIncluded ? tour.notIncluded : []), highlights: tour.highlights || [], itinerary: tour.itinerary || [] } : blank);
   const [uploading, setUploading] = useState(false);
   const [galUploading, setGalUploading] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -369,33 +396,49 @@ function TourEditModal({ tour, onClose, onSaved }) {
   const save = async (status = form.status) => {
     if (!form.title.trim()) { toast("Title is required", "x"); return; }
     setSaving(true);
+    const payload = {
+      id: form.id, title: form.title, blurb: form.blurb,
+      full_description: form.full_description,
+      country: form.country, city: form.city,
+      region: form.region || form.country || form.city || "",
+      place: form.city && form.country ? `${form.city}, ${form.country}` : (form.place || ""),
+      days: Number(form.days) || 7,
+      price: Number(form.price) || 0,
+      discount_price: form.discount_price ? Number(form.discount_price) : null,
+      old_price: form.old_price ? Number(form.old_price) : null,
+      category: form.category || "luxury",
+      difficulty: form.difficulty || "Moderate",
+      group_max: Number(form.group_max) || 12,
+      season: form.season || "year-round",
+      theme: form.theme || "ocean",
+      image_url: form.image_url || null,
+      gallery_urls: form.gallery_urls || [],
+      departure_dates: form.departure_dates || [],
+      tags_json: form.tags_json || [],
+      included_json: form.included_json || [],
+      excluded_json: form.excluded_json || [],
+      highlights: form.highlights || [],
+      itinerary: (form.itinerary || []).filter(d => d.t || d.x),
+      featured: !!form.featured, popular: !!form.popular, is_hot: !!form.is_hot,
+      rating: Number(form.rating) || 5.0,
+      reviews: Number(form.reviews) || 0,
+      status,
+    };
     try {
-      await SB.tours.upsert({
-        id: form.id, title: form.title, blurb: form.blurb,
-        full_description: form.full_description,
-        country: form.country, city: form.city,
-        region: form.region || form.country || form.city || "",
-        place: form.city && form.country ? `${form.city}, ${form.country}` : (form.place || ""),
-        days: Number(form.days) || 7,
-        price: Number(form.price) || 0,
-        discount_price: form.discount_price ? Number(form.discount_price) : null,
-        old_price: form.old_price ? Number(form.old_price) : null,
-        category: form.category || "luxury",
-        difficulty: form.difficulty || "Moderate",
-        group_max: Number(form.group_max) || 12,
-        season: form.season || "year-round",
-        theme: form.theme || "ocean",
-        image_url: form.image_url || null,
-        gallery_urls: form.gallery_urls || [],
-        departure_dates: form.departure_dates || [],
-        tags_json: form.tags_json || [],
-        included_json: form.included_json || [],
-        excluded_json: form.excluded_json || [],
-        featured: !!form.featured, popular: !!form.popular, is_hot: !!form.is_hot,
-        rating: Number(form.rating) || 5.0,
-        reviews: Number(form.reviews) || 0,
-        status,
-      });
+      try {
+        await SB.tours.upsert(payload);
+      } catch (e) {
+        // DBs that haven't run SCHEMA_V3.sql yet don't have these columns
+        if (/column|schema cache/i.test(e.message || "")) {
+          const { highlights, itinerary, ...rest } = payload;
+          await SB.tours.upsert(rest);
+          toast("Saved — run SCHEMA_V3.sql in Supabase to enable highlights & itinerary", "check");
+          onSaved();
+          setSaving(false);
+          return;
+        }
+        throw e;
+      }
       toast(isNew ? "Tour created!" : "Tour saved!", "check");
       onSaved();
     } catch(e) { toast("Save failed: " + e.message, "x"); }
@@ -427,7 +470,7 @@ function TourEditModal({ tour, onClose, onSaved }) {
 
       {/* Body */}
       <div style={{ flex: 1, overflow: "auto", padding: "28px 28px 60px" }}>
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 340px", gap: 28, maxWidth: 1100, margin: "0 auto" }}>
+        <div className="tour-edit-grid" style={{ display: "grid", gridTemplateColumns: "1fr 340px", gap: 28, maxWidth: 1100, margin: "0 auto" }}>
           {/* Left column */}
           <div className="col gap-5">
             {/* Basic info */}
@@ -481,6 +524,18 @@ function TourEditModal({ tour, onClose, onSaved }) {
                 <TourField label="Short description" hint="Shown on listing cards (1-2 sentences)"><textarea className="input" rows={2} value={form.blurb} onChange={setE("blurb")} placeholder="A captivating one-liner for cards and previews" style={{ resize: "vertical" }} /></TourField>
                 <TourField label="Full description" hint="Shown on the tour detail page"><textarea className="input" rows={6} value={form.full_description} onChange={setE("full_description")} placeholder="Full tour details, atmosphere, unique selling points…" style={{ resize: "vertical" }} /></TourField>
               </div>
+            </div>
+
+            {/* Highlights */}
+            <div style={{ background: "var(--surface)", borderRadius: "var(--r-md)", padding: 24, border: "1px solid var(--hairline)" }}>
+              <h3 style={{ fontSize: "0.9rem", fontWeight: 700, color: "var(--ink-3)", marginBottom: 18, textTransform: "uppercase", letterSpacing: "0.08em" }}>Trip Highlights</h3>
+              <ListInput value={form.highlights || []} onChange={set("highlights")} placeholder="e.g. Sail the caldera at golden hour" />
+            </div>
+
+            {/* Itinerary */}
+            <div style={{ background: "var(--surface)", borderRadius: "var(--r-md)", padding: 24, border: "1px solid var(--hairline)" }}>
+              <h3 style={{ fontSize: "0.9rem", fontWeight: 700, color: "var(--ink-3)", marginBottom: 18, textTransform: "uppercase", letterSpacing: "0.08em" }}>Day-by-day Itinerary</h3>
+              <ItineraryInput value={form.itinerary || []} onChange={set("itinerary")} />
             </div>
 
             {/* Departure dates */}
@@ -581,18 +636,11 @@ function AdminTours() {
   const load = async () => {
     setLoading(true);
     try {
-      const hardcoded = typeof TOURS !== "undefined" ? TOURS : [];
       if (SB.ok) {
         const sbTours = await SB.tours.list();
-        if (sbTours.length) {
-          const merged = hardcoded.map(t => { const sb = sbTours.find(s => s.id === t.id); return sb ? { ...t, ...sb } : t; });
-          const extra = sbTours.filter(s => !hardcoded.find(t => t.id === s.id));
-          setTours([...merged, ...extra]);
-        } else {
-          setTours(hardcoded.map(t => ({ ...t, status: "active", view_count: 0 })));
-        }
+        setTours(mergeTours(sbTours, { publicOnly: false }).map(t => ({ status: "active", view_count: 0, ...t })));
       } else {
-        setTours(hardcoded.map(t => ({ ...t, status: "active", view_count: 0 })));
+        setTours((typeof TOURS !== "undefined" ? TOURS : []).map(t => ({ ...t, status: "active", view_count: 0 })));
       }
     } catch(e) { toast("Failed to load tours: " + e.message, "x"); }
     setLoading(false);
@@ -603,6 +651,26 @@ function AdminTours() {
   const filtered = filterStatus === "all" ? tours : tours.filter(t => (t.status || "active") === filterStatus);
 
   const deleteTour = async (id) => {
+    const isBuiltIn = typeof TOURS !== "undefined" && TOURS.some(t => t.id === id);
+    if (isBuiltIn) {
+      /* Built-in tours live in the code bundle — a DB delete would just make
+         them reappear. Hide them instead so they vanish from the site. */
+      if (!confirm("This is a built-in tour, so it can't be permanently deleted — but it will be hidden everywhere on the site. Continue?")) return;
+      const t = tours.find(x => x.id === id) || {};
+      try {
+        await SB.tours.upsert({
+          id, title: t.title, blurb: t.blurb || "", region: t.region || "", place: t.place || "",
+          days: t.days || 7, price: t.price || 0, old_price: t.old_price ?? t.oldPrice ?? null,
+          rating: t.rating || 5, reviews: t.reviews || 0, theme: t.theme || "ocean",
+          featured: !!t.featured, popular: !!t.popular,
+          category: t.category || (t.categories && t.categories[0]) || "luxury",
+          difficulty: t.difficulty || "Moderate", group_max: t.group_max || t.groupMax || 12,
+          season: t.season || "year-round", status: "hidden",
+        });
+        toast("Tour hidden from the site", "check"); load();
+      } catch(e) { toast("Failed: " + e.message, "x"); }
+      return;
+    }
     if (!confirm("Delete this tour? This cannot be undone.")) return;
     try { await SB.tours.delete(id); toast("Deleted", "check"); load(); }
     catch(e) { toast("Delete failed", "x"); }
@@ -638,10 +706,10 @@ function AdminTours() {
               <TD><div style={{ width: 56, height: 42, borderRadius: 6, overflow: "hidden", background: "var(--ocean-tint)" }}><img src={tour.image_url || (typeof PHOTOS !== "undefined" && PHOTOS[tour.theme]) || ""} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} /></div></TD>,
               <TD><div style={{ fontWeight: 700, maxWidth: 220 }}>{tour.title}</div><div style={{ fontSize: "0.78rem", color: "var(--ink-3)" }}>{tour.place || `${tour.city || ""}${tour.country ? ", " + tour.country : ""}`}</div></TD>,
               <TD><StatusBadge status={tour.status || "active"} /></TD>,
-              <TD><div style={{ fontWeight: 700 }}>${(tour.discount_price || tour.price || 0).toLocaleString()}</div>{tour.old_price && <div style={{ fontSize: "0.76rem", color: "var(--ink-3)", textDecoration: "line-through" }}>${(tour.old_price).toLocaleString()}</div>}</TD>,
+              <TD><div style={{ fontWeight: 700 }}>{fmtPrice(tourPrice(tour))}</div>{tourOldPrice(tour) && <div style={{ fontSize: "0.76rem", color: "var(--ink-3)", textDecoration: "line-through" }}>{fmtPrice(tourOldPrice(tour))}</div>}</TD>,
               <TD><span style={{ fontWeight: 700, color: "var(--ocean)" }}>{tour.view_count || 0}</span></TD>,
               <TD><div style={{ display: "flex", gap: 4, flexWrap: "wrap" }}>{tour.featured && <span style={{ fontSize: "0.68rem", background: "var(--ocean-tint)", color: "var(--ocean-deep)", padding: "2px 7px", borderRadius: "var(--r-pill)", fontWeight: 700 }}>Featured</span>}{tour.popular && <span style={{ fontSize: "0.68rem", background: "var(--coral-soft)", color: "var(--coral-deep)", padding: "2px 7px", borderRadius: "var(--r-pill)", fontWeight: 700 }}>Popular</span>}{tour.is_hot && <span style={{ fontSize: "0.68rem", background: "var(--sand)", color: "oklch(0.46 0.06 78)", padding: "2px 7px", borderRadius: "var(--r-pill)", fontWeight: 700 }}>Hot</span>}</div></TD>,
-              <TD><div className="row gap-2"><button className="btn btn-ghost btn-sm" onClick={() => openEdit(tour)}>Edit</button><button className="btn btn-sm" onClick={() => deleteTour(tour.id)} style={{ background: "var(--coral-soft)", color: "var(--coral-deep)" }}>Delete</button></div></TD>,
+              <TD><div className="row gap-2"><button className="btn btn-ghost btn-sm" onClick={() => openEdit(tour)}>Edit</button><button className="btn btn-sm" onClick={() => deleteTour(tour.id)} style={{ background: "var(--coral-soft)", color: "var(--coral-deep)" }}>{(typeof TOURS !== "undefined" && TOURS.some(t => t.id === tour.id)) ? "Hide" : "Delete"}</button></div></TD>,
             ])}
           />
       }
@@ -680,7 +748,7 @@ function AdminInquiries() {
   if (loading)  return <div style={{ textAlign: "center", padding: 48, color: "var(--ink-3)" }}>Loading inquiries…</div>;
 
   return (
-    <div style={{ display: "grid", gridTemplateColumns: selected ? "1fr 380px" : "1fr", gap: 20 }}>
+    <div className="admin-inq-grid" style={{ display: "grid", gridTemplateColumns: selected ? "1fr 380px" : "1fr", gap: 20 }}>
       <div>
         <div className="row gap-2" style={{ marginBottom: 18, flexWrap: "wrap" }}>
           {statuses.map(s => (
@@ -750,14 +818,15 @@ function AdminBookings() {
     catch(e) { toast("Failed", "x"); }
   };
 
-  const total = bookings.reduce((s, b) => s + (Number(b.total) || 0), 0);
+  /* Cancelled bookings shouldn't count toward revenue */
+  const total = bookings.reduce((s, b) => s + (b.status === "cancelled" ? 0 : Number(b.total) || 0), 0);
 
   if (!SB.ok) return <div style={{ textAlign: "center", padding: 60, color: "var(--ink-3)" }}>Configure Supabase to see bookings.</div>;
   if (loading) return <div style={{ textAlign: "center", padding: 48, color: "var(--ink-3)" }}>Loading bookings…</div>;
 
   return (
     <div>
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 14, marginBottom: 24 }}>
+      <div className="admin-3col" style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 14, marginBottom: 24 }}>
         <StatCard icon="compass"  label="Total bookings" value={bookings.length}    color="var(--ocean)" />
         <StatCard icon="checkC"   label="Confirmed"      value={bookings.filter(b => b.status === "confirmed").length} color="var(--teal)" />
         <StatCard icon="tag"      label="Total revenue"  value={"$" + total.toLocaleString()}  color="var(--coral)" />
@@ -859,37 +928,45 @@ function AdminSettings() {
   if (!SB.ok) return <div style={{ background: "var(--coral-soft)", color: "var(--coral-deep)", borderRadius: "var(--r-md)", padding: 28, fontWeight: 600 }}>Configure Supabase to enable settings.</div>;
   if (loading) return <div style={{ textAlign: "center", padding: 48, color: "var(--ink-3)" }}>Loading settings…</div>;
 
-  const SF = (props) => <SettingsField {...props} form={form} setForm={setForm} />;
+  /* NOTE: fields render SettingsField directly (not through a locally-defined
+     wrapper component) — a wrapper redefined on every render remounts the
+     input and loses focus after each keystroke. */
+  const sf = (props) => <SettingsField {...props} form={form} setForm={setForm} />;
 
   return (
     <div style={{ maxWidth: 720 }}>
       <p style={{ color: "var(--ink-3)", marginBottom: 28, fontSize: "0.9rem" }}>These override built-in defaults. Leave blank to use defaults.</p>
       <div className="col gap-4">
         <div style={{ background: "var(--surface)", borderRadius: "var(--r-md)", padding: 28, border: "1px solid var(--hairline)" }}>
+          <h3 style={{ fontSize: "1rem", marginBottom: 8, color: "var(--ink-2)" }}>Announcement Bar</h3>
+          <p style={{ fontSize: "0.82rem", color: "var(--ink-3)", marginBottom: 18 }}>Shown as a slim banner at the very top of every page. Leave empty to hide.</p>
+          {sf({ id: "announcement", label: "Announcement text", placeholder: "🌴 Summer sale — save up to $500 on Mediterranean journeys!" })}
+        </div>
+        <div style={{ background: "var(--surface)", borderRadius: "var(--r-md)", padding: 28, border: "1px solid var(--hairline)" }}>
           <h3 style={{ fontSize: "1rem", marginBottom: 20, color: "var(--ink-2)" }}>Homepage Hero</h3>
           <div className="col gap-4">
-            <SF id="hero_image_url" label="Hero background image URL" placeholder="https://images.unsplash.com/..." hint="Any direct image URL" />
-            <SF id="hero_heading"   label="Main heading" placeholder="Discover the World" />
-            <SF id="hero_sub"       label="Subtitle"     placeholder="Extraordinary journeys, beautifully planned." />
+            {sf({ id: "hero_image_url", label: "Hero background image URL", placeholder: "https://images.unsplash.com/...", hint: "Overrides the hero video when set" })}
+            {sf({ id: "hero_heading", label: "Main heading", placeholder: "Discover the World" })}
+            {sf({ id: "hero_sub", label: "Subtitle", placeholder: "Extraordinary journeys, beautifully planned." })}
           </div>
         </div>
         <div style={{ background: "var(--surface)", borderRadius: "var(--r-md)", padding: 28, border: "1px solid var(--hairline)" }}>
           <h3 style={{ fontSize: "1rem", marginBottom: 20, color: "var(--ink-2)" }}>Footer</h3>
           <div className="col gap-4">
-            <SF id="footer_tagline"  label="Footer tagline" placeholder="Curated journeys to the world's most beautiful places…" textarea />
-            <SF id="footer_col2_h"   label="Column 2 heading" placeholder="Company" />
-            <SF id="footer_col2"     label="Column 2 links (one per line)" placeholder={"Our story\nTravel guides\nSustainability\nCareers\nPress"} textarea hint="One link label per line" />
-            <SF id="footer_col3_h"   label="Column 3 heading" placeholder="Support" />
-            <SF id="footer_col3"     label="Column 3 links (one per line)" placeholder={"Help centre\nBooking terms\nTravel insurance\nContact us\nFAQ"} textarea hint="One link label per line" />
-            <SF id="footer_copy"     label="Copyright text" placeholder="© 2026 Lumina Voyages. Crafted for the curious." />
+            {sf({ id: "footer_tagline", label: "Footer tagline", placeholder: "Curated journeys to the world's most beautiful places…", textarea: true })}
+            {sf({ id: "footer_col2_h", label: "Column 2 heading", placeholder: "Company" })}
+            {sf({ id: "footer_col2", label: "Column 2 links (one per line)", placeholder: "Our story\nTravel guides\nSustainability\nCareers\nPress", textarea: true, hint: "One link label per line" })}
+            {sf({ id: "footer_col3_h", label: "Column 3 heading", placeholder: "Support" })}
+            {sf({ id: "footer_col3", label: "Column 3 links (one per line)", placeholder: "Help centre\nBooking terms\nTravel insurance\nContact us\nFAQ", textarea: true, hint: "One link label per line" })}
+            {sf({ id: "footer_copy", label: "Copyright text", placeholder: "© 2026 Lumina Voyages. Crafted for the curious." })}
           </div>
         </div>
         <div style={{ background: "var(--surface)", borderRadius: "var(--r-md)", padding: 28, border: "1px solid var(--hairline)" }}>
           <h3 style={{ fontSize: "1rem", marginBottom: 20, color: "var(--ink-2)" }}>Contact & Social</h3>
           <div className="col gap-4">
-            <SF id="contact_email" label="Contact email"  placeholder="hello@luminavoyages.com" />
-            <SF id="whatsapp"      label="WhatsApp"       placeholder="+1 234 567 8900" />
-            <SF id="instagram"     label="Instagram"      placeholder="@luminavoyages" />
+            {sf({ id: "contact_email", label: "Contact email", placeholder: "hello@luminavoyages.com" })}
+            {sf({ id: "whatsapp", label: "WhatsApp", placeholder: "+1 234 567 8900" })}
+            {sf({ id: "instagram", label: "Instagram", placeholder: "@luminavoyages" })}
           </div>
         </div>
         <button className="btn btn-primary btn-lg" onClick={save} disabled={saving}>{saving ? "Saving…" : <><Icon name="check" size={20} /> Save all settings</>}</button>
@@ -950,14 +1027,14 @@ function AdminPage({ go, store }) {
   const tabLabels = { dashboard: "Dashboard", tours: "Tour Management", inquiries: "Inquiries", bookings: "Bookings", users: "Users", settings: "Site Settings" };
 
   return (
-    <div style={{ display: "flex", minHeight: "100vh", background: "var(--bg-2)" }}>
+    <div className="admin-shell" style={{ display: "flex", minHeight: "100vh", background: "var(--bg-2)" }}>
         {/* Sidebar */}
-        <aside style={{ width: 230, background: "var(--footer-bg)", color: "white", display: "flex", flexDirection: "column", flexShrink: 0, position: "sticky", top: 0, height: "100vh", overflow: "hidden" }}>
+        <aside className="admin-side" style={{ width: 230, background: "var(--footer-bg)", color: "white", display: "flex", flexDirection: "column", flexShrink: 0, position: "sticky", top: 0, height: "100vh", overflow: "hidden" }}>
           <div style={{ padding: "22px 18px 18px", borderBottom: "1px solid oklch(1 0 0 / 0.07)" }}>
             <Logo light onClick={() => go({ view: "home" })} />
             <div style={{ marginTop: 7, fontSize: "0.66rem", letterSpacing: "0.18em", textTransform: "uppercase", color: "oklch(0.48 0.02 230)", fontWeight: 700 }}>Admin Panel</div>
           </div>
-          <nav style={{ flex: 1, padding: "10px 10px", overflow: "auto" }}>
+          <nav className="admin-nav" style={{ flex: 1, padding: "10px 10px", overflow: "auto" }}>
             {sideLinks.map(l => (
               <button key={l.id} onClick={() => setTab(l.id)} className="row gap-3" style={{ width: "100%", padding: "10px 14px", borderRadius: "var(--r-sm)", marginBottom: 2, fontWeight: 600, fontSize: "0.88rem", textAlign: "left", color: tab === l.id ? "white" : "oklch(0.60 0.016 228)", background: tab === l.id ? "oklch(1 0 0 / 0.11)" : "transparent", transition: "all 0.18s", border: tab === l.id ? "1px solid oklch(1 0 0 / 0.09)" : "1px solid transparent" }}>
                 <Icon name={l.icon} size={17} />

@@ -20,15 +20,9 @@ function ListingPage({ go, route }) {
   useEffect(() => {
     if (typeof SB !== "undefined" && SB.ok) {
       SB.tours.list().then((rows) => {
-        if (rows && rows.length) {
-          const sbMap = new Map(rows.filter(r => r.status !== "hidden" && r.status !== "draft").map(r => [r.id, r]));
-          const staticIds = new Set(TOURS.map(t => t.id));
-          const merged = TOURS.map(t => { const sb = sbMap.get(t.id); return sb ? { ...t, ...sb, image_url: sb.image_url || t.image_url || null } : t; });
-          const newOnes = rows.filter(r => !staticIds.has(r.id) && r.status !== "hidden" && r.status !== "draft");
-          setAllTours([...merged, ...newOnes]);
-        }
+        if (rows && rows.length) setAllTours(mergeTours(rows));
       }).catch(() => {});
-      SB.settings.getAll().then(all => setContact(all || {})).catch(() => {});
+      SB.settings.load().then(all => setContact(all || {}));
     }
   }, []);
 
@@ -52,13 +46,13 @@ function ListingPage({ go, route }) {
       const hay = (tr.title + " " + (tr.place || "") + " " + (tr.region || "") + " " + tags.join(" ")).toLowerCase();
       if (!hay.includes(q.toLowerCase())) return false;
     }
-    if (tr.price > maxPrice) return false;
+    if (maxPrice < 7000 && tourPrice(tr) > maxPrice) return false;
     if (durations.length) { const band = tr.days <= 6 ? "short" : tr.days <= 8 ? "mid" : "long"; if (!durations.includes(band)) return false; }
     if (difficulties.length && !difficulties.includes(tr.difficulty)) return false;
     return true;
   }).sort((a, b) => {
-    if (sort === "price-lo") return a.price - b.price;
-    if (sort === "price-hi") return b.price - a.price;
+    if (sort === "price-lo") return tourPrice(a) - tourPrice(b);
+    if (sort === "price-hi") return tourPrice(b) - tourPrice(a);
     if (sort === "rating") return b.rating - a.rating;
     if (sort === "duration") return a.days - b.days;
     return b.reviews - a.reviews;

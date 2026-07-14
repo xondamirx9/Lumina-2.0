@@ -107,7 +107,7 @@ function AuthPanel({ go }) {
               ))}
             </div>
           </div>
-          <p style={{ color: "oklch(1 0 0 / 0.45)", fontSize: "0.78rem" }}>© 2025 Lumina Voyages</p>
+          <p style={{ color: "oklch(1 0 0 / 0.45)", fontSize: "0.78rem" }}>© 2026 Lumina Voyages</p>
         </div>
       </div>
 
@@ -245,10 +245,12 @@ function AuthPanel({ go }) {
 function TripsTab({ store, go }) {
   const [sbBookings, setSbBookings] = useState(null);
   const { t } = useI18n();
+  /* Hooks must run unconditionally — keep them above any early return */
+  const tripsRef = useReveal();
   useEffect(() => {
     if (SB.ok) SB.bookings.mine().then(setSbBookings).catch(() => {});
   }, []);
-  const bookings = (sbBookings !== null ? sbBookings : null) || store.bookings || [];
+  const bookings = (sbBookings && sbBookings.length ? sbBookings : store.bookings) || [];
 
   if (!bookings.length) return (
     <div style={{ textAlign: "center", padding: "70px 20px", background: "var(--surface)", borderRadius: "var(--r-lg)", boxShadow: "var(--sh-sm)" }}>
@@ -259,7 +261,6 @@ function TripsTab({ store, go }) {
     </div>
   );
 
-  const tripsRef = useReveal();
   return (
     <div ref={tripsRef} className="col gap-4">
       {bookings.map((b, i) => {
@@ -268,7 +269,7 @@ function TripsTab({ store, go }) {
         return (
           <div key={b.id || i} style={{ background: "var(--surface)", borderRadius: "var(--r-md)", boxShadow: "var(--sh-sm)", overflow: "hidden", display: "grid", gridTemplateColumns: "180px 1fr", border: "1px solid var(--hairline)" }}>
             <div style={{ position: "relative", background: "var(--ocean-tint)" }}>
-              {tour?.theme && <img src={typeof PHOTOS !== "undefined" ? PHOTOS[tour.theme] : ""} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />}
+              {(tour?.image_url || tour?.theme) && <img src={tour.image_url || (typeof PHOTOS !== "undefined" ? PHOTOS[tour.theme] : "")} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />}
             </div>
             <div style={{ padding: "20px 22px" }}>
               <div className="row" style={{ justifyContent: "space-between", marginBottom: 8 }}>
@@ -293,6 +294,8 @@ function SavedTab({ store, go }) {
   const { t } = useI18n();
   const saved = store.saved || [];
   const [extraTours, setExtraTours] = useState([]);
+  /* Hooks must run unconditionally — keep them above any early return */
+  const revealRef = useReveal();
   useEffect(() => {
     const missing = saved.filter(id => !getTour(id));
     if (!missing.length || !SB.ok) return;
@@ -309,7 +312,6 @@ function SavedTab({ store, go }) {
       <button className="btn btn-primary" onClick={() => go({ view: "listing" })}>{t("acc_explore")}</button>
     </div>
   );
-  const revealRef = useReveal();
   return <div ref={revealRef} className="grid-3" style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 22 }}>
     {tours.map(tr => <TourCard key={tr.id} tour={tr} onOpen={id => go({ view: "tour", id })} />)}
   </div>;
@@ -398,6 +400,54 @@ function ProfileTab({ user, go }) {
   );
 }
 
+/* ── Reset password (arrived via email recovery link) ─────────── */
+function ResetPasswordPanel({ go, user }) {
+  const [form, setForm] = useState({ password: "", confirm: "" });
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState("");
+  const toast = useToast();
+
+  const submit = async (e) => {
+    e.preventDefault();
+    setErr("");
+    if (form.password.length < 8) { setErr("Password must be at least 8 characters."); return; }
+    if (form.password !== form.confirm) { setErr("Passwords do not match."); return; }
+    setBusy(true);
+    try {
+      await SB.auth.updatePassword(form.password);
+      toast("Password updated — you're all set!", "checkC");
+      go({ view: "account" });
+    } catch (ex) { setErr(ex.message || "Could not update password."); }
+    setBusy(false);
+  };
+
+  return (
+    <div style={{ minHeight: "100vh", display: "grid", placeItems: "center", background: "var(--bg-2)", padding: 20 }}>
+      <div className="card anim-scale-in" style={{ width: "100%", maxWidth: 420, padding: 36, boxShadow: "var(--sh-lg)" }}>
+        <span style={{ width: 60, height: 60, borderRadius: "50%", background: "var(--ocean-tint)", color: "var(--ocean-deep)", display: "grid", placeItems: "center", marginBottom: 20 }}><Icon name="lock" size={26} /></span>
+        <h2 style={{ marginBottom: 8 }}>Set a new password</h2>
+        {user ? (
+          <form onSubmit={submit} className="col gap-4" style={{ marginTop: 20 }}>
+            <div className="field"><label>New password</label>
+              <input className="input" type="password" autoComplete="new-password" value={form.password} onChange={e => setForm(p => ({ ...p, password: e.target.value }))} placeholder="8+ characters" />
+            </div>
+            <div className="field"><label>Confirm password</label>
+              <input className="input" type="password" autoComplete="new-password" value={form.confirm} onChange={e => setForm(p => ({ ...p, confirm: e.target.value }))} placeholder="Repeat password" />
+            </div>
+            {err && <div style={{ background: "var(--coral-soft)", color: "var(--coral-deep)", padding: "10px 14px", borderRadius: "var(--r-sm)", fontSize: "0.88rem", fontWeight: 600 }}>{err}</div>}
+            <button className="btn btn-primary btn-lg btn-block" type="submit" disabled={busy}>{busy ? "Updating…" : "Update password"}</button>
+          </form>
+        ) : (
+          <>
+            <p style={{ color: "var(--ink-2)", lineHeight: 1.6, margin: "12px 0 24px" }}>This reset link has expired or already been used. Request a new one from the sign-in page.</p>
+            <button className="btn btn-primary btn-block" onClick={() => go({ view: "account" })}>Go to sign in</button>
+          </>
+        )}
+      </div>
+    </div>
+  );
+}
+
 /* ── AccountPage ──────────────────────────────────────────────── */
 function AccountPage({ go, route, store }) {
   const user = store.user;
@@ -405,6 +455,8 @@ function AccountPage({ go, route, store }) {
   const { t } = useI18n();
 
   useEffect(() => { if (route.tab) setTab(route.tab); }, [route.tab]);
+
+  if (route.resetPassword) return <ResetPasswordPanel go={go} user={user} />;
 
   if (!user) return <AuthPanel go={go} />;
 

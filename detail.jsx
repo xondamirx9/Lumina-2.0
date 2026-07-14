@@ -14,6 +14,7 @@ function TourPage({ go, route }) {
   const [departure, setDeparture] = useState(departureDates[0]);
   const reviews = reviewsFor(tour ? tour.id : "");
   const [showReview, setShowReview] = useState(false);
+  const [showGallery, setShowGallery] = useState(false);
   const { t } = useI18n();
 
   useEffect(() => {
@@ -22,28 +23,20 @@ function TourPage({ go, route }) {
     if (local) setTour(local);
     if (typeof SB !== "undefined" && SB.ok) {
       SB.tours.get(route.id).then((sb) => {
-        if (!sb) return;
-        const base = local || {};
-        // Merge: Supabase fields override static, but fall back to static for fields not set in Supabase
-        setTour({
-          ...base,
-          ...sb,
-          image_url: sb.image_url || base.image_url || null,
-          gallery_urls: (sb.gallery_urls && sb.gallery_urls.length) ? sb.gallery_urls : (base.gallery || []),
-          tags: (sb.tags_json && sb.tags_json.length) ? sb.tags_json : (base.tags || []),
-          tags_json: sb.tags_json || base.tags || [],
-          included: (sb.included_json && sb.included_json.length) ? sb.included_json : (base.included || []),
-          excluded: (sb.excluded_json && sb.excluded_json.length) ? sb.excluded_json : (base.notIncluded || []),
-          highlights: sb.highlights || base.highlights || [],
-          itinerary: sb.itinerary || base.itinerary || [],
-        });
+        if (sb) setTour(mergeTour(local, sb));
       }).catch(() => {});
     }
   }, [route.id]);
+  /* Keep the selected departure valid when tour data arrives from the DB */
+  useEffect(() => {
+    setDeparture(d => departureDates.includes(d) ? d : departureDates[0]);
+  }, [departureDates.join("|")]);
   useEffect(() => { if (typeof SB !== "undefined" && SB.ok && tour?.id) SB.tours.trackView(tour.id).catch(() => {}); }, [tour?.id]);
   if (!tour) return <div style={{ paddingTop: 120, textAlign: "center", color: "var(--ink-3)" }}>Loading…</div>;
 
-  const total = tour.price * travellers;
+  const price = tourPrice(tour);
+  const oldP = tourOldPrice(tour);
+  const total = price * travellers;
   const tabs = [
     ["overview", t("detail_overview")],
     ["itinerary", t("detail_itinerary")],
@@ -68,9 +61,9 @@ function TourPage({ go, route }) {
         </div>
         {(() => {
           const mainImg = tour.image_url;
-          const gallery = tour.gallery_urls && tour.gallery_urls.length ? tour.gallery_url : null;
-          const g1 = (tour.gallery_urls || [])[0];
-          const g2 = (tour.gallery_urls || [])[1];
+          const galleryUrls = tour.gallery_urls || [];
+          const g1 = galleryUrls[0];
+          const g2 = galleryUrls[1];
           const ImgCell = ({ src, theme, label, style, children }) => (
             <div style={{ position: "relative", overflow: "hidden", ...style }}>
               {src
@@ -90,11 +83,17 @@ function TourPage({ go, route }) {
               </ImgCell>
               <ImgCell src={g1 || null} theme="maldives" label="moment · two" style={{ height: "100%" }} />
               <ImgCell src={g2 || null} theme={tour.theme === "santorini" ? "sunset" : "ocean"} label="moment · three" style={{ height: "100%" }}>
-                <button className="btn btn-ghost btn-sm" style={{ position: "absolute", right: 14, bottom: 14, background: "oklch(1 0 0 / 0.92)" }}><Icon name="camera" size={16} /> {t("detail_photos")}</button>
+                {galleryUrls.length > 0 && (
+                  <button className="btn btn-ghost btn-sm" onClick={() => setShowGallery(true)}
+                    style={{ position: "absolute", right: 14, bottom: 14, background: "oklch(1 0 0 / 0.92)", color: "oklch(0.28 0.035 235)" }}>
+                    <Icon name="camera" size={16} /> +{galleryUrls.length + (mainImg ? 1 : 0)} {t("detail_photos")}
+                  </button>
+                )}
               </ImgCell>
             </div>
           );
         })()}
+        {showGallery && <GalleryLightbox tour={tour} onClose={() => setShowGallery(false)} />}
       </div>
 
       <div className="wrap" style={{ paddingTop: 28 }}>
@@ -250,11 +249,12 @@ function TourPage({ go, route }) {
               <div>
                 <span style={{ fontSize: "0.8rem", color: "var(--ink-3)" }}>{t("detail_from")}</span>
                 <div className="row gap-2" style={{ alignItems: "baseline" }}>
-                  <span className="display" style={{ fontSize: "2.4rem" }}>{fmtPrice(tour.price)}</span>
+                  <span className="display" style={{ fontSize: "2.4rem" }}>{fmtPrice(price)}</span>
+                  {oldP && <span style={{ color: "var(--ink-3)", textDecoration: "line-through", fontSize: "0.95rem" }}>{fmtPrice(oldP)}</span>}
                   <span style={{ color: "var(--ink-3)", fontSize: "0.85rem" }}>{t("detail_person")}</span>
                 </div>
               </div>
-              {(tour.old_price || tour.oldPrice) && <span className="badge badge-coral">{t("detail_save")} {fmtPrice((tour.old_price || tour.oldPrice) - tour.price)}</span>}
+              {oldP && <span className="badge badge-coral">{t("save_badge")} {fmtPrice(oldP - price)}</span>}
             </div>
             <div className="hr" style={{ margin: "18px 0" }} />
             <div className="field" style={{ marginBottom: 14 }}>
@@ -274,7 +274,7 @@ function TourPage({ go, route }) {
               </div>
             </div>
             <div className="col gap-2" style={{ background: "var(--bg-2)", borderRadius: "var(--r-sm)", padding: "14px 16px", marginBottom: 18 }}>
-              <div className="row" style={{ justifyContent: "space-between", fontSize: "0.9rem" }}><span style={{ color: "var(--ink-2)" }}>{fmtPrice(tour.price)} × {travellers}</span><span style={{ fontWeight: 600 }}>{fmtPrice(total)}</span></div>
+              <div className="row" style={{ justifyContent: "space-between", fontSize: "0.9rem" }}><span style={{ color: "var(--ink-2)" }}>{fmtPrice(price)} × {travellers}</span><span style={{ fontWeight: 600 }}>{fmtPrice(total)}</span></div>
               <div className="row" style={{ justifyContent: "space-between", fontSize: "0.9rem" }}><span style={{ color: "var(--ink-2)" }}>{t("detail_taxes")}</span><span style={{ fontWeight: 600 }}>{t("detail_included_tab")}</span></div>
               <div className="hr" style={{ margin: "4px 0" }} />
               <div className="row" style={{ justifyContent: "space-between" }}><span style={{ fontWeight: 700 }}>{t("detail_total")}</span><span style={{ fontWeight: 800, fontSize: "1.2rem" }}>{fmtPrice(total)}</span></div>
@@ -295,6 +295,35 @@ function TourPage({ go, route }) {
 }
 
 const stepBtn = { width: 32, height: 32, borderRadius: "50%", display: "grid", placeItems: "center", background: "var(--ocean-tint)", color: "var(--ocean-deep)" };
+
+/* Fullscreen gallery viewer for tour photos */
+function GalleryLightbox({ tour, onClose }) {
+  const images = [tour.image_url, ...(tour.gallery_urls || [])].filter(Boolean);
+  const [i, setI] = useState(0);
+  useEffect(() => {
+    const onKey = (e) => {
+      if (e.key === "Escape") onClose();
+      if (e.key === "ArrowRight") setI(x => (x + 1) % images.length);
+      if (e.key === "ArrowLeft") setI(x => (x - 1 + images.length) % images.length);
+    };
+    window.addEventListener("keydown", onKey);
+    document.body.style.overflow = "hidden";
+    return () => { window.removeEventListener("keydown", onKey); document.body.style.overflow = ""; };
+  }, [images.length]);
+  if (!images.length) return null;
+  return (
+    <div onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
+      style={{ position: "fixed", inset: 0, zIndex: 950, background: "oklch(0.08 0.01 235 / 0.92)", backdropFilter: "blur(6px)", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: 20 }}>
+      <button onClick={onClose} aria-label="Close gallery" style={{ position: "absolute", top: 18, right: 20, width: 42, height: 42, borderRadius: "50%", background: "oklch(1 0 0 / 0.12)", color: "white", display: "grid", placeItems: "center" }}><Icon name="x" size={20} /></button>
+      <img src={images[i]} alt={tour.title} className="anim-scale-in" style={{ maxWidth: "88vw", maxHeight: "76vh", borderRadius: 14, objectFit: "contain", boxShadow: "var(--sh-xl)" }} />
+      <div className="row gap-4" style={{ marginTop: 20 }}>
+        <button onClick={() => setI(x => (x - 1 + images.length) % images.length)} aria-label="Previous photo" style={{ width: 44, height: 44, borderRadius: "50%", background: "oklch(1 0 0 / 0.14)", color: "white", display: "grid", placeItems: "center" }}><Icon name="arrowL" size={20} /></button>
+        <span style={{ color: "white", fontWeight: 700, fontSize: "0.9rem", minWidth: 60, textAlign: "center" }}>{i + 1} / {images.length}</span>
+        <button onClick={() => setI(x => (x + 1) % images.length)} aria-label="Next photo" style={{ width: 44, height: 44, borderRadius: "50%", background: "oklch(1 0 0 / 0.14)", color: "white", display: "grid", placeItems: "center" }}><Icon name="arrow" size={20} /></button>
+      </div>
+    </div>
+  );
+}
 
 function ReviewForm({ tour, onClose }) {
   const [rating, setRating] = useState(5);

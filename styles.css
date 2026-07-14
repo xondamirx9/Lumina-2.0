@@ -100,7 +100,36 @@ body {
   line-height: 1.6;
   letter-spacing: -0.01em;
   overflow-x: hidden;
+  /* offset for the admin-managed announcement bar (0 when hidden) */
+  padding-top: var(--ann-h, 0px);
 }
+
+/* =========================================================
+   Announcement bar (admin-managed)
+   ========================================================= */
+.announce-bar {
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  height: 38px;
+  z-index: 101;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 0 44px 0 16px;
+  background: linear-gradient(90deg, var(--ocean-deep), var(--ocean), var(--teal));
+  color: white;
+  font-size: 0.84rem;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+}
+.announce-bar .announce-text { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.announce-bar button {
+  position: absolute; right: 10px; top: 50%; transform: translateY(-50%);
+  width: 28px; height: 28px; border-radius: 50%; color: white;
+  display: grid; place-items: center; opacity: 0.8; transition: opacity 0.2s, background 0.2s;
+}
+.announce-bar button:hover { opacity: 1; background: oklch(1 0 0 / 0.15); }
 
 ::selection { background: var(--coral-soft); color: var(--coral-deep); }
 
@@ -608,4 +637,71 @@ html { scroll-behavior: smooth; }
   background: linear-gradient(180deg, oklch(1 0 0 / 0.8), transparent);
   transform-origin: top;
   animation: scrollLine 1.5s ease-in-out infinite;
+}
+
+/* =========================================================
+   Journey Finder quiz
+   ========================================================= */
+.quiz-option {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 24px 14px;
+  border-radius: var(--r-md);
+  background: var(--bg-2);
+  box-shadow: inset 0 0 0 1px var(--hairline);
+  color: var(--ink);
+  transition: transform 0.35s var(--spring), box-shadow 0.3s, background 0.3s;
+  text-align: center;
+}
+.quiz-option:hover {
+  transform: translateY(-4px);
+  background: var(--ocean-tint);
+  box-shadow: inset 0 0 0 2px var(--ocean), var(--sh-md);
+}
+.quiz-option-icon {
+  width: 52px; height: 52px; border-radius: 50%;
+  display: grid; place-items: center;
+  background: var(--ocean-tint); color: var(--ocean-deep);
+  transition: transform 0.35s var(--spring), background 0.3s, color 0.3s;
+}
+.quiz-option:hover .quiz-option-icon {
+  transform: scale(1.12) rotate(-5deg);
+  background: var(--ocean); color: white;
+}
+/* result cards live inside a modal with no reveal observer — show them */
+.quiz-results .reveal { opacity: 1 !important; transform: none !important; }
+@media (max-width: 720px) {
+  .quiz-options { grid-template-columns: 1fr 1fr !important; }
+  .quiz-results { grid-template-columns: 1fr !important; }
+}
+
+/* =========================================================
+   Admin panel — responsive layout
+   ========================================================= */
+@media (max-width: 920px) {
+  .admin-shell { flex-direction: column !important; }
+  .admin-side {
+    width: 100% !important;
+    height: auto !important;
+    position: relative !important;
+    top: auto !important;
+    overflow: visible !important;
+  }
+  .admin-nav {
+    display: flex !important;
+    flex-direction: row !important;
+    overflow-x: auto !important;
+    gap: 4px;
+    padding: 8px 10px !important;
+  }
+  .admin-nav > button { width: auto !important; flex-shrink: 0; white-space: nowrap; }
+  .admin-nav > button div div:last-child { display: none; } /* hide sub-labels */
+  .tour-edit-grid { grid-template-columns: 1fr !important; }
+  .admin-2col { grid-template-columns: 1fr !important; }
+  .admin-inq-grid { grid-template-columns: 1fr !important; }
+}
+@media (max-width: 720px) {
+  .admin-3col { grid-template-columns: 1fr !important; }
 }
