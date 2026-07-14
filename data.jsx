@@ -529,6 +529,13 @@ const Store = (() => {
   /* Sync user from Supabase session on startup */
   if (typeof SB !== "undefined" && SB.ok) {
     SB.auth.session().then(async (session) => {
+      if (!session?.user) {
+        /* The access token expires after ~1h. If restoring it failed
+           (transient network error, throttled background tab), retry the
+           refresh-token exchange once before treating the user as
+           signed out — otherwise a hiccup logs people out for no reason. */
+        session = await SB.auth.refresh().catch(() => null);
+      }
       if (session?.user) {
         const profile = await SB.auth.profile(session.user.id).catch(() => null);
         _applySession(session, profile);
@@ -541,7 +548,11 @@ const Store = (() => {
     }).catch(() => { authReady = true; listeners.forEach(fn => fn(state)); });
 
     SB.auth.onChange(async (event, session) => {
-      if (event === "SIGNED_IN" && session?.user) {
+      const isLive = (event === "SIGNED_IN" || event === "TOKEN_REFRESHED" || event === "INITIAL_SESSION") && session?.user;
+      if (isLive) {
+        /* Skip redundant re-apply when the same user's token was merely
+           refreshed — avoids an extra profile fetch every hour. */
+        if (event !== "SIGNED_IN" && state.user?.id === session.user.id) return;
         const profile = await SB.auth.profile(session.user.id).catch(() => null);
         _applySession(session, profile);
       } else if (event === "SIGNED_OUT") {

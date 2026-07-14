@@ -41,6 +41,13 @@ const SB = {
       if (error) throw error;
     },
     async session() { const { data } = await _sb.auth.getSession(); return data?.session ?? null; },
+    /* Force one refresh-token exchange; used as a retry when the initial
+       session restore fails so a network hiccup doesn't log the user out */
+    async refresh() {
+      const { data, error } = await _sb.auth.refreshSession();
+      if (error) throw error;
+      return data?.session ?? null;
+    },
     async profile(userId) {
       const { data } = await _sb.from("profiles").select("*").eq("id", userId).single();
       return data;
