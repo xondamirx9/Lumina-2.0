@@ -39,7 +39,12 @@ function AuthPanel({ go }) {
         go({ view: "account" });
       }
     } catch(ex) {
-      setErr(ex.message || "Invalid email or password.");
+      const msg = ex.message || "";
+      if (/email not confirmed/i.test(msg)) {
+        setErr("Your email isn't confirmed yet — open the confirmation link we emailed you, then sign in.");
+      } else {
+        setErr(msg || "Invalid email or password.");
+      }
     }
     setBusy(false);
   };
@@ -53,7 +58,10 @@ function AuthPanel({ go }) {
     setBusy(true);
     try {
       if (SB.ok) {
-        await SB.auth.signUp(form.email, form.password, form.name);
+        const data = await SB.auth.signUp(form.email, form.password, form.name);
+        // When email confirmation is disabled in Supabase, signUp returns a
+        // live session — go straight in instead of asking to check email.
+        if (data?.session) { go({ view: "account" }); setBusy(false); return; }
         setMode("check-email");
       } else {
         Store.signIn({ name: form.name, email: form.email, isAdmin: false });
