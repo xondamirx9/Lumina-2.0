@@ -1,5 +1,5 @@
 /* =========================================================
-   Lumina Voyages — Tour detail page
+   Oscar Travel — Tour detail page
    ========================================================= */
 
 const DEPARTURES = ["14 Jun 2026", "12 Jul 2026", "9 Aug 2026", "13 Sep 2026", "11 Oct 2026"];

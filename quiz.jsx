@@ -1,5 +1,5 @@
 /* =========================================================
-   Lumina Voyages — Journey Finder
+   Oscar Travel — Journey Finder
    A 4-question quiz that scores every tour and recommends
    the best matches with a match percentage.
    ========================================================= */

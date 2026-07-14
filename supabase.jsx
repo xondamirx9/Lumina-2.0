@@ -1,5 +1,5 @@
 /* ================================================================
-   Lumina Voyages — Supabase client & API (v2)
+   Oscar Travel — Supabase client & API (v2)
    Fill in SUPABASE_URL and SUPABASE_ANON_KEY, then run SCHEMA_V2.sql
    ================================================================ */
 

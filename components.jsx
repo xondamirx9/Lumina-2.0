@@ -1,5 +1,5 @@
 /* =========================================================
-   Lumina Voyages — Shared components & helpers
+   Oscar Travel — Shared components & helpers
    ========================================================= */
 const { useState, useEffect, useRef, useCallback, createContext, useContext } = React;
 
@@ -257,16 +257,32 @@ function TourCard({ tour, onOpen, delay = 0, matchPct }) {
   );
 }
 
-const LOGO_URL       = "https://ekudvabndtdxlgubymgg.supabase.co/storage/v1/object/public/tour-images/tours/ChatGPT%20Image%20Jun%207,%202026,%2002_45_02%20AM.png";
-const LOGO_WHITE_URL = "https://ekudvabndtdxlgubymgg.supabase.co/storage/v1/object/public/tour-images/tours/LogoWhite.png";
+/* Oscar Travel brand gold */
+const BRAND_GOLD = "#C6A15B";
 
-function Logo({ light, onClick, size = 110 }) {
+/* OT monogram — vector recreation of the brand mark (crisp at any size,
+   transparent background, adapts to dark surfaces automatically) */
+function LogoMark({ size = 46, gold = BRAND_GOLD }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 96 96" aria-hidden="true" style={{ flexShrink: 0, display: "block", overflow: "visible" }}>
+      <circle cx="48" cy="44" r="36" fill="none" stroke={gold} strokeWidth="2.4" />
+      <text x="39" y="60" textAnchor="middle" fontFamily="'Instrument Serif', Georgia, 'Times New Roman', serif" fontSize="52" fill={gold}>O</text>
+      <text x="60" y="78" textAnchor="middle" fontFamily="'Instrument Serif', Georgia, 'Times New Roman', serif" fontSize="52" fill={gold}>T</text>
+    </svg>
+  );
+}
+
+function Logo({ light, onClick, size = 44 }) {
   const { theme } = useI18n();
   const isDark = theme === "dark";
-  const src = (light || isDark) ? LOGO_WHITE_URL : LOGO_URL;
+  const ink = (light || isDark) ? "#ffffff" : "var(--ink)";
   return (
-    <a href="#/" onClick={(e) => { e.preventDefault(); onClick && onClick(); }} style={{ alignItems: "center", textDecoration: "none", display: "inline-flex" }}>
-      <img src={src} alt="Lumina Voyages" style={{ height: size, width: "auto", objectFit: "contain" }} />
+    <a href="#/" onClick={(e) => { e.preventDefault(); onClick && onClick(); }} aria-label="Oscar Travel — home"
+      style={{ alignItems: "center", textDecoration: "none", display: "inline-flex", gap: 11 }}>
+      <LogoMark size={size} />
+      <span style={{ fontFamily: "var(--font-display)", fontSize: size * 0.44, letterSpacing: "0.14em", color: ink, whiteSpace: "nowrap", lineHeight: 1, transition: "color 0.4s" }}>
+        OSCAR TRAVEL
+      </span>
     </a>
   );
 }
@@ -497,7 +513,7 @@ function Footer({ go }) {
 class ErrorBoundary extends React.Component {
   constructor(props) { super(props); this.state = { error: null }; }
   static getDerivedStateFromError(error) { return { error }; }
-  componentDidCatch(error, info) { console.error("Lumina error:", error, info); }
+  componentDidCatch(error, info) { console.error("Oscar Travel error:", error, info); }
   render() {
     if (this.state.error) {
       return (

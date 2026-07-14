@@ -1,5 +1,5 @@
 /* ================================================================
-   Lumina Voyages — Admin Panel v2 (CRM Dashboard)
+   Oscar Travel — Admin Panel v2 (CRM Dashboard)
    ================================================================ */
 
 /* ── Shared primitives ──────────────────────────────────────────── */
@@ -792,7 +792,7 @@ function AdminInquiries() {
                 ))}
               </div>
             </div>
-            <a href={"mailto:" + selected.email + "?subject=Re: " + (selected.tour_title || "Your inquiry") + " — Lumina Voyages"} className="btn btn-primary btn-sm btn-block" style={{ marginTop: 8 }}><Icon name="mail" size={16} /> Reply by email</a>
+            <a href={"mailto:" + selected.email + "?subject=Re: " + (selected.tour_title || "Your inquiry") + " — Oscar Travel"} className="btn btn-primary btn-sm btn-block" style={{ marginTop: 8 }}><Icon name="mail" size={16} /> Reply by email</a>
           </div>
         </div>
       )}
@@ -958,7 +958,7 @@ function AdminSettings() {
             {sf({ id: "footer_col2", label: "Column 2 links (one per line)", placeholder: "Our story\nTravel guides\nSustainability\nCareers\nPress", textarea: true, hint: "One link label per line" })}
             {sf({ id: "footer_col3_h", label: "Column 3 heading", placeholder: "Support" })}
             {sf({ id: "footer_col3", label: "Column 3 links (one per line)", placeholder: "Help centre\nBooking terms\nTravel insurance\nContact us\nFAQ", textarea: true, hint: "One link label per line" })}
-            {sf({ id: "footer_copy", label: "Copyright text", placeholder: "© 2026 Lumina Voyages. Crafted for the curious." })}
+            {sf({ id: "footer_copy", label: "Copyright text", placeholder: "© 2026 Oscar Travel. Crafted for the curious." })}
           </div>
         </div>
         <div style={{ background: "var(--surface)", borderRadius: "var(--r-md)", padding: 28, border: "1px solid var(--hairline)" }}>
@@ -966,7 +966,7 @@ function AdminSettings() {
           <div className="col gap-4">
             {sf({ id: "contact_email", label: "Contact email", placeholder: "hello@luminavoyages.com" })}
             {sf({ id: "whatsapp", label: "WhatsApp", placeholder: "+1 234 567 8900" })}
-            {sf({ id: "instagram", label: "Instagram", placeholder: "@luminavoyages" })}
+            {sf({ id: "instagram", label: "Instagram", placeholder: "@oscartravel" })}
           </div>
         </div>
         <button className="btn btn-primary btn-lg" onClick={save} disabled={saving}>{saving ? "Saving…" : <><Icon name="check" size={20} /> Save all settings</>}</button>
