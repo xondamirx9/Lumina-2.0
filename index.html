@@ -193,7 +193,14 @@ function App() {
 
   useEffectApp(() => {
     const b = document.getElementById("boot");
-    if (b) requestAnimationFrame(() => b.classList.add("gone"));
+    if (!b) return;
+    /* Keep the branded boot screen up for at least 2s from page open.
+       performance.now() counts from navigation start, so a slow load
+       hides it immediately once the app is ready — no double wait. */
+    const MIN_BOOT_MS = 2000;
+    const delay = Math.max(0, MIN_BOOT_MS - performance.now());
+    const t = setTimeout(() => b.classList.add("gone"), delay);
+    return () => clearTimeout(t);
   }, []);
 
   const go = (r) => {
