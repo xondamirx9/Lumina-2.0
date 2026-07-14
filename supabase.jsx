@@ -219,14 +219,22 @@ const SB = {
   /* ── SETTINGS ─────────────────────────────────────────────── */
   settings: {
     _cache: {},
+    _promise: null,
     async getAll() {
       const { data } = await _sb.from("site_settings").select("*");
       this._cache = Object.fromEntries((data || []).map(r => [r.key, r.value]));
       return this._cache;
     },
+    /* Shared, cached fetch — several components read settings on mount */
+    load() {
+      if (!this._promise) this._promise = this.getAll().catch(() => ({}));
+      return this._promise;
+    },
     async set(key, value) {
-      await _sb.from("site_settings").upsert({ key, value, updated_at: new Date().toISOString() });
+      const { error } = await _sb.from("site_settings").upsert({ key, value, updated_at: new Date().toISOString() });
+      if (error) throw error;
       this._cache[key] = value;
+      this._promise = Promise.resolve(this._cache);
     },
     get(key, fallback = "") { return this._cache[key] ?? fallback; }
   }

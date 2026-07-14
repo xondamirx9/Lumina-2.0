@@ -6,9 +6,11 @@
 <title>Lumina Voyages — Extraordinary travel, beautifully planned</title>
 <meta name="description" content="Discover handcrafted luxury tours to 60+ countries. From private sails through the Cyclades to the dunes of the Sahara — beautifully designed journeys, booked in minutes." />
 <meta name="theme-color" content="#0d4f6b" />
+<link rel="canonical" href="https://www.luminavoyages.tours/" />
 <!-- Open Graph / Social -->
 <meta property="og:type" content="website" />
-<meta property="og:url" content="https://luminavoyages.com/" />
+<meta property="og:url" content="https://www.luminavoyages.tours/" />
+<meta property="og:site_name" content="Lumina Voyages" />
 <meta property="og:title" content="Lumina Voyages — Extraordinary travel, beautifully planned" />
 <meta property="og:description" content="Handcrafted journeys to 60+ countries. Luxury tours, private sails, adventure treks — designed by specialists who've been there." />
 <meta property="og:image" content="https://images.unsplash.com/photo-1476514525535-07fb3b4ae5f1?auto=format&fit=crop&w=1200&q=80" />
@@ -99,6 +101,7 @@
 <script type="text/babel" src="booking.jsx"></script>
 <script type="text/babel" src="account.jsx"></script>
 <script type="text/babel" src="admin.jsx"></script>
+<script type="text/babel" src="quiz.jsx"></script>
 
 <script type="text/babel" data-presets="react">
 const { useState: useStateApp, useEffect: useEffectApp } = React;
@@ -117,10 +120,23 @@ function parseHash() {
   return { view: "home" };
 }
 
+function routeToHash(r) {
+  const map = { home: "#/", listing: "#/journeys", tour: "#/tour/" + (r.id || ""), booking: "#/booking/" + (r.id || ""), account: "#/account" + (r.tab ? "/" + r.tab : ""), admin: "#/admin" };
+  return map[r.view] || "#/";
+}
+
 function App() {
   const [route, setRoute] = useStateApp(() => {
-    // restore richer route (with transient params) if present
-    try { const s = sessionStorage.getItem("lumina_route"); if (s) return JSON.parse(s); } catch (e) {}
+    // Restore the richer stored route (with transient params like travellers)
+    // only when it matches the current hash — otherwise the URL wins, so
+    // shared/bookmarked links always open the right page.
+    try {
+      const s = sessionStorage.getItem("lumina_route");
+      if (s) {
+        const r = JSON.parse(s);
+        if (routeToHash(r) === (location.hash || "#/")) return r;
+      }
+    } catch (e) {}
     return parseHash();
   });
   const [store, setStore] = useStateApp(Store.get());
@@ -135,16 +151,25 @@ function App() {
   const go = (r) => {
     setRoute(r);
     try { sessionStorage.setItem("lumina_route", JSON.stringify(r)); } catch (e) {}
-    const hashMap = { home: "#/", listing: "#/journeys", tour: "#/tour/" + (r.id || ""), booking: "#/booking/" + (r.id || ""), account: "#/account" + (r.tab ? "/" + r.tab : ""), admin: "#/admin" };
-    history.replaceState(null, "", hashMap[r.view] || "#/");
-    window.scrollTo(0, 0);
+    const h = routeToHash(r);
+    // pushState (not replaceState) so the browser back button works
+    if (h !== location.hash) history.pushState(null, "", h);
+    if (r.hash) {
+      setTimeout(() => {
+        const el = document.getElementById(r.hash);
+        if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
+      }, 150);
+    } else {
+      window.scrollTo(0, 0);
+    }
   };
 
-  // sync browser back/forward
+  // sync browser back/forward (covers both pushState and manual hash edits)
   useEffectApp(() => {
-    const onPop = () => setRoute(parseHash());
-    window.addEventListener("popstate", onPop);
-    return () => window.removeEventListener("popstate", onPop);
+    const onNav = () => setRoute(parseHash());
+    window.addEventListener("popstate", onNav);
+    window.addEventListener("hashchange", onNav);
+    return () => { window.removeEventListener("popstate", onNav); window.removeEventListener("hashchange", onNav); };
   }, []);
 
   const showChrome = (route.view !== "account" || store.user) && route.view !== "admin";

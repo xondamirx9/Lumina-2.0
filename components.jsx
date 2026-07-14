@@ -124,6 +124,41 @@ function useReveal() {
   return ref;
 }
 
+/* Shared site settings (single cached fetch for Nav, Hero, Footer, contacts) */
+function useSiteSettings() {
+  const [cfg, setCfg] = useState({});
+  useEffect(() => {
+    let alive = true;
+    if (typeof SB !== "undefined" && SB.ok) {
+      SB.settings.load().then((all) => { if (alive) setCfg(all || {}); });
+    }
+    return () => { alive = false; };
+  }, []);
+  return cfg;
+}
+
+/* Site-wide announcement bar, managed from admin Settings */
+function AnnouncementBar() {
+  const cfg = useSiteSettings();
+  const [dismissed, setDismissed] = useState(() => {
+    try { return sessionStorage.getItem("lv_ann_dismissed") === "1"; } catch (e) { return false; }
+  });
+  const text = (cfg.announcement || "").trim();
+  const show = !!text && !dismissed;
+  useEffect(() => {
+    document.documentElement.style.setProperty("--ann-h", show ? "38px" : "0px");
+    return () => document.documentElement.style.setProperty("--ann-h", "0px");
+  }, [show]);
+  if (!show) return null;
+  return (
+    <div className="announce-bar" role="status">
+      <Icon name="sparkle" size={14} />
+      <span className="announce-text">{text}</span>
+      <button onClick={() => { setDismissed(true); try { sessionStorage.setItem("lv_ann_dismissed", "1"); } catch (e) {} }} aria-label="Dismiss announcement"><Icon name="x" size={15} /></button>
+    </div>
+  );
+}
+
 const ToastCtx = createContext(() => {});
 function useToast() { return useContext(ToastCtx); }
 function ToastProvider({ children }) {
@@ -163,9 +198,11 @@ function SaveButton({ tourId, big }) {
   );
 }
 
-function TourCard({ tour, onOpen, delay = 0 }) {
+function TourCard({ tour, onOpen, delay = 0, matchPct }) {
   const [hover, setHover] = useState(false);
   const { t } = useI18n();
+  const price = tourPrice(tour);
+  const oldP = tourOldPrice(tour);
   return (
     <a href={"#/tour/" + tour.id} onClick={(e) => { e.preventDefault(); onOpen(tour.id); }}
       className="card reveal" style={{ transitionDelay: delay + "s", cursor: "pointer", display: "block" }}
@@ -173,9 +210,10 @@ function TourCard({ tour, onOpen, delay = 0 }) {
       <div style={{ position: "relative", overflow: "hidden" }}>
         <Scenic theme={tour.theme} imageUrl={tour.image_url || null} label={tour.place} style={{ height: 230, transition: "transform 0.7s var(--ease-out)", transform: hover ? "scale(1.06)" : "scale(1)" }} />
         <div style={{ position: "absolute", top: 14, left: 14, display: "flex", gap: 8 }}>
-          {(tour.oldPrice || tour.old_price) && <span className="badge badge-coral">{t("save_badge")} {fmtPrice((tour.oldPrice || tour.old_price) - tour.price)}</span>}
-          {tour.is_hot && !(tour.oldPrice || tour.old_price) && <span className="badge badge-coral">Filling fast</span>}
-          {tour.popular && !tour.is_hot && !(tour.oldPrice || tour.old_price) && <span className="badge badge-glass">{t("card_popular")}</span>}
+          {matchPct != null && <span className="badge" style={{ background: "var(--ocean)", color: "white" }}><Icon name="sparkle" size={12} /> {matchPct}% {t("quiz_match")}</span>}
+          {oldP && <span className="badge badge-coral">{t("save_badge")} {fmtPrice(oldP - price)}</span>}
+          {tour.is_hot && !oldP && <span className="badge badge-coral">Filling fast</span>}
+          {tour.popular && !tour.is_hot && !oldP && !matchPct && <span className="badge badge-glass">{t("card_popular")}</span>}
         </div>
         <div style={{ position: "absolute", top: 12, right: 12 }}><SaveButton tourId={tour.id} /></div>
       </div>
@@ -205,8 +243,8 @@ function TourCard({ tour, onOpen, delay = 0 }) {
           <div>
             <span style={{ fontSize: "0.78rem", color: "var(--ink-3)" }}>{t("card_from")}</span>
             <div className="row gap-2" style={{ alignItems: "baseline" }}>
-              <span style={{ fontSize: "1.4rem", fontWeight: 800, letterSpacing: "-0.03em" }}>{fmtPrice(tour.price)}</span>
-              {(tour.oldPrice || tour.old_price) && <span style={{ color: "var(--ink-3)", textDecoration: "line-through", fontSize: "0.9rem" }}>{fmtPrice(tour.oldPrice || tour.old_price)}</span>}
+              <span style={{ fontSize: "1.4rem", fontWeight: 800, letterSpacing: "-0.03em" }}>{fmtPrice(price)}</span>
+              {oldP && <span style={{ color: "var(--ink-3)", textDecoration: "line-through", fontSize: "0.9rem" }}>{fmtPrice(oldP)}</span>}
               <span style={{ color: "var(--ink-3)", fontSize: "0.8rem" }}>{t("card_person")}</span>
             </div>
           </div>
@@ -321,7 +359,8 @@ function Nav({ go, route, savedCount, user }) {
   ];
   return (
     <>
-      <header style={{ position: "fixed", top: 0, left: 0, right: 0, zIndex: 100, transition: "all 0.5s var(--ease)", background: solid ? "var(--nav-bg)" : "transparent", backdropFilter: solid ? "blur(18px) saturate(1.5)" : "none", boxShadow: solid ? "0 1px 0 var(--hairline)" : "none" }}>
+      <AnnouncementBar />
+      <header style={{ position: "fixed", top: "var(--ann-h, 0px)", left: 0, right: 0, zIndex: 100, transition: "background 0.5s var(--ease), box-shadow 0.5s var(--ease)", background: solid ? "var(--nav-bg)" : "transparent", backdropFilter: solid ? "blur(18px) saturate(1.5)" : "none", boxShadow: solid ? "0 1px 0 var(--hairline)" : "none" }}>
         <div className="wrap row" style={{ justifyContent: "space-between", height: 74 }}>
           <Logo light={!solid} onClick={() => go({ view: "home" })} />
           <nav className="row gap-8 desk-nav">
@@ -360,13 +399,7 @@ function Nav({ go, route, savedCount, user }) {
 
 function Footer({ go }) {
   const { t } = useI18n();
-  const [cfg, setCfg] = useState({});
-
-  useEffect(() => {
-    if (typeof SB !== "undefined" && SB.ok) {
-      SB.settings.getAll().then(all => setCfg(all || {})).catch(() => {});
-    }
-  }, []);
+  const cfg = useSiteSettings();
 
   const col2Items = cfg.footer_col2 ? cfg.footer_col2.split("\n").filter(Boolean) : ["Our story", "Travel guides", "Sustainability", "Careers", "Press"];
   const col3Items = cfg.footer_col3 ? cfg.footer_col3.split("\n").filter(Boolean) : ["Help centre", "Booking terms", "Travel insurance", "Contact us", "FAQ"];
@@ -534,14 +567,8 @@ function CustomTripModal({ onClose }) {
 }
 
 function FloatContact() {
-  const [cfg, setCfg] = useState({});
+  const cfg = useSiteSettings();
   const [showTrip, setShowTrip] = useState(false);
-
-  useEffect(() => {
-    if (typeof SB !== "undefined" && SB.ok) {
-      SB.settings.getAll().then((all) => setCfg(all || {})).catch(() => {});
-    }
-  }, []);
 
   const waUrl = cfg.whatsapp ? "https://wa.me/" + cfg.whatsapp.replace(/\D/g, "") : null;
   const mailUrl = cfg.contact_email ? "mailto:" + cfg.contact_email : "mailto:hello@luminavoyages.com";
@@ -568,4 +595,4 @@ function FloatContact() {
   );
 }
 
-Object.assign(window, { Icon, Scenic, Stars, useReveal, ToastProvider, useToast, SaveButton, TourCard, Logo, Nav, Footer, ErrorBoundary, SkeletonCard, SkeletonText, FloatContact, CustomTripModal });
+Object.assign(window, { Icon, Scenic, Stars, useReveal, useSiteSettings, AnnouncementBar, ToastProvider, useToast, SaveButton, TourCard, Logo, Nav, Footer, ErrorBoundary, SkeletonCard, SkeletonText, FloatContact, CustomTripModal });

@@ -608,9 +608,59 @@ function reviewsFor(id) {
   const mine = (Store.get().userReviews[id] || []);
   return [...mine, ...(REVIEWS[id] || [])];
 }
-function fmtPrice(n) { return "$" + n.toLocaleString("en-US"); }
+function fmtPrice(n) { return "$" + (Number(n) || 0).toLocaleString("en-US"); }
+
+/* Current selling price: an admin-set discount_price wins over the base price */
+function tourPrice(t) {
+  const d = Number(t.discount_price);
+  if (d > 0) return d;
+  return Number(t.price) || 0;
+}
+/* Crossed-out price — only shown when genuinely higher than the current price */
+function tourOldPrice(t) {
+  const cur = tourPrice(t);
+  const candidates = [Number(t.old_price) || 0, Number(t.oldPrice) || 0];
+  if ((Number(t.discount_price) || 0) > 0) candidates.push(Number(t.price) || 0);
+  const old = Math.max(...candidates);
+  return old > cur ? old : null;
+}
+
+function isPublicTour(t) { return t.status !== "hidden" && t.status !== "draft"; }
+
+/* Merge a static tour with its Supabase override row.
+   Supabase fields win; array fields fall back to static content when empty. */
+function mergeTour(staticT, sbRow) {
+  if (!sbRow) return staticT;
+  const base = staticT || {};
+  return {
+    ...base, ...sbRow,
+    image_url: sbRow.image_url || base.image_url || null,
+    /* once a DB row exists it is the source of truth for pricing */
+    oldPrice: sbRow.old_price ?? null,
+    gallery_urls: (sbRow.gallery_urls && sbRow.gallery_urls.length) ? sbRow.gallery_urls : (base.gallery_urls || []),
+    tags: (sbRow.tags_json && sbRow.tags_json.length) ? sbRow.tags_json : (base.tags || []),
+    included: (sbRow.included_json && sbRow.included_json.length) ? sbRow.included_json : (base.included || []),
+    notIncluded: (sbRow.excluded_json && sbRow.excluded_json.length) ? sbRow.excluded_json : (base.notIncluded || []),
+    highlights: (sbRow.highlights && sbRow.highlights.length) ? sbRow.highlights : (base.highlights || []),
+    itinerary: (sbRow.itinerary && sbRow.itinerary.length) ? sbRow.itinerary : (base.itinerary || []),
+  };
+}
+
+/* Full catalogue: static tours merged with DB rows + admin-created tours.
+   publicOnly filters out tours the admin set to hidden/draft — including
+   static tours that were hidden via the admin panel. */
+function mergeTours(sbRows, { publicOnly = true } = {}) {
+  const rows = sbRows || [];
+  const sbMap = new Map(rows.map(r => [r.id, r]));
+  const staticIds = new Set(TOURS.map(t => t.id));
+  const merged = TOURS.map(t => mergeTour(t, sbMap.get(t.id)));
+  const extras = rows.filter(r => !staticIds.has(r.id)).map(r => mergeTour(null, r));
+  const all = [...merged, ...extras];
+  return publicOnly ? all.filter(isPublicTour) : all;
+}
 
 Object.assign(window, {
   CATEGORIES, TOURS, REVIEWS, DESTINATIONS, Store,
-  getTour, reviewsFor, fmtPrice,
+  getTour, reviewsFor, fmtPrice, tourPrice, tourOldPrice,
+  isPublicTour, mergeTour, mergeTours,
 });

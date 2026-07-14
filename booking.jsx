@@ -13,7 +13,9 @@ const ADDONS = [
 ];
 
 function BookingPage({ go, route }) {
-  const tour = getTour(route.id);
+  /* Static tours resolve instantly; admin-created tours are fetched from Supabase */
+  const [tour, setTour] = useState(() => getTour(route.id));
+  const [notFound, setNotFound] = useState(false);
   const [step, setStep] = useState(0);
   const [travellers, setTravellers] = useState(route.travellers || 2);
   const [departure, setDeparture] = useState(route.departure || _BOOKING_DEPARTURES[0]);
@@ -27,14 +29,31 @@ function BookingPage({ go, route }) {
   const { t } = useI18n();
 
   useEffect(() => { window.scrollTo(0, 0); }, [step]);
-  if (!tour) return null;
+
+  useEffect(() => {
+    const local = getTour(route.id);
+    if (local) setTour(local);
+    if (typeof SB !== "undefined" && SB.ok) {
+      SB.tours.get(route.id)
+        .then((sb) => { if (sb) setTour(mergeTour(local, sb)); else if (!local) setNotFound(true); })
+        .catch(() => { if (!local) setNotFound(true); });
+    } else if (!local) setNotFound(true);
+  }, [route.id]);
+
+  if (!tour) return (
+    <div style={{ paddingTop: 150, minHeight: "60vh", textAlign: "center", color: "var(--ink-3)" }}>
+      {notFound
+        ? <><h2 style={{ marginBottom: 12 }}>Tour not found</h2><button className="btn btn-primary" onClick={() => go({ view: "listing" })}>Browse journeys</button></>
+        : "Loading…"}
+    </div>
+  );
 
   const steps = [t("book_s1"), t("book_s2"), t("book_s3"), t("book_s4")];
   const addonTotal = addons.reduce((s, id) => {
     const a = ADDONS.find((x) => x.id === id); if (!a || a.quote) return s;
     return s + (a.per ? a.price * travellers : a.price);
   }, 0);
-  const base = tour.price * travellers;
+  const base = tourPrice(tour) * travellers;
   const total = base + addonTotal;
   const deposit = Math.round(total * 0.2);
 
@@ -230,7 +249,7 @@ function OrderSummary({ tour, travellers, departure, base, addons, addonTotal, t
   return (
     <aside className="order-summary" style={{ position: "sticky", top: 90 }}>
       <div className="card" style={{ boxShadow: "var(--sh-md)", overflow: "hidden" }}>
-        <Scenic theme={tour.theme} label={tour.place} style={{ height: 130 }} />
+        <Scenic theme={tour.theme} imageUrl={tour.image_url || null} label={tour.place} style={{ height: 130 }} />
         <div style={{ padding: 22 }}>
           <h3 style={{ fontSize: "1.15rem", marginBottom: 4 }}>{tour.title}</h3>
           <div className="row gap-2" style={{ color: "var(--ink-3)", fontSize: "0.84rem", marginBottom: 14 }}><Icon name="pin" size={14} /> {tour.place}</div>
@@ -280,12 +299,12 @@ function Confirmation({ booking, tour, go }) {
       <div className="card" style={{ padding: "44px 40px", textAlign: "center", boxShadow: "var(--sh-lg)", position: "relative", zIndex: 2 }}>
         <span style={{ width: 78, height: 78, borderRadius: "50%", background: "var(--ocean-tint)", color: "var(--ocean)", display: "grid", placeItems: "center", margin: "0 auto 20px" }}><Icon name="checkC" size={44} /></span>
         <span className="eyebrow">{t("conf_title")}</span>
-        <h1 className="display" style={{ fontSize: "clamp(2rem, 4vw, 3rem)", margin: "10px 0 12px" }}>{t("conf_going")} {tour.place.split(",")[0]}!</h1>
+        <h1 className="display" style={{ fontSize: "clamp(2rem, 4vw, 3rem)", margin: "10px 0 12px" }}>{t("conf_going")} {(tour.place || tour.title).split(",")[0]}!</h1>
         <p style={{ color: "var(--ink-2)", fontSize: "1.05rem", marginBottom: 8 }}>{t("conf_email_sent")} <strong>{booking.lead.email}</strong>.</p>
         <div className="row gap-2" style={{ justifyContent: "center", marginBottom: 28 }}><span className="badge badge-ocean" style={{ fontSize: "0.86rem", padding: "8px 16px" }}>{t("conf_ref")} {booking.id}</span></div>
         <div style={{ background: "var(--bg-2)", borderRadius: "var(--r-md)", padding: 22, textAlign: "left", marginBottom: 24 }}>
           <div className="row gap-4" style={{ alignItems: "center" }}>
-            <Scenic theme={tour.theme} label="" style={{ width: 84, height: 84, borderRadius: "var(--r-sm)", flexShrink: 0 }} />
+            <Scenic theme={tour.theme} imageUrl={tour.image_url || null} label="" style={{ width: 84, height: 84, borderRadius: "var(--r-sm)", flexShrink: 0 }} />
             <div style={{ flex: 1 }}>
               <h3 style={{ fontSize: "1.15rem" }}>{tour.title}</h3>
               <div className="row gap-4" style={{ color: "var(--ink-2)", fontSize: "0.86rem", marginTop: 6, flexWrap: "wrap" }}>

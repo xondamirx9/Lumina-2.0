@@ -25,9 +25,12 @@ function AnimatedCounter({ target, duration = 1400 }) {
     const io = new IntersectionObserver(([e]) => {
       if (e.isIntersecting && !started.current) {
         started.current = true;
-        const isFloat = String(target).includes(".");
-        const end = parseFloat(String(target).replace(/[^0-9.]/g, ""));
-        const suffix = String(target).replace(/[0-9.]/g, "");
+        /* Animate only the leading number; keep the rest verbatim so
+           values like "24/7" don't get mangled into "247/" */
+        const m = String(target).match(/^([\d.]+)([\s\S]*)$/);
+        const isFloat = !!m && m[1].includes(".");
+        const end = m ? parseFloat(m[1]) : 0;
+        const suffix = m ? m[2] : String(target);
         const startTime = performance.now();
         const tick = (now) => {
           const t = Math.min((now - startTime) / duration, 1);
@@ -103,7 +106,9 @@ const hsInput = { border: "none", outline: "none", background: "transparent", fo
 
 function Hero({ go }) {
   const [p, setP] = useState(0);
+  const [showQuiz, setShowQuiz] = useState(false);
   const { t } = useI18n();
+  const cfg = useSiteSettings();
   useEffect(() => {
     const onScroll = () => setP(window.scrollY);
     window.addEventListener("scroll", onScroll, { passive: true });
@@ -115,13 +120,16 @@ function Hero({ go }) {
     { label: t("hero_tailor"), target: "100%", raw: "100%" },
     { label: t("hero_support"), target: "24/7", raw: "24/7" },
   ];
+  const heroImg = (cfg.hero_image_url || "").trim();
   return (
     <section style={{ position: "relative", minHeight: "100vh", display: "flex", flexDirection: "column", justifyContent: "center", overflow: "hidden", paddingTop: 90, backgroundColor: "oklch(0.14 0.04 235)" }}>
-      {/* Background video + parallax */}
+      {/* Background media + parallax — admin-set image overrides the video */}
       <div style={{ position: "absolute", inset: 0, transform: `translateY(${p * 0.25}px) scale(1.05)`, zIndex: 0 }}>
-        <video autoPlay muted loop playsInline style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", objectPosition: "center 50%" }}>
-          <source src="https://ekudvabndtdxlgubymgg.supabase.co/storage/v1/object/public/tour-images/hero/loop_seamless.mp4" type="video/mp4" />
-        </video>
+        {heroImg
+          ? <img src={heroImg} alt="" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", objectPosition: "center 50%" }} />
+          : <video autoPlay muted loop playsInline poster={PHOTOS.santorini} style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", objectPosition: "center 50%" }}>
+              <source src="https://ekudvabndtdxlgubymgg.supabase.co/storage/v1/object/public/tour-images/hero/loop_seamless.mp4" type="video/mp4" />
+            </video>}
         <div style={{ position: "absolute", inset: 0, background: "linear-gradient(180deg, oklch(0.15 0.05 235 / 0.75) 0%, oklch(0.18 0.05 235 / 0.5) 40%, oklch(0.1 0.03 235 / 0.15) 68%, var(--bg) 100%)" }} />
       </div>
 
@@ -140,12 +148,18 @@ function Hero({ go }) {
           <Icon name="sparkle" size={16} /> {t("hero_badge")}
         </span>
         <h1 className="display anim-fade-up" style={{ fontSize: "clamp(3rem, 8vw, 6.6rem)", color: "white", animationDelay: "0.12s", textShadow: "0 2px 40px oklch(0.2 0.05 235 / 0.4)" }}>
-          {t("hero_h1a")}<br /><span className="serif-italic" style={{ color: "var(--sand)" }}>{t("hero_h1b")}</span>
+          {(cfg.hero_heading || "").trim()
+            ? cfg.hero_heading
+            : <>{t("hero_h1a")}<br /><span className="serif-italic" style={{ color: "var(--sand)" }}>{t("hero_h1b")}</span></>}
         </h1>
         <p className="anim-fade-up" style={{ color: "oklch(1 0 0 / 0.94)", fontSize: "clamp(1.05rem, 2vw, 1.3rem)", maxWidth: 600, margin: "22px auto 40px", animationDelay: "0.2s", lineHeight: 1.5, textShadow: "0 1px 20px oklch(0.2 0.05 235 / 0.4)" }}>
-          {t("hero_sub")}
+          {(cfg.hero_sub || "").trim() || t("hero_sub")}
         </p>
         <HeroSearch go={go} />
+        <button className="btn glass anim-fade-up quiz-cta" onClick={() => setShowQuiz(true)}
+          style={{ marginTop: 20, color: "white", animationDelay: "0.38s", fontWeight: 700 }}>
+          <Icon name="sparkle" size={17} /> {t("quiz_cta")}
+        </button>
 
         {/* Animated stats */}
         <div className="anim-fade-up row" style={{ justifyContent: "center", gap: 40, marginTop: 44, animationDelay: "0.45s", flexWrap: "wrap" }}>
@@ -165,6 +179,7 @@ function Hero({ go }) {
         <div className="scroll-hint-line" />
         <span>scroll</span>
       </div>
+      {showQuiz && <JourneyFinder go={go} onClose={() => setShowQuiz(false)} />}
     </section>
   );
 }
@@ -197,11 +212,7 @@ function FeaturedTours({ go }) {
     if (typeof SB !== "undefined" && SB.ok) {
       SB.tours.list().then((rows) => {
         if (rows && rows.length) {
-          const sbMap = new Map(rows.map(r => [r.id, r]));
-          const staticIds = new Set(TOURS.map(t => t.id));
-          const mergedStatic = TOURS.filter(t => t.featured).map(t => { const sb = sbMap.get(t.id); return sb ? { ...t, ...sb, image_url: sb.image_url || t.image_url || null } : t; }).filter(t => t.status !== "hidden" && t.status !== "draft");
-          const newFeatured = rows.filter(r => !staticIds.has(r.id) && r.featured && r.status !== "hidden" && r.status !== "draft");
-          setTours([...mergedStatic, ...newFeatured].slice(0, 6));
+          setTours(mergeTours(rows).filter(t => t.featured).slice(0, 6));
         }
       }).catch(() => {});
     }
