@@ -107,6 +107,7 @@ const hsInput = { border: "none", outline: "none", background: "transparent", fo
 function Hero({ go }) {
   const [p, setP] = useState(0);
   const [showQuiz, setShowQuiz] = useState(false);
+  const [videoReady, setVideoReady] = useState(false);
   const { t } = useI18n();
   const cfg = useSiteSettings();
   useEffect(() => {
@@ -127,7 +128,11 @@ function Hero({ go }) {
       <div style={{ position: "absolute", inset: 0, transform: `translateY(${p * 0.25}px) scale(1.05)`, zIndex: 0 }}>
         {heroImg
           ? <img src={heroImg} alt="" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", objectPosition: "center 50%" }} />
-          : <video autoPlay muted loop playsInline poster={PHOTOS.santorini} style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", objectPosition: "center 50%" }}>
+          : /* No poster: it flashed an unrelated photo for the first seconds.
+               The video fades in from the dark ocean background instead. */
+            <video autoPlay muted loop playsInline
+              onCanPlay={() => setVideoReady(true)}
+              style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", objectPosition: "center 50%", opacity: videoReady ? 1 : 0, transition: "opacity 1.1s var(--ease)" }}>
               <source src="https://ekudvabndtdxlgubymgg.supabase.co/storage/v1/object/public/tour-images/hero/loop_seamless.mp4" type="video/mp4" />
             </video>}
         <div style={{ position: "absolute", inset: 0, background: "linear-gradient(180deg, oklch(0.15 0.05 235 / 0.75) 0%, oklch(0.18 0.05 235 / 0.5) 40%, oklch(0.1 0.03 235 / 0.15) 68%, var(--bg) 100%)" }} />

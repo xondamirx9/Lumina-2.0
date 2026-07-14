@@ -59,13 +59,61 @@
     .search-label { display: inline; }
     .wrap { padding: 0 18px; }
   }
-  #boot { position: fixed; inset: 0; display: grid; place-items: center; background: var(--bg); z-index: 999; transition: opacity 0.5s; }
-  #boot.gone { opacity: 0; pointer-events: none; }
+  /* ---- Boot screen: a little journey while the site loads ---- */
+  #boot {
+    position: fixed; inset: 0; z-index: 999;
+    display: grid; place-items: center;
+    background: radial-gradient(130% 130% at 50% 18%, oklch(0.30 0.06 235) 0%, oklch(0.17 0.045 235) 55%, oklch(0.11 0.03 235) 100%);
+    transition: opacity 0.6s ease, visibility 0.6s;
+  }
+  #boot.gone { opacity: 0; pointer-events: none; visibility: hidden; }
+  .boot-inner { display: flex; flex-direction: column; align-items: center; gap: 20px; animation: bootIn 0.8s cubic-bezier(0.16,1,0.3,1) both; }
+  @keyframes bootIn { from { opacity: 0; transform: translateY(14px) scale(0.97); } to { opacity: 1; transform: none; } }
+  .boot-globe { position: relative; width: 88px; height: 88px; }
+  .boot-globe::before { /* the globe */
+    content: ''; position: absolute; inset: 12px; border-radius: 50%;
+    border: 2px solid oklch(1 0 0 / 0.28);
+    background: radial-gradient(circle at 32% 32%, oklch(0.74 0.09 196 / 0.4), transparent 62%);
+    box-shadow: 0 0 34px oklch(0.66 0.11 222 / 0.35), inset 0 0 18px oklch(0.66 0.11 222 / 0.25);
+  }
+  .boot-globe::after { /* meridian */
+    content: ''; position: absolute; inset: 12px; border-radius: 50%;
+    border: 1px solid oklch(1 0 0 / 0.14); transform: scaleX(0.52);
+  }
+  .boot-orbit { position: absolute; inset: 0; border-radius: 50%; border: 1.5px dashed oklch(1 0 0 / 0.25); animation: spinSlow 3.2s linear infinite; }
+  .boot-orbit::before { /* the traveller */
+    content: ''; position: absolute; top: -5px; left: 50%; margin-left: -5px;
+    width: 10px; height: 10px; border-radius: 50%;
+    background: oklch(0.72 0.14 38);
+    box-shadow: 0 0 16px 4px oklch(0.72 0.14 38 / 0.55);
+  }
+  .boot-word { font-family: "Instrument Serif", Georgia, serif; font-size: 2.1rem; color: white; line-height: 1; }
+  .boot-word em { font-style: italic; color: oklch(0.9 0.05 80); }
+  .boot-sub { font-family: "Manrope", system-ui, sans-serif; font-size: 0.64rem; font-weight: 700; letter-spacing: 0.34em; text-transform: uppercase; color: oklch(1 0 0 / 0.5); margin-top: -12px; }
+  .boot-bar { width: 178px; height: 3px; border-radius: 99px; background: oklch(1 0 0 / 0.12); overflow: hidden; }
+  .boot-bar span { display: block; height: 100%; width: 40%; border-radius: 99px; background: linear-gradient(90deg, oklch(0.66 0.11 222), oklch(0.74 0.09 196), oklch(0.72 0.14 38)); animation: bootSlide 1.15s ease-in-out infinite; }
+  @keyframes bootSlide { 0% { transform: translateX(-110%); } 100% { transform: translateX(460%); } }
+  .boot-star { position: absolute; width: 3px; height: 3px; border-radius: 50%; background: white; opacity: 0.35; animation: bootTwinkle 2.6s ease-in-out infinite; }
+  @keyframes bootTwinkle { 50% { opacity: 0.95; transform: scale(1.5); } }
+  /* small spinner reused inside the app (admin session check) */
   .boot-mark { width: 52px; height: 52px; border-radius: 50%; background: conic-gradient(var(--ocean-bright), var(--teal), var(--coral), var(--ocean-bright)); animation: spinSlow 1.1s linear infinite; -webkit-mask: radial-gradient(farthest-side, transparent 60%, #000 62%); mask: radial-gradient(farthest-side, transparent 60%, #000 62%); }
 </style>
 </head>
 <body>
-<div id="boot"><div class="boot-mark"></div></div>
+<div id="boot">
+  <span class="boot-star" style="top:16%;left:20%"></span>
+  <span class="boot-star" style="top:28%;left:76%;animation-delay:0.7s"></span>
+  <span class="boot-star" style="top:62%;left:14%;animation-delay:1.3s"></span>
+  <span class="boot-star" style="top:74%;left:70%;animation-delay:0.4s"></span>
+  <span class="boot-star" style="top:11%;left:54%;animation-delay:1.8s"></span>
+  <span class="boot-star" style="top:84%;left:38%;animation-delay:1s"></span>
+  <div class="boot-inner">
+    <div class="boot-globe"><div class="boot-orbit"></div></div>
+    <div class="boot-word">Lumina <em>Voyages</em></div>
+    <div class="boot-sub">preparing your journey</div>
+    <div class="boot-bar"><span></span></div>
+  </div>
+</div>
 <div id="root"></div>
 
 <template id="__bundler_thumbnail" data-bg-color="#0d4f6b">
