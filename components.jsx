@@ -48,6 +48,7 @@ const I = {
   sun:      "M12 3v2M12 19v2M4.2 4.2l1.4 1.4M18.4 18.4l1.4 1.4M3 12h2M19 12h2M4.2 19.8l1.4-1.4M18.4 5.6l1.4-1.4M12 8a4 4 0 100 8 4 4 0 000-8z",
   moon:     "M21 12.8A9 9 0 1111.2 3a7 7 0 009.8 9.8z",
   menu:     "M3 12h18M3 6h18M3 18h18",
+  send:     "M22 2L11 13M22 2l-7 20-4-9-9-4z",
 };
 
 function Icon({ name, size = 20, fill = "none", style, strokeWidth = 1.9, className }) {
@@ -263,6 +264,9 @@ const BRAND_GOLD = "#C6A15B";
 /* Default contacts — used until overridden in admin → Settings */
 const DEFAULT_WHATSAPP = "+998 77 608 68 98";
 function waHref(number) { return "https://wa.me/" + String(number || DEFAULT_WHATSAPP).replace(/\D/g, ""); }
+/* Accept either @username or a full URL for social settings */
+function tgHref(v) { const s = String(v || "").trim(); if (!s) return ""; return /^https?:/i.test(s) ? s : "https://t.me/" + s.replace(/^@/, ""); }
+function igHref(v) { const s = String(v || "").trim(); if (!s) return ""; return /^https?:/i.test(s) ? s : "https://instagram.com/" + s.replace(/^@/, ""); }
 
 /* OT monogram — vector recreation of the brand mark (crisp at any size,
    transparent background, adapts to dark surfaces automatically) */
@@ -291,23 +295,18 @@ function Logo({ light, onClick, size = 44 }) {
   const cfg = useSiteSettings();
   const isDark = theme === "dark";
   const ink = (light || isDark) ? "#ffffff" : "var(--ink)";
-  /* A custom logo uploaded via admin → Settings → Brand replaces the
-     whole lockup (uploads usually already contain the brand name), so
-     it renders alone and as large as the header allows. */
+  /* A custom mark uploaded via admin → Settings → Brand replaces the
+     monogram. It renders deliberately oversized (bleeding slightly past
+     the header edges, negative margins keep the layout height intact)
+     because uploaded files usually carry their own inner padding. */
   const customMark = (cfg.logo_url || "").trim();
-  if (customMark) {
-    return (
-      <a href="#/" onClick={(e) => { e.preventDefault(); onClick && onClick(); }} aria-label="Oscar Travel — home"
-        style={{ display: "inline-flex", alignItems: "center", textDecoration: "none" }}>
-        <img src={customMark} alt="Oscar Travel"
-          style={{ height: size * 1.64, maxWidth: "min(64vw, 340px)", width: "auto", objectFit: "contain", display: "block" }} />
-      </a>
-    );
-  }
   return (
     <a href="#/" onClick={(e) => { e.preventDefault(); onClick && onClick(); }} aria-label="Oscar Travel — home"
-      style={{ alignItems: "center", textDecoration: "none", display: "inline-flex", gap: 11 }}>
-      <LogoMark size={size} />
+      style={{ alignItems: "center", textDecoration: "none", display: "inline-flex", gap: 12 }}>
+      {customMark
+        ? <img src={customMark} alt=""
+            style={{ height: size * 2.2, maxWidth: "min(40vw, 220px)", width: "auto", objectFit: "contain", display: "block", margin: `${-(size * 0.6)}px 0`, flexShrink: 0 }} />
+        : <LogoMark size={size} />}
       <span style={{ fontFamily: "var(--font-display)", fontSize: size * 0.44, letterSpacing: "0.14em", color: ink, whiteSpace: "nowrap", lineHeight: 1, transition: "color 0.4s" }}>
         OSCAR TRAVEL
       </span>
@@ -508,11 +507,12 @@ function Footer({ go }) {
             </a>
             <div className="row gap-3" style={{ marginTop: 18 }}>
               {[
-                { ic: "globe",  href: cfg.instagram ? "https://instagram.com/" + cfg.instagram.replace("@","") : "#" },
-                { ic: "mail",   href: cfg.contact_email ? "mailto:" + cfg.contact_email : "#" },
-                { ic: "phone",  href: waHref(cfg.whatsapp) },
-              ].map(({ ic, href }) => (
-                <a key={ic} href={href} target="_blank" rel="noopener" style={{ width: 40, height: 40, borderRadius: "50%", display: "grid", placeItems: "center", background: "oklch(1 0 0 / 0.07)", color: "white" }}><Icon name={ic} size={18} /></a>
+                { ic: "globe",  href: igHref(cfg.instagram) || "#", title: "Instagram" },
+                { ic: "send",   href: tgHref(cfg.telegram), title: "Telegram" },
+                { ic: "mail",   href: cfg.contact_email ? "mailto:" + cfg.contact_email : "#", title: "Email" },
+                { ic: "phone",  href: waHref(cfg.whatsapp), title: "WhatsApp" },
+              ].filter(x => x.href).map(({ ic, href, title }) => (
+                <a key={ic} href={href} target="_blank" rel="noopener" title={title} style={{ width: 40, height: 40, borderRadius: "50%", display: "grid", placeItems: "center", background: "oklch(1 0 0 / 0.07)", color: "white" }}><Icon name={ic} size={18} /></a>
               ))}
             </div>
           </div>
@@ -671,6 +671,14 @@ function FloatContact() {
           onMouseLeave={(e) => { e.currentTarget.style.transform = "none"; e.currentTarget.style.boxShadow = "var(--sh-lg)"; }}>
           <Icon name="compass" size={18} /> Plan my trip
         </button>
+        {tgHref(cfg.telegram) && (
+          <a href={tgHref(cfg.telegram)} target="_blank" rel="noopener" title="Telegram"
+            style={{ width: 56, height: 56, borderRadius: "50%", background: "#229ED9", color: "white", display: "grid", placeItems: "center", boxShadow: "var(--sh-lg)", transition: "transform 0.25s, box-shadow 0.25s" }}
+            onMouseEnter={(e) => { e.currentTarget.style.transform = "translateY(-2px) scale(1.07)"; e.currentTarget.style.boxShadow = "var(--sh-xl)"; }}
+            onMouseLeave={(e) => { e.currentTarget.style.transform = "none"; e.currentTarget.style.boxShadow = "var(--sh-lg)"; }}>
+            <Icon name="send" size={22} />
+          </a>
+        )}
         <a href={waUrl || mailUrl} target="_blank" rel="noopener"
           title={waUrl ? "Chat on WhatsApp" : "Email us"}
           style={{ width: 56, height: 56, borderRadius: "50%", background: waUrl ? "#25D366" : "var(--ocean)", color: "white", display: "grid", placeItems: "center", boxShadow: "var(--sh-lg)", transition: "transform 0.25s, box-shadow 0.25s" }}
