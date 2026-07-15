@@ -304,8 +304,10 @@ function Logo({ light, onClick, size = 44 }) {
     <a href="#/" onClick={(e) => { e.preventDefault(); onClick && onClick(); }} aria-label="Oscar Travel — home"
       style={{ alignItems: "center", textDecoration: "none", display: "inline-flex", gap: 12 }}>
       {customMark
+        /* Negative side margins trim the transparent padding baked into
+           uploaded files so the mark sits tight against the wordmark */
         ? <img src={customMark} alt=""
-            style={{ height: size * 2.2, maxWidth: "min(40vw, 220px)", width: "auto", objectFit: "contain", display: "block", margin: `${-(size * 0.6)}px 0`, flexShrink: 0 }} />
+            style={{ height: size * 2.2, maxWidth: "min(40vw, 220px)", width: "auto", objectFit: "contain", display: "block", margin: `${-(size * 0.6)}px ${-(size * 0.38)}px`, flexShrink: 0 }} />
         : <LogoMark size={size} />}
       <span style={{ fontFamily: "var(--font-display)", fontSize: size * 0.44, letterSpacing: "0.14em", color: ink, whiteSpace: "nowrap", lineHeight: 1, transition: "color 0.4s" }}>
         OSCAR TRAVEL
