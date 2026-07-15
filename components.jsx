@@ -288,12 +288,18 @@ function LogoMark({ size = 46, gold = BRAND_GOLD }) {
 
 function Logo({ light, onClick, size = 44 }) {
   const { theme } = useI18n();
+  const cfg = useSiteSettings();
   const isDark = theme === "dark";
   const ink = (light || isDark) ? "#ffffff" : "var(--ink)";
+  /* A custom mark uploaded via admin → Settings → Brand overrides the
+     built-in vector monogram. */
+  const customMark = (cfg.logo_url || "").trim();
   return (
     <a href="#/" onClick={(e) => { e.preventDefault(); onClick && onClick(); }} aria-label="Oscar Travel — home"
       style={{ alignItems: "center", textDecoration: "none", display: "inline-flex", gap: 11 }}>
-      <LogoMark size={size} />
+      {customMark
+        ? <img src={customMark} alt="" style={{ height: size * 1.12, width: "auto", objectFit: "contain", flexShrink: 0, display: "block" }} />
+        : <LogoMark size={size} />}
       <span style={{ fontFamily: "var(--font-display)", fontSize: size * 0.44, letterSpacing: "0.14em", color: ink, whiteSpace: "nowrap", lineHeight: 1, transition: "color 0.4s" }}>
         OSCAR TRAVEL
       </span>

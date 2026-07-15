@@ -911,7 +911,23 @@ function AdminSettings() {
   const [form, setForm] = useState({ hero_image_url: "", hero_heading: "", hero_sub: "", contact_email: "", whatsapp: "", instagram: "" });
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [logoUploading, setLogoUploading] = useState(false);
   const toast = useToast();
+
+  const uploadLogo = async (file) => {
+    setLogoUploading(true);
+    try {
+      const url = await SB.storage.upload(file);
+      setForm(p => ({ ...p, logo_url: url }));
+      toast("Logo uploaded — press Save to apply it site-wide", "check");
+    } catch(e) {
+      const msg = e.message && e.message.includes("Bucket not found")
+        ? 'Storage bucket missing. Create "tour-images" public bucket in Supabase → Storage.'
+        : "Upload failed: " + e.message;
+      toast(msg, "x");
+    }
+    setLogoUploading(false);
+  };
 
   useEffect(() => {
     if (!SB.ok) { setLoading(false); return; }
@@ -937,6 +953,21 @@ function AdminSettings() {
     <div style={{ maxWidth: 720 }}>
       <p style={{ color: "var(--ink-3)", marginBottom: 28, fontSize: "0.9rem" }}>These override built-in defaults. Leave blank to use defaults.</p>
       <div className="col gap-4">
+        <div style={{ background: "var(--surface)", borderRadius: "var(--r-md)", padding: 28, border: "1px solid var(--hairline)" }}>
+          <h3 style={{ fontSize: "1rem", marginBottom: 8, color: "var(--ink-2)" }}>Brand Logo</h3>
+          <p style={{ fontSize: "0.82rem", color: "var(--ink-3)", marginBottom: 18 }}>Shown in the header, footer and admin sidebar next to the OSCAR TRAVEL wordmark. Use a transparent PNG/SVG — it appears on both light and dark backgrounds. Leave empty to use the built-in monogram.</p>
+          <div style={{ maxWidth: 340 }}>
+            <DropZone onFile={uploadLogo} uploading={logoUploading} preview={form.logo_url} label="Drop logo image or click to upload" />
+          </div>
+          <div style={{ marginTop: 12 }}>
+            {sf({ id: "logo_url", label: "Or paste logo image URL", placeholder: "https://..." })}
+          </div>
+          {form.logo_url && (
+            <button className="btn btn-ghost btn-sm" style={{ marginTop: 10 }} onClick={() => setForm(p => ({ ...p, logo_url: "" }))}>
+              <Icon name="x" size={14} /> Remove — use built-in monogram
+            </button>
+          )}
+        </div>
         <div style={{ background: "var(--surface)", borderRadius: "var(--r-md)", padding: 28, border: "1px solid var(--hairline)" }}>
           <h3 style={{ fontSize: "1rem", marginBottom: 8, color: "var(--ink-2)" }}>Announcement Bar</h3>
           <p style={{ fontSize: "0.82rem", color: "var(--ink-3)", marginBottom: 18 }}>Shown as a slim banner at the very top of every page. Leave empty to hide.</p>
