@@ -965,7 +965,7 @@ function AdminSettings() {
           <h3 style={{ fontSize: "1rem", marginBottom: 20, color: "var(--ink-2)" }}>Contact & Social</h3>
           <div className="col gap-4">
             {sf({ id: "contact_email", label: "Contact email", placeholder: "hello@luminavoyages.com" })}
-            {sf({ id: "whatsapp", label: "WhatsApp", placeholder: "+1 234 567 8900" })}
+            {sf({ id: "whatsapp", label: "WhatsApp", placeholder: "+998 77 608 68 98", hint: "Default is +998 77 608 68 98 — set a value here to override" })}
             {sf({ id: "instagram", label: "Instagram", placeholder: "@oscartravel" })}
           </div>
         </div>

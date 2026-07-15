@@ -27,13 +27,7 @@ function ListingPage({ go, route }) {
   }, []);
 
   const openContact = () => {
-    if (contact.whatsapp) {
-      window.open("https://wa.me/" + contact.whatsapp.replace(/\D/g, ""), "_blank");
-    } else if (contact.contact_email) {
-      window.open("mailto:" + contact.contact_email, "_blank");
-    } else {
-      window.open("mailto:hello@luminavoyages.com", "_blank");
-    }
+    window.open(waHref(contact.whatsapp), "_blank");
   };
 
   const toggle = (arr, set, v) => set(arr.includes(v) ? arr.filter((x) => x !== v) : [...arr, v]);
@@ -118,8 +112,8 @@ function ListingPage({ go, route }) {
             <Icon name="phone" size={22} style={{ color: "var(--ocean-deep)" }} />
             <h4 style={{ margin: "8px 0 6px", fontSize: "1rem" }}>{t("listing_help_h")}</h4>
             <p style={{ fontSize: "0.85rem", color: "var(--ink-2)", lineHeight: 1.5, marginBottom: 14 }}>{t("listing_help_p")}</p>
-            <button className="btn btn-ocean btn-sm btn-block" onClick={openContact}>
-              {contact.whatsapp ? <><Icon name="phone" size={15} /> WhatsApp</> : t("listing_expert")}
+            <button className="btn btn-sm btn-block" onClick={openContact} style={{ background: "#25D366", color: "white" }}>
+              <Icon name="phone" size={15} /> WhatsApp
             </button>
           </div>
         </aside>
