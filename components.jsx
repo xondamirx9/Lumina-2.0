@@ -298,7 +298,9 @@ function Logo({ light, onClick, size = 44 }) {
     <a href="#/" onClick={(e) => { e.preventDefault(); onClick && onClick(); }} aria-label="Oscar Travel — home"
       style={{ alignItems: "center", textDecoration: "none", display: "inline-flex", gap: 11 }}>
       {customMark
-        ? <img src={customMark} alt="" style={{ height: size * 1.12, width: "auto", objectFit: "contain", flexShrink: 0, display: "block" }} />
+        /* Uploaded marks usually carry their own inner padding, so render
+           larger than the vector monogram to visually match the wordmark */
+        ? <img src={customMark} alt="" style={{ height: size * 1.5, width: "auto", objectFit: "contain", flexShrink: 0, display: "block" }} />
         : <LogoMark size={size} />}
       <span style={{ fontFamily: "var(--font-display)", fontSize: size * 0.44, letterSpacing: "0.14em", color: ink, whiteSpace: "nowrap", lineHeight: 1, transition: "color 0.4s" }}>
         OSCAR TRAVEL
