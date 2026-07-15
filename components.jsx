@@ -291,17 +291,23 @@ function Logo({ light, onClick, size = 44 }) {
   const cfg = useSiteSettings();
   const isDark = theme === "dark";
   const ink = (light || isDark) ? "#ffffff" : "var(--ink)";
-  /* A custom mark uploaded via admin → Settings → Brand overrides the
-     built-in vector monogram. */
+  /* A custom logo uploaded via admin → Settings → Brand replaces the
+     whole lockup (uploads usually already contain the brand name), so
+     it renders alone and as large as the header allows. */
   const customMark = (cfg.logo_url || "").trim();
+  if (customMark) {
+    return (
+      <a href="#/" onClick={(e) => { e.preventDefault(); onClick && onClick(); }} aria-label="Oscar Travel — home"
+        style={{ display: "inline-flex", alignItems: "center", textDecoration: "none" }}>
+        <img src={customMark} alt="Oscar Travel"
+          style={{ height: size * 1.64, maxWidth: "min(64vw, 340px)", width: "auto", objectFit: "contain", display: "block" }} />
+      </a>
+    );
+  }
   return (
     <a href="#/" onClick={(e) => { e.preventDefault(); onClick && onClick(); }} aria-label="Oscar Travel — home"
       style={{ alignItems: "center", textDecoration: "none", display: "inline-flex", gap: 11 }}>
-      {customMark
-        /* Uploaded marks usually carry their own inner padding, so render
-           larger than the vector monogram to visually match the wordmark */
-        ? <img src={customMark} alt="" style={{ height: size * 1.5, width: "auto", objectFit: "contain", flexShrink: 0, display: "block" }} />
-        : <LogoMark size={size} />}
+      <LogoMark size={size} />
       <span style={{ fontFamily: "var(--font-display)", fontSize: size * 0.44, letterSpacing: "0.14em", color: ink, whiteSpace: "nowrap", lineHeight: 1, transition: "color 0.4s" }}>
         OSCAR TRAVEL
       </span>
