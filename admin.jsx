@@ -997,7 +997,8 @@ function AdminSettings() {
           <div className="col gap-4">
             {sf({ id: "contact_email", label: "Contact email", placeholder: "hello@luminavoyages.com" })}
             {sf({ id: "whatsapp", label: "WhatsApp", placeholder: "+998 77 608 68 98", hint: "Default is +998 77 608 68 98 — set a value here to override" })}
-            {sf({ id: "instagram", label: "Instagram", placeholder: "@oscartravel" })}
+            {sf({ id: "telegram", label: "Telegram", placeholder: "@oscartravel or https://t.me/oscartravel", hint: "Username or full link — shows in the footer and as a floating button" })}
+            {sf({ id: "instagram", label: "Instagram", placeholder: "@oscartravel or https://www.instagram.com/oscartravel.uz/", hint: "Username or full link" })}
           </div>
         </div>
         <button className="btn btn-primary btn-lg" onClick={save} disabled={saving}>{saving ? "Saving…" : <><Icon name="check" size={20} /> Save all settings</>}</button>
