@@ -955,7 +955,7 @@ function AdminSettings() {
       <div className="col gap-4">
         <div style={{ background: "var(--surface)", borderRadius: "var(--r-md)", padding: 28, border: "1px solid var(--hairline)" }}>
           <h3 style={{ fontSize: "1rem", marginBottom: 8, color: "var(--ink-2)" }}>Brand Logo</h3>
-          <p style={{ fontSize: "0.82rem", color: "var(--ink-3)", marginBottom: 18 }}>Shown in the header, footer and admin sidebar next to the OSCAR TRAVEL wordmark. Use a transparent PNG/SVG — it appears on both light and dark backgrounds. Leave empty to use the built-in monogram.</p>
+          <p style={{ fontSize: "0.82rem", color: "var(--ink-3)", marginBottom: 18 }}>Replaces the entire logo in the header, footer and admin sidebar — upload your full logo (mark + brand name) as a transparent PNG/SVG so it reads on both light and dark backgrounds. Leave empty to use the built-in monogram + wordmark.</p>
           <div style={{ maxWidth: 340 }}>
             <DropZone onFile={uploadLogo} uploading={logoUploading} preview={form.logo_url} label="Drop logo image or click to upload" />
           </div>
