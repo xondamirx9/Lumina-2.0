@@ -123,7 +123,7 @@ function Hero({ go }) {
   ];
   const heroImg = (cfg.hero_image_url || "").trim();
   return (
-    <section style={{ position: "relative", minHeight: "100vh", display: "flex", flexDirection: "column", justifyContent: "center", overflow: "hidden", paddingTop: 90, backgroundColor: "oklch(0.14 0.04 235)" }}>
+    <section style={{ position: "relative", minHeight: "100vh", display: "flex", flexDirection: "column", justifyContent: "center", overflow: "hidden", paddingTop: 90, backgroundColor: "oklch(0.14 0.012 70)" }}>
       {/* Background media + parallax — admin-set image overrides the video */}
       <div style={{ position: "absolute", inset: 0, transform: `translateY(${p * 0.25}px) scale(1.05)`, zIndex: 0 }}>
         {heroImg

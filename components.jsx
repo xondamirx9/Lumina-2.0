@@ -260,14 +260,18 @@ function TourCard({ tour, onOpen, delay = 0, matchPct }) {
 /* Oscar Travel brand gold */
 const BRAND_GOLD = "#C6A15B";
 
+/* Default contacts — used until overridden in admin → Settings */
+const DEFAULT_WHATSAPP = "+998 77 608 68 98";
+function waHref(number) { return "https://wa.me/" + String(number || DEFAULT_WHATSAPP).replace(/\D/g, ""); }
+
 /* OT monogram — vector recreation of the brand mark (crisp at any size,
    transparent background, adapts to dark surfaces automatically) */
 function LogoMark({ size = 46, gold = BRAND_GOLD }) {
   return (
-    <svg width={size} height={size} viewBox="0 0 96 96" aria-hidden="true" style={{ flexShrink: 0, display: "block", overflow: "visible" }}>
-      <circle cx="48" cy="44" r="36" fill="none" stroke={gold} strokeWidth="2.4" />
-      <text x="39" y="60" textAnchor="middle" fontFamily="'Instrument Serif', Georgia, 'Times New Roman', serif" fontSize="52" fill={gold}>O</text>
-      <text x="60" y="78" textAnchor="middle" fontFamily="'Instrument Serif', Georgia, 'Times New Roman', serif" fontSize="52" fill={gold}>T</text>
+    <svg width={size} height={size} viewBox="0 0 100 100" aria-hidden="true" style={{ flexShrink: 0, display: "block", overflow: "visible" }}>
+      <circle cx="50" cy="44" r="38" fill="none" stroke={gold} strokeWidth="2.2" />
+      <text x="41" y="64" textAnchor="middle" fontFamily="'Instrument Serif', Georgia, 'Times New Roman', serif" fontSize="60" fill={gold}>O</text>
+      <text x="63" y="86" textAnchor="middle" fontFamily="'Instrument Serif', Georgia, 'Times New Roman', serif" fontSize="60" fill={gold}>T</text>
     </svg>
   );
 }
@@ -473,11 +477,16 @@ function Footer({ go }) {
           <div>
             <Logo light onClick={() => go({ view: "home" })} />
             <p style={{ marginTop: 18, maxWidth: 280, lineHeight: 1.6, color: "oklch(0.68 0.02 230)" }}>{cfg.footer_tagline || t("footer_tagline")}</p>
-            <div className="row gap-3" style={{ marginTop: 22 }}>
+            <a href={waHref(cfg.whatsapp)} target="_blank" rel="noopener" className="row gap-2"
+              style={{ marginTop: 16, color: "oklch(0.85 0.02 230)", fontWeight: 700, fontSize: "0.94rem" }}>
+              <span style={{ width: 26, height: 26, borderRadius: "50%", background: "#25D366", color: "white", display: "grid", placeItems: "center", flexShrink: 0 }}><Icon name="phone" size={14} /></span>
+              {cfg.whatsapp || DEFAULT_WHATSAPP}
+            </a>
+            <div className="row gap-3" style={{ marginTop: 18 }}>
               {[
                 { ic: "globe",  href: cfg.instagram ? "https://instagram.com/" + cfg.instagram.replace("@","") : "#" },
                 { ic: "mail",   href: cfg.contact_email ? "mailto:" + cfg.contact_email : "#" },
-                { ic: "phone",  href: cfg.whatsapp ? "https://wa.me/" + cfg.whatsapp.replace(/\D/g,"") : "#" },
+                { ic: "phone",  href: waHref(cfg.whatsapp) },
               ].map(({ ic, href }) => (
                 <a key={ic} href={href} target="_blank" rel="noopener" style={{ width: 40, height: 40, borderRadius: "50%", display: "grid", placeItems: "center", background: "oklch(1 0 0 / 0.07)", color: "white" }}><Icon name={ic} size={18} /></a>
               ))}
@@ -626,7 +635,7 @@ function FloatContact() {
   const cfg = useSiteSettings();
   const [showTrip, setShowTrip] = useState(false);
 
-  const waUrl = cfg.whatsapp ? "https://wa.me/" + cfg.whatsapp.replace(/\D/g, "") : null;
+  const waUrl = waHref(cfg.whatsapp);
   const mailUrl = cfg.contact_email ? "mailto:" + cfg.contact_email : "mailto:hello@luminavoyages.com";
 
   return (

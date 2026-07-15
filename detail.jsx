@@ -282,9 +282,11 @@ function TourPage({ go, route }) {
             <button className="btn btn-primary btn-lg btn-block" onClick={() => go({ view: "booking", id: tour.id, travellers, departure })}>{t("detail_reserve")} <Icon name="arrow" size={18} /></button>
             <p className="row gap-2" style={{ justifyContent: "center", color: "var(--ink-3)", fontSize: "0.8rem", marginTop: 12 }}><Icon name="shield" size={15} /> {t("detail_cancel_note")}</p>
           </div>
-          <div className="row gap-3" style={{ marginTop: 14, justifyContent: "center", color: "var(--ink-2)", fontSize: "0.86rem", fontWeight: 600 }}>
-            <Icon name="phone" size={16} style={{ color: "var(--ocean)" }} /> {t("detail_call")}
-          </div>
+          <a href={waHref()} target="_blank" rel="noopener" className="row gap-3"
+            style={{ marginTop: 14, justifyContent: "center", color: "var(--ink-2)", fontSize: "0.86rem", fontWeight: 600 }}>
+            <span style={{ width: 24, height: 24, borderRadius: "50%", background: "#25D366", color: "white", display: "grid", placeItems: "center", flexShrink: 0 }}><Icon name="phone" size={13} /></span>
+            {t("detail_call")} {DEFAULT_WHATSAPP}
+          </a>
           <InquiryForm tour={tour} />
         </aside>
       </div>
