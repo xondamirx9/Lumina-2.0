@@ -266,12 +266,22 @@ function waHref(number) { return "https://wa.me/" + String(number || DEFAULT_WHA
 
 /* OT monogram — vector recreation of the brand mark (crisp at any size,
    transparent background, adapts to dark surfaces automatically) */
+/* Monogram drawn as vector paths (not font glyphs) so it renders
+   pixel-identically everywhere, regardless of which fonts loaded. */
 function LogoMark({ size = 46, gold = BRAND_GOLD }) {
   return (
     <svg width={size} height={size} viewBox="0 0 100 100" aria-hidden="true" style={{ flexShrink: 0, display: "block", overflow: "visible" }}>
-      <circle cx="50" cy="44" r="38" fill="none" stroke={gold} strokeWidth="2.2" />
-      <text x="41" y="64" textAnchor="middle" fontFamily="'Instrument Serif', Georgia, 'Times New Roman', serif" fontSize="60" fill={gold}>O</text>
-      <text x="63" y="86" textAnchor="middle" fontFamily="'Instrument Serif', Georgia, 'Times New Roman', serif" fontSize="60" fill={gold}>T</text>
+      <circle cx="50" cy="44" r="38" fill="none" stroke={gold} strokeWidth="1.6" />
+      <g fill={gold}>
+        {/* O — didone oval: thick sides, thin top/bottom */}
+        <path fillRule="evenodd" d="M21 46 a20 26 0 1 0 40 0 a20 26 0 1 0 -40 0 Z M28 46 a13 22.4 0 1 0 26 0 a13 22.4 0 1 0 -26 0 Z" />
+        {/* T — crossbar with end drops, stem descending past the circle */}
+        <rect x="45" y="30" width="37" height="3.2" />
+        <rect x="45" y="30" width="2.6" height="9.4" />
+        <rect x="79.4" y="30" width="2.6" height="9.4" />
+        <rect x="60" y="30" width="6.4" height="54.5" />
+        <path d="M55.4 87.8 h15.6 v-3.3 h-4.6 v-1.6 h-6.4 v1.6 h-4.6 Z" />
+      </g>
     </svg>
   );
 }
